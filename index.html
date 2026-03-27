@@ -1828,7 +1828,7 @@ function loadRealAthletes() {
             var color=colors[Math.abs((a.id||'x').charCodeAt(0)+(a.id||'x').charCodeAt(1))%colors.length];
             var aid = a.id;
             fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
-                +'<div style="position:absolute;top:8px;right:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
+                +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+a.prenom+(a.pseudo?' @'+a.pseudo:'')+'</div>'
                 +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
@@ -1876,7 +1876,7 @@ function openRealProfile(userId) {
     }).catch(function(){});
 }
 
-function openRealChat(userId) {
+function openRealChat(userId) { window._chatFromProfile = true;
     var fn = window.sbGetAthletes;
     if(typeof fn !== 'function') return;
     fn().then(function(athletes) {
@@ -1926,7 +1926,13 @@ function updateMsgBadge() {
         savedBadge.style.display = unread > 0 ? '' : 'none';
     }
 }
-function closeChat() { document.getElementById('chat-view').classList.remove('open'); }
+function closeChat() {
+    document.getElementById('chat-view').classList.remove('open');
+    if(window._chatFromProfile) {
+        window._chatFromProfile = false;
+        document.getElementById('profile-modal').classList.add('open');
+    }
+}
 function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
 function sendMsgBtn() {
     var input = document.getElementById('msg-input');

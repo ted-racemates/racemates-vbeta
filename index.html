@@ -1794,76 +1794,98 @@ function goTo(page) {
 }
 
 function loadRealAthletes() {
+    var list = document.getElementById('athletes-list');
+    if(!list) return;
+    list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') { console.warn('sbGetAthletes non disponible'); return; }
+    if(typeof fn !== 'function') return;
     fn().then(function(athletes) {
-        if(!athletes || athletes.length === 0) { console.log('Aucun profil trouvé'); return; }
-        console.log('Profils reçus:', athletes.length);
-        var list = document.getElementById('athletes-list');
-        if(!list) return;
-        // Supprimer les cartes réelles déjà injectées
-        list.querySelectorAll('.real-athlete-card').forEach(function(c){ c.remove(); });
-        // Injecter les vrais profils en haut
+        if(!athletes || athletes.length === 0) return;
         var fragment = '';
         athletes.forEach(function(a) {
             if(!a.prenom) return;
-            var initials = a.avatar_initials || ((a.prenom[0]||'?') + (a.pseudo ? a.pseudo[0]||'' : '')).toUpperCase();
+            var initials = a.avatar_initials || ((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
             var sports = [];
-            try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports || []); } catch(e){}
+            try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
             var needs = [];
-            try { needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs || []); } catch(e){}
-            var sportBadges = sports.slice(0,2).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
+            try { needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs||[]); } catch(e){}
+            var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
+            var needTags = needs.map(function(n){
+                if(n.includes('Logement')) return 'logement';
+                if(n.includes('Duo')) return 'duo';
+                if(n.includes('Relais')) return 'relais';
+                if(n.includes('Entra')) return 'training';
+                return '';
+            }).join(' ');
+            var dataTags = (sportKey+' '+needTags+' dispo').trim();
+            var sportBadges = sports.slice(0,2).map(function(s){return '<span class="badge badge-dark">'+s+'</span>';}).join('');
             var needBadges = needs.slice(0,2).map(function(n){
-                var icons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
-                var icon = Object.keys(icons).find(function(k){ return n.includes(k); });
-                return '<span class="badge badge-blue">'+(icons[icon]||'')+(icon?icon.split(' ')[0]:n)+'</span>';
+                var icons={'Logement':'🏠','Partenaire Duo':'🏅','Relais':'⚡','Entra':'🤝'};
+                var key=Object.keys(icons).find(function(k){return n.includes(k);});
+                return '<span class="badge badge-blue">'+(key?icons[key]+' ':'')+n+'</span>';
             }).join('');
-            var ville = a.ville || 'France';
-            var colors = ['linear-gradient(150deg,#0A1628,#1E3A8A)','linear-gradient(150deg,#065F46,#059669)','linear-gradient(150deg,#7C3AED,#4F46E5)','linear-gradient(150deg,#92400E,#D97706)'];
-            var color = colors[Math.floor(Math.random()*colors.length)];
-            fragment += '<div class="athlete-card real-athlete-card" onclick="openRealProfile(\''+a.id+'\')" style="cursor:pointer;border:2px solid var(--blue)">'
-                + '<div style="position:absolute;top:8px;right:8px;background:var(--blue);color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;font-family:Barlow Condensed,sans-serif;letter-spacing:1px">NOUVEAU</div>'
-                + '<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
-                + '<div class="ac-info"><div class="ac-name">'+a.prenom+(a.pseudo?' @'+a.pseudo:'')+'</div>'
-                + '<div class="ac-loc">📍 '+ville+'</div></div>'
-                + '<div class="ac-chrono"><div class="ac-chrono-lbl">✅ Inscrit</div><div class="ac-chrono-val" style="font-size:0.75em">RaceMates</div></div></div>'
-                + '<div style="padding:10px 12px"><div class="mmc-badges">'+sportBadges+needBadges+'</div>'
-                + (a.bio ? '<div style="font-size:0.78em;color:var(--grey);margin-top:6px;line-height:1.4">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>' : '')
-                + '</div></div>';
+            var colors=['linear-gradient(150deg,#0A1628,#1E3A8A)','linear-gradient(150deg,#065F46,#059669)','linear-gradient(150deg,#7C3AED,#4F46E5)','linear-gradient(150deg,#92400E,#D97706)'];
+            var color=colors[Math.abs((a.id||'x').charCodeAt(0)+(a.id||'x').charCodeAt(1))%colors.length];
+            var aid = a.id;
+            fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
+                +'<div style="position:absolute;top:8px;right:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
+                +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
+                +'<div class="ac-info"><div class="ac-name">'+a.prenom+(a.pseudo?' @'+a.pseudo:'')+'</div>'
+                +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
+                +'<div class="ac-chrono"><div class="ac-chrono-lbl">✅ Inscrit</div><div class="ac-chrono-val" style="font-size:0.75em">RaceMates</div></div></div>'
+                +'<div class="ac-body"><div class="ac-badges">'+sportBadges+needBadges+'</div>'
+                +(a.bio?'<div class="ac-bio">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>':'')
+                +'<div class="ac-actions">'
+                +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(\''+aid+'\')">💬 Contacter</button>'
+                +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this)">🔖</button>'
+                +'</div></div></div>';
         });
-        if(fragment) list.insertAdjacentHTML('afterbegin', fragment);
+        if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
     }).catch(function(){});
 }
 
 function openRealProfile(userId) {
-    if(typeof sbGetAthletes !== 'function') return;
-    sbGetAthletes().then(function(athletes) {
-        var a = athletes.find(function(x){ return x.id === userId; });
+    var fn = window.sbGetAthletes;
+    if(typeof fn !== 'function') return;
+    fn().then(function(athletes) {
+        var a = athletes.find(function(x){return x.id===userId;});
         if(!a) return;
-        var sports = [];
-        try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports || []); } catch(e){}
-        var needs = [];
-        try { needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs || []); } catch(e){}
-        var initials = a.avatar_initials || ((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
-        // Remplir le modal profil
-        var pm = document.getElementById('profile-modal');
+        var sports=[];
+        try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
+        var needs=[];
+        try{needs=typeof a.needs==='string'?JSON.parse(a.needs):(a.needs||[]);}catch(e){}
+        var initials=a.avatar_initials||((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+        var pm=document.getElementById('profile-modal');
         if(!pm) return;
-        var el = function(id){ return document.getElementById(id); };
-        if(el('pm-avatar')) el('pm-avatar').textContent = initials;
-        if(el('pm-name')) el('pm-name').textContent = a.prenom + (a.pseudo ? ' @'+a.pseudo : '');
-        if(el('pm-loc')) el('pm-loc').textContent = '📍 ' + (a.ville || 'France');
-        if(el('pm-bio')) el('pm-bio').textContent = a.bio || '';
-        if(el('pm-sport')) el('pm-sport').textContent = sports[0] || 'Multi-sport';
-        // Badges besoins
-        var needsEl = el('pm-needs');
-        if(needsEl) {
-            var icons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
-            needsEl.innerHTML = needs.map(function(n){
-                var icon = Object.keys(icons).find(function(k){ return n.includes(k); });
-                return '<span class="badge badge-blue">'+(icons[icon]||'')+' '+n+'</span>';
+        var el=function(id){return document.getElementById(id);};
+        if(el('pm-av')) el('pm-av').textContent=initials;
+        if(el('pm-chrono')) el('pm-chrono').textContent=sports[0]||'RaceMates';
+        if(el('pm-name')) el('pm-name').textContent=a.prenom+(a.pseudo?' @'+a.pseudo:'');
+        if(el('pm-loc')) el('pm-loc').textContent='📍 '+(a.ville||'France');
+        if(el('pm-bio')) el('pm-bio').textContent=a.bio||'';
+        if(el('pm-sport')) el('pm-sport').textContent=sports[0]||'';
+        var needsEl=el('pm-needs');
+        if(needsEl){
+            needsEl.innerHTML=needs.map(function(n){
+                return '<span class="badge badge-blue">'+n+'</span>';
             }).join('');
         }
-        pm.style.display = 'flex';
+        var contactBtn=el('profile-modal-contact-btn');
+        if(contactBtn)(function(aa){contactBtn.onclick=function(){closeProfile();openRealChat(aa.id);};})(a);
+        pm.classList.add('open');pm.scrollTop=0;
+    }).catch(function(){});
+}
+
+function openRealChat(userId) {
+    var fn = window.sbGetAthletes;
+    if(typeof fn !== 'function') return;
+    fn().then(function(athletes) {
+        var a=athletes.find(function(x){return x.id===userId;});
+        if(!a) return;
+        var sports=[];
+        try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
+        var initials=a.avatar_initials||((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+        contactAndChat(a.prenom+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'));
     }).catch(function(){});
 }
 

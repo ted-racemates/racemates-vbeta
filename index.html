@@ -612,7 +612,10 @@
                     niveau: parseSafeObj(data.niveau),
                     events: parseSafe(data.events),
                     initials: data.avatar_initials || 'RM',
-                    plan: data.plan || 'free'
+                    plan: data.plan || 'free',
+                    best_time: data.best_time || '',
+                    nb_courses: data.nb_courses || '',
+                    pace: data.pace || ''
                 };
                 // Update UI avatars
                 document.querySelectorAll('.user-av').forEach(el => el.textContent = data.avatar_initials || 'RM');
@@ -3570,10 +3573,13 @@ function toggleCompletFilter() {
             var statsHtml = '';
             var SPORT_LABELS = {"hyrox": {"icon": "🏋️", "name": "Hyrox", "stat1_lbl": "Best Hyrox", "stat1_val": "1:12:45", "stat2_lbl": "Courses", "stat2_val": "5", "stat3_lbl": "Pace", "stat3_val": "4:55/km"}, "athx": {"icon": "⚡", "name": "ATHX", "stat1_lbl": "Best ATHX", "stat1_val": "1:05:30", "stat2_lbl": "Courses", "stat2_val": "3", "stat3_lbl": "Pace", "stat3_val": "4:40/km"}, "running": {"icon": "🏃", "name": "Running", "stat1_lbl": "Best 10km", "stat1_val": "44:10", "stat2_lbl": "Semis", "stat2_val": "4", "stat3_lbl": "Pace", "stat3_val": "4:25/km"}, "trail": {"icon": "🌿", "name": "Trail", "stat1_lbl": "Pace trail", "stat1_val": "6:30/km", "stat2_lbl": "Trails", "stat2_val": "3", "stat3_lbl": "D+ max", "stat3_val": "+2500m"}, "triathlon": {"icon": "🏊", "name": "Triathlon", "stat1_lbl": "Best Ironman", "stat1_val": "10:42:00", "stat2_lbl": "Triathons", "stat2_val": "2", "stat3_lbl": "Pace run", "stat3_val": "5:10/km"}, "crossfit": {"icon": "💪", "name": "CrossFit", "stat1_lbl": "FRAN", "stat1_val": "4:32", "stat2_lbl": "Snatch", "stat2_val": "60kg", "stat3_lbl": "Back Squat", "stat3_val": "100kg"}, "spartan": {"icon": "🧱", "name": "Spartan", "stat1_lbl": "Best Spartan", "stat1_val": "2:15:00", "stat2_lbl": "Courses", "stat2_val": "3", "stat3_lbl": "Obstacles", "stat3_val": "100%"}, "musculation": {"icon": "🏋️\u200d♂️", "name": "Muscu", "stat1_lbl": "Squat", "stat1_val": "120kg", "stat2_lbl": "Bench", "stat2_val": "90kg", "stat3_lbl": "Deadlift", "stat3_val": "150kg"}};
             var sports = p.sports && p.sports.length ? p.sports : ['hyrox'];
-            var firstSport = SPORT_LABELS[sports[0]] || SPORT_LABELS['hyrox'];
-            statsHtml += '<div class="pstat"><div class="pstat-val">' + firstSport.stat1_val + '</div><div class="pstat-lbl">' + firstSport.stat1_lbl + '</div></div>';
-            statsHtml += '<div class="pstat"><div class="pstat-val">' + firstSport.stat2_val + '</div><div class="pstat-lbl">' + firstSport.stat2_lbl + '</div></div>';
-            statsHtml += '<div class="pstat"><div class="pstat-val">' + firstSport.stat3_val + '</div><div class="pstat-lbl">' + firstSport.stat3_lbl + '</div></div>';
+            var sport0 = (sports[0]||'hyrox').toLowerCase();
+            var lbl1 = p.best_time ? 'BEST PERF' : 'BEST PERF';
+            var lbl2 = 'COURSES';
+            var lbl3 = p.pace ? 'PACE / STAT' : 'PACE';
+            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.best_time || '-') + '</div><div class="pstat-lbl">' + lbl1 + '</div></div>';
+            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.nb_courses || '-') + '</div><div class="pstat-lbl">' + lbl2 + '</div></div>';
+            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.pace || '-') + '</div><div class="pstat-lbl">' + lbl3 + '</div></div>';
             pstats.innerHTML = statsHtml;
         }
 

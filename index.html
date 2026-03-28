@@ -1359,19 +1359,9 @@
                 💡 Passe en <strong>Complet</strong> pour sortir de la liste de matching et éviter des messages inutiles.
             </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-            <span class="badge badge-dark">🏋️ Hyrox</span>
-            <span class="badge" style="background:#ECFDF5;color:#065F46;border:1px solid #6EE7B7">🌿 Trail</span>
-            <span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">Confirmé</span>
-            <span class="badge badge-blue">🏠 Logement</span>
-            <span class="badge badge-blue">🏅 Duo</span>
-            <span class="badge badge-training">🤝 Entraînement</span>
-        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="profile-badges-dynamic"></div>
         <!-- SPORT TABS PROFIL -->
-        <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none" id="profile-sport-tabs">
-            <div class="fchip active" onclick="switchProfileSport(this,'hyrox')">🏋️ Hyrox</div>
-            <div class="fchip" onclick="switchProfileSport(this,'trail')">🌿 Trail</div>
-        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none" id="profile-sport-tabs"></div>
         <!-- HYROX STATS -->
         <div id="profile-pstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"><!-- stats dynamiques --></div>
 
@@ -3567,16 +3557,48 @@ function toggleCompletFilter() {
         var pstats = document.getElementById('profile-pstats');
         if(pstats) {
             var statsHtml = '';
-            var SPORT_LABELS = {"hyrox": {"icon": "🏋️", "name": "Hyrox", "stat1_lbl": "Best Hyrox", "stat1_val": "1:12:45", "stat2_lbl": "Courses", "stat2_val": "5", "stat3_lbl": "Pace", "stat3_val": "4:55/km"}, "athx": {"icon": "⚡", "name": "ATHX", "stat1_lbl": "Best ATHX", "stat1_val": "1:05:30", "stat2_lbl": "Courses", "stat2_val": "3", "stat3_lbl": "Pace", "stat3_val": "4:40/km"}, "running": {"icon": "🏃", "name": "Running", "stat1_lbl": "Best 10km", "stat1_val": "44:10", "stat2_lbl": "Semis", "stat2_val": "4", "stat3_lbl": "Pace", "stat3_val": "4:25/km"}, "trail": {"icon": "🌿", "name": "Trail", "stat1_lbl": "Pace trail", "stat1_val": "6:30/km", "stat2_lbl": "Trails", "stat2_val": "3", "stat3_lbl": "D+ max", "stat3_val": "+2500m"}, "triathlon": {"icon": "🏊", "name": "Triathlon", "stat1_lbl": "Best Ironman", "stat1_val": "10:42:00", "stat2_lbl": "Triathons", "stat2_val": "2", "stat3_lbl": "Pace run", "stat3_val": "5:10/km"}, "crossfit": {"icon": "💪", "name": "CrossFit", "stat1_lbl": "FRAN", "stat1_val": "4:32", "stat2_lbl": "Snatch", "stat2_val": "60kg", "stat3_lbl": "Back Squat", "stat3_val": "100kg"}, "spartan": {"icon": "🧱", "name": "Spartan", "stat1_lbl": "Best Spartan", "stat1_val": "2:15:00", "stat2_lbl": "Courses", "stat2_val": "3", "stat3_lbl": "Obstacles", "stat3_val": "100%"}, "musculation": {"icon": "🏋️\u200d♂️", "name": "Muscu", "stat1_lbl": "Squat", "stat1_val": "120kg", "stat2_lbl": "Bench", "stat2_val": "90kg", "stat3_lbl": "Deadlift", "stat3_val": "150kg"}};
-            var sports = p.sports && p.sports.length ? p.sports : ['hyrox'];
-            var sport0 = (sports[0]||'hyrox').toLowerCase();
-            var lbl1 = p.best_time ? 'BEST PERF' : 'BEST PERF';
+            var sports = p.sports && p.sports.length ? p.sports : [];
+            var lbl1 = 'BEST PERF';
             var lbl2 = 'COURSES';
             var lbl3 = p.pace ? 'PACE / STAT' : 'PACE';
             statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.best_time || '-') + '</div><div class="pstat-lbl">' + lbl1 + '</div></div>';
             statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.nb_courses || '-') + '</div><div class="pstat-lbl">' + lbl2 + '</div></div>';
             statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.pace || '-') + '</div><div class="pstat-lbl">' + lbl3 + '</div></div>';
             pstats.innerHTML = statsHtml;
+        }
+
+        // Badges dynamiques (sports + needs + niveau)
+        var badgesDyn = document.getElementById('profile-badges-dynamic');
+        if(badgesDyn) {
+            var sports = p.sports && p.sports.length ? p.sports : [];
+            var needs = p.needs && p.needs.length ? p.needs : [];
+            var niveau = p.niveau || {};
+            var sportIcons = {hyrox:'🏋️',athx:'⚡',running:'🏃',trail:'🌿',triathlon:'🏊',crossfit:'💪',spartan:'🧱',musculation:'🏋️‍♂️',natation:'🏊'};
+            var needIcons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
+            var html = '';
+            sports.forEach(function(s){
+                var key = s.toLowerCase().replace(/[^a-z]/g,'');
+                var icon = sportIcons[key] || '🏆';
+                html += '<span class="badge badge-dark">'+icon+' '+s+'</span>';
+            });
+            var niv = Object.values(niveau)[0] || '';
+            if(niv) html += '<span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">'+niv+'</span>';
+            needs.forEach(function(n){
+                var icon = Object.keys(needIcons).find(function(k){return n.includes(k);});
+                html += '<span class="badge badge-blue">'+(icon?needIcons[icon]+' ':'')+n+'</span>';
+            });
+            badgesDyn.innerHTML = html;
+        }
+
+        // Onglets sport dynamiques
+        var sportTabs = document.getElementById('profile-sport-tabs');
+        if(sportTabs) {
+            var sports = p.sports && p.sports.length ? p.sports : [];
+            var sportIcons = {hyrox:'🏋️',athx:'⚡',running:'🏃',trail:'🌿',triathlon:'🏊',crossfit:'💪',spartan:'🧱',musculation:'🏋️‍♂️',natation:'🏊'};
+            sportTabs.innerHTML = sports.map(function(s, i){
+                var key = s.toLowerCase().replace(/[^a-z]/g,'');
+                return '<div class="fchip'+(i===0?' active':'')+'" onclick="switchProfileSport(this,\''+key+'\')">'+( sportIcons[key]||'🏆')+' '+s+'</div>';
+            }).join('');
         }
 
         // Complétion du profil
@@ -3706,7 +3728,6 @@ function toggleCompletFilter() {
     // ===== EDIT PROFILE =====
     function openEditProfile() {
         var p = window.myProfile || {};
-        // Pre-fill fields
         var el = function(id) { return document.getElementById(id); };
         if(el('edit-prenom')) el('edit-prenom').value = p.prenom || '';
         if(el('edit-pseudo')) el('edit-pseudo').value = p.pseudo || '';
@@ -3714,7 +3735,10 @@ function toggleCompletFilter() {
         if(el('edit-bio')) el('edit-bio').value = p.bio || '';
         if(el('edit-instagram')) el('edit-instagram').value = p.instagram || '';
         if(el('edit-strava')) el('edit-strava').value = p.strava || '';
-        // Update avatar preview
+        if(el('edit-facebook')) el('edit-facebook').value = p.facebook || '';
+        if(el('edit-best-time')) el('edit-best-time').value = p.best_time || '';
+        if(el('edit-nb-courses')) el('edit-nb-courses').value = p.nb_courses || '';
+        if(el('edit-pace')) el('edit-pace').value = p.pace || '';
         var initials = ((p.prenom||'T')[0] + (p.pseudo||'J')[0]).toUpperCase();
         if(el('edit-avatar-preview')) el('edit-avatar-preview').textContent = initials;
         el('edit-profile-modal').style.display = 'block';
@@ -3734,19 +3758,24 @@ function toggleCompletFilter() {
         var bio       = (el('edit-bio')||{}).value?.trim() || '';
         var instagram = ((el('edit-instagram')||{}).value||'').replace('@','').trim();
         var strava    = (el('edit-strava')||{}).value?.trim() || '';
+        var facebook  = (el('edit-facebook')||{}).value?.trim() || '';
+        var best_time = (el('edit-best-time')||{}).value?.trim() || '';
+        var nb_courses= (el('edit-nb-courses')||{}).value?.trim() || '';
+        var pace      = (el('edit-pace')||{}).value?.trim() || '';
         if(!prenom){ showStatusToast('⚠️ Entre ton prénom !'); return; }
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
         if(!window.myProfile) window.myProfile = {};
-        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, initials });
+        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials });
         // Update UI
         document.querySelectorAll('.user-av').forEach(av => av.textContent = initials);
         var profName = document.querySelector('#screen-profile .profile-name');
         if(profName) profName.textContent = prenom + (pseudo ? ' @'+pseudo : '');
         var profLoc = document.querySelector('#screen-profile .profile-loc');
         if(profLoc) profLoc.textContent = '📍 ' + (ville||'France');
+        updateMyProfileScreen && updateMyProfileScreen();
         closeEditProfile && closeEditProfile();
         // Sync Supabase
-        sbUpdateProfile({ prenom, pseudo, ville, bio, instagram, strava, avatar_initials: initials })
+        sbUpdateProfile({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials })
             .then(() => showStatusToast('✅ Profil mis à jour !'))
             .catch(() => showStatusToast('✅ Profil mis à jour (hors ligne)'));
     }
@@ -4515,6 +4544,22 @@ setPlan('free');
             <div>
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">Strava</label>
                 <input id="edit-strava" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="Lien profil Strava">
+            </div>
+            <div>
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">Facebook</label>
+                <input id="edit-facebook" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="Lien profil Facebook">
+            </div>
+            <div style="border-top:1px solid #E2E8F0;padding-top:14px">
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🏅 Meilleure perf</label>
+                <input id="edit-best-time" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="ex: 1:05:00 · 3h45 · 180kg squat">
+            </div>
+            <div>
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🔢 Nombre de courses</label>
+                <input id="edit-nb-courses" type="number" min="0" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="ex: 5">
+            </div>
+            <div>
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">⚡ Pace / stat complémentaire</label>
+                <input id="edit-pace" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="ex: 4:55/km · 100kg bench">
             </div>
 
         </div>

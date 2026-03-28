@@ -623,6 +623,8 @@
                 document.querySelectorAll('.user-av').forEach(el => el.textContent = data.avatar_initials || 'RM');
                 if (typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
                 if (typeof setPlan === 'function') setPlan(data.plan || 'free');
+                // Charger les vraies conversations
+                setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 500);
             }
         }
 
@@ -1873,19 +1875,89 @@ function openRealChat(userId) { window._chatFromProfile = true;
         var sports=[];
         try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
         var initials=a.avatar_initials||((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
-        contactAndChat(a.prenom+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'));
+        contactAndChat(a.prenom+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'), userId);
     }).catch(function(){});
 }
 
 // ===================== CHAT =====================
+// ===================== CHAT RÉEL (Supabase) =====================
+var _currentConvId = null;
+var _currentConvUserId = null;
+var _realtimeSubscription = null;
+
+async function getOrCreateConversation(otherUserId) {
+    if (!currentUser) return null;
+    // Chercher conversation existante
+    const { data: convs } = await sb.from('conversations')
+        .select('*')
+        .or(`and(user1_id.eq.${currentUser.id},user2_id.eq.${otherUserId}),and(user1_id.eq.${otherUserId},user2_id.eq.${currentUser.id})`);
+    if (convs && convs.length > 0) return convs[0];
+    // Créer nouvelle conversation
+    const { data, error } = await sb.from('conversations').insert({
+        user1_id: currentUser.id,
+        user2_id: otherUserId
+    }).select().single();
+    if (error) { console.warn('conv error:', error.message); return null; }
+    return data;
+}
+
+async function loadMessages(convId) {
+    var msgs = document.getElementById('chat-messages');
+    if (!msgs) return;
+    const { data } = await sb.from('messages')
+        .select('*, sender:sender_id(prenom, avatar_initials)')
+        .eq('conversation_id', convId)
+        .order('created_at');
+    msgs.innerHTML = '';
+    (data || []).forEach(function(m) {
+        var isMine = m.sender_id === (currentUser && currentUser.id);
+        var wrap = document.createElement('div');
+        wrap.className = 'msg-wrap ' + (isMine ? 'sent' : 'recv');
+        var time = new Date(m.created_at);
+        var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
+        wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + (isMine ? ' <span class="rcheck">✓✓</span>' : '') + '</div>';
+        msgs.appendChild(wrap);
+    });
+    msgs.scrollTop = msgs.scrollHeight;
+    // Marquer comme lus
+    if (data && data.length > 0) {
+        sb.from('messages').update({ read_at: new Date().toISOString() })
+            .eq('conversation_id', convId)
+            .neq('sender_id', currentUser.id)
+            .is('read_at', null)
+            .then(function() { updateMsgBadge(); });
+    }
+}
+
+function subscribeToMessages(convId) {
+    if (_realtimeSubscription) { sb.removeChannel(_realtimeSubscription); }
+    _realtimeSubscription = sb.channel('messages:' + convId)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + convId },
+            function(payload) {
+                var m = payload.new;
+                if (m.sender_id === (currentUser && currentUser.id)) return; // déjà affiché
+                var msgs = document.getElementById('chat-messages');
+                if (!msgs) return;
+                var wrap = document.createElement('div');
+                wrap.className = 'msg-wrap recv';
+                var time = new Date(m.created_at);
+                var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
+                wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + '</div>';
+                msgs.appendChild(wrap);
+                msgs.scrollTop = msgs.scrollHeight;
+                // Marquer lu
+                sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id);
+            })
+        .subscribe();
+}
+
 function openChat(name, initials, status, event) {
     document.getElementById('chat-name').textContent = name;
     document.getElementById('chat-av').textContent = initials;
     document.getElementById('chat-status').textContent = status === 'online' ? '🟢 En ligne' : '⚫ Hors ligne';
     document.getElementById('chat-event').textContent = event;
     document.getElementById('chat-view').classList.add('open');
-    setTimeout(function(){ var m = document.getElementById('chat-messages'); m.scrollTop = m.scrollHeight; }, 50);
-    // Mark conversation as read
+    // Marquer conv comme lue dans UI
     document.querySelectorAll('.conv-card').forEach(function(card) {
         var n = card.querySelector('.conv-name');
         if(n && n.textContent === name) {
@@ -1895,7 +1967,121 @@ function openChat(name, initials, status, event) {
         }
     });
     updateMsgBadge();
+    // Si pas de conv Supabase, juste afficher les messages fictifs
+    if (!_currentConvId) {
+        setTimeout(function(){ var m = document.getElementById('chat-messages'); if(m) m.scrollTop = m.scrollHeight; }, 50);
+    }
 }
+
+function updateMsgBadge() {
+    var unread = document.querySelectorAll('.conv-card.unread').length;
+    var badge = document.getElementById('nav-msg-badge');
+    if(badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
+    var unreadChip = document.getElementById('unread-count-badge');
+    if(unreadChip) unreadChip.textContent = unread;
+    var savedBadge = document.getElementById('saved-nav-msg-badge');
+    if(savedBadge) { savedBadge.textContent = unread; savedBadge.style.display = unread > 0 ? '' : 'none'; }
+}
+
+function closeChat() {
+    document.getElementById('chat-view').classList.remove('open');
+    if (_realtimeSubscription) { sb.removeChannel(_realtimeSubscription); _realtimeSubscription = null; }
+    if(window._chatFromProfile) {
+        window._chatFromProfile = false;
+        document.getElementById('profile-modal').classList.add('open');
+    }
+}
+
+function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
+
+function sendMsgBtn() {
+    var input = document.getElementById('msg-input');
+    var text = input.value.trim();
+    if(!text) return;
+    input.value = '';
+    var msgs = document.getElementById('chat-messages');
+    var now = new Date();
+    var timeStr = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+    // Afficher immédiatement
+    var wrap = document.createElement('div');
+    wrap.className = 'msg-wrap sent';
+    wrap.innerHTML = '<div class="msg-bubble">' + text + '</div><div class="msg-time st">' + timeStr + ' <span class="rcheck sent-check">✓</span></div>';
+    msgs.appendChild(wrap);
+    msgs.scrollTop = msgs.scrollHeight;
+    // Envoyer dans Supabase si conversation réelle
+    if (_currentConvId && currentUser) {
+        sb.from('messages').insert({
+            conversation_id: _currentConvId,
+            sender_id: currentUser.id,
+            content: text
+        }).then(function() {
+            wrap.querySelector('.rcheck') && (wrap.querySelector('.rcheck').textContent = '✓✓');
+        });
+        // Update last_message
+        sb.from('conversations').update({ last_message: text, last_message_at: now.toISOString() })
+            .eq('id', _currentConvId);
+    } else {
+        // Pas de conv réelle — simulation
+        setTimeout(function() { var chk = wrap.querySelector('.rcheck'); if(chk) chk.textContent = '✓✓'; }, 800);
+        setTimeout(function() { showTyping(); setTimeout(function() { hideTyping(); autoReply(msgs); }, 2000 + Math.random()*2000); }, 1200);
+    }
+}
+
+async function contactAndChat(name, initials, status, event, otherUserId) {
+    goTo('messages');
+    _currentConvId = null;
+    _currentConvUserId = otherUserId || null;
+    // Si on a un userId réel, créer/récupérer la conversation
+    if (otherUserId && currentUser) {
+        try {
+            var conv = await getOrCreateConversation(otherUserId);
+            if (conv) {
+                _currentConvId = conv.id;
+                await loadMessages(conv.id);
+                subscribeToMessages(conv.id);
+                loadConversationsList();
+            }
+        } catch(e) { console.warn('chat error:', e); }
+    }
+    openChat(name, initials, status, event);
+}
+
+async function loadConversationsList() {
+    if (!currentUser) return;
+    const convs = await sbGetConversations();
+    if (!convs || convs.length === 0) return;
+    var list = document.getElementById('conv-list-real');
+    if (!list) {
+        // Créer le conteneur si absent
+        var msgList = document.querySelector('#screen-messages .conv-list') || document.querySelector('#screen-messages');
+        if (!msgList) return;
+        list = document.createElement('div');
+        list.id = 'conv-list-real';
+        msgList.insertAdjacentElement('afterbegin', list);
+    }
+    list.innerHTML = '';
+    convs.forEach(function(conv) {
+        var other = conv.user1_id === currentUser.id ? conv.user2 : conv.user1;
+        if (!other) return;
+        var initials = (other.avatar_initials || ((other.prenom||'?')[0] + (other.pseudo||'?')[0]).toUpperCase());
+        var otherId = conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id;
+        var card = document.createElement('div');
+        card.className = 'conv-card';
+        card.innerHTML = '<div class="conv-av">' + initials + '</div>'
+            + '<div style="flex:1"><div class="conv-name">' + (other.prenom||'') + (other.pseudo ? ' @'+other.pseudo : '') + '</div>'
+            + '<div class="conv-preview">' + (conv.last_message || 'Nouvelle conversation') + '</div></div>';
+        card.onclick = function() {
+            _currentConvId = conv.id;
+            _currentConvUserId = otherId;
+            loadMessages(conv.id);
+            subscribeToMessages(conv.id);
+            openChat(other.prenom + (other.pseudo?' @'+other.pseudo:''), initials, 'online', '');
+        };
+        list.appendChild(card);
+    });
+}
+
+
 
 function updateMsgBadge() {
     var unread = document.querySelectorAll('.conv-card.unread').length;
@@ -1997,10 +2183,7 @@ function autoReply(msgs) {
     msgs.scrollTop = msgs.scrollHeight;
 }
 
-function contactAndChat(name, initials, status, event) {
-    goTo('messages');
-    openChat(name, initials, status, event);
-}
+// contactAndChat — remplacée par version Supabase ci-dessus
 
 // ===================== MODALS =====================
 function openSaved() { document.getElementById('saved-modal').classList.add('open'); document.getElementById('saved-modal').scrollTop = 0; }

@@ -772,12 +772,16 @@
 
         // ── ATHLETES (matching) ──────────────────────────────────
         async function sbGetAthletes(filters = {}) {
+            // S'assurer que la session est établie
+            const session = await sb.auth.getSession();
+            const uid = session?.data?.session?.user?.id || currentUser?.id || '00000000-0000-0000-0000-000000000000';
             let q = sb.from('profiles')
                 .select('*')
-                .neq('id', currentUser?.id || '00000000-0000-0000-0000-000000000000')
+                .neq('id', uid)
                 .limit(50);
             if (filters.ville) q = q.ilike('ville', `%${filters.ville}%`);
-            const { data } = await q;
+            const { data, error } = await q;
+            if(error) { console.warn('sbGetAthletes error:', error.message); return []; }
             let athletes = data || [];
             // Filtrer par sport côté JS (sports stocké en JSON texte)
             if (filters.sport && athletes.length) {
@@ -864,7 +868,7 @@
             <div class="sport-select-card" onclick="goToMatchingSport('hyrox')" style="background:linear-gradient(135deg,#0A1628,#1E3A8A)">
                 <div class="ssc-icon">🏋️</div>
                 <div class="ssc-name">Hyrox</div>
-                <div class="ssc-count">42 athlètes</div>
+                <div class="ssc-count" id="ssc-hyrox">42 athlètes</div>
                 <div class="ssc-events">3 événements proches</div>
                 <div class="ssc-hot">🔥 Populaire</div>
             </div>
@@ -872,7 +876,7 @@
             <div class="sport-select-card" onclick="goToMatchingSport('athx')" style="background:linear-gradient(135deg,#1C1917,#44403C)">
                 <div class="ssc-icon">⚡</div>
                 <div class="ssc-name">ATHX</div>
-                <div class="ssc-count">9 athlètes</div>
+                <div class="ssc-count" id="ssc-athx">9 athlètes</div>
                 <div class="ssc-events">2 événements proches</div>
                 <div class="ssc-hot ssc-new">✨ Nouveau</div>
             </div>
@@ -880,7 +884,7 @@
             <div class="sport-select-card" onclick="goToMatchingSport('running')" style="background:linear-gradient(135deg,#1A1A2E,#1E3A5F)">
                 <div class="ssc-icon">🏃</div>
                 <div class="ssc-name">Running</div>
-                <div class="ssc-count">67 athlètes</div>
+                <div class="ssc-count" id="ssc-running">67 athlètes</div>
                 <div class="ssc-events">Marathon Paris · Semi Lyon</div>
                 <div class="ssc-hot">🔥 Top</div>
             </div>
@@ -888,28 +892,28 @@
             <div class="sport-select-card" onclick="goToMatchingSport('trail')" style="background:linear-gradient(135deg,#064E3B,#065F46)">
                 <div class="ssc-icon">🌿</div>
                 <div class="ssc-name">Trail</div>
-                <div class="ssc-count">29 athlètes</div>
+                <div class="ssc-count" id="ssc-trail">29 athlètes</div>
                 <div class="ssc-events">UTMB · Templiers</div>
             </div>
 
             <div class="sport-select-card" onclick="goToMatchingSport('triathlon')" style="background:linear-gradient(135deg,#1E3A5F,#1E4D8C)">
                 <div class="ssc-icon">🏊</div>
                 <div class="ssc-name">Triathlon</div>
-                <div class="ssc-count">21 athlètes</div>
+                <div class="ssc-count" id="ssc-triathlon">21 athlètes</div>
                 <div class="ssc-events">Ironman Nice · Triathlon Paris</div>
             </div>
 
             <div class="sport-select-card" onclick="goToMatchingSport('spartan')" style="background:linear-gradient(135deg,#450A0A,#7F1D1D)">
                 <div class="ssc-icon">🧱</div>
                 <div class="ssc-name">Spartan Race</div>
-                <div class="ssc-count">15 athlètes</div>
+                <div class="ssc-count" id="ssc-spartan">15 athlètes</div>
                 <div class="ssc-events">Spartan Lyon · Avr.</div>
             </div>
 
             <div class="sport-select-card" onclick="goToMatchingSport('crossfit')" style="background:linear-gradient(135deg,#1C1917,#292524)">
                 <div class="ssc-icon">💪</div>
                 <div class="ssc-name">CrossFit</div>
-                <div class="ssc-count">33 athlètes</div>
+                <div class="ssc-count" id="ssc-crossfit">33 athlètes</div>
                 <div class="ssc-events">Open 2026 · French Throwdown</div>
                 <div class="ssc-hot ssc-new">✨ Nouveau</div>
             </div>
@@ -917,7 +921,7 @@
             <div class="sport-select-card" onclick="goToMatchingSport('musculation')" style="background:linear-gradient(135deg,#1E1B4B,#3730A3)">
                 <div class="ssc-icon">🏋️‍♂️</div>
                 <div class="ssc-name">Musculation</div>
-                <div class="ssc-count">12 athlètes</div>
+                <div class="ssc-count" id="ssc-musculation">12 athlètes</div>
                 <div class="ssc-events">Partenaire box</div>
             </div>
 
@@ -3393,32 +3397,39 @@ function toggleCompletFilter() {
 
     function updateAthleteCount() {
         var fn = window.sbGetAthletes;
-        if(typeof fn === 'function') {
-            fn().then(function(athletes) {
-                var total = (athletes||[]).length + document.querySelectorAll('.demo-athlete-card').length;
-                var training = (athletes||[]).filter(function(a){
-                    try{ var n=typeof a.needs==='string'?JSON.parse(a.needs):(a.needs||[]); return n.some(function(x){return x.includes('Entraîn');}); }catch(e){return false;}
-                }).length;
-                var elA = document.getElementById('qa-sub-athletes');
-                if(elA) elA.textContent = total + ' disponibles';
-                var elT = document.getElementById('qa-sub-training');
-                if(elT) elT.textContent = (training + 8) + ' disponibles';
-                // Bandeau home
-                var mcText = document.querySelector('.mc-text');
-                if(mcText) mcText.innerHTML = '<strong>'+total+' athlètes</strong> matchent avec ton profil';
-            }).catch(function(){
-                // Fallback sur le DOM
-                var visible = document.querySelectorAll('#athletes-list .athlete-card[data-status=\"dispo\"]').length;
-                var elA = document.getElementById('qa-sub-athletes');
-                if(elA) elA.textContent = visible + ' disponibles';
+        if(typeof fn !== "function") return;
+        fn().then(function(athletes) {
+            var all = athletes || [];
+            var demoCards = document.querySelectorAll(".demo-athlete-card");
+            var sportCounts = {};
+            all.forEach(function(a) {
+                var sports = [];
+                try { sports = typeof a.sports === "string" ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
+                sports.forEach(function(s) {
+                    var key = s.toLowerCase().replace(/[^a-z]/g,"");
+                    sportCounts[key] = (sportCounts[key]||0) + 1;
+                });
             });
-        } else {
-            var visible = document.querySelectorAll('#athletes-list .athlete-card[data-status=\"dispo\"]').length;
-            var elA = document.getElementById('qa-sub-athletes');
-            if(elA) elA.textContent = visible + ' disponibles';
-        }
+            demoCards.forEach(function(c) {
+                var sp = c.getAttribute("data-sport")||""
+                if(sp) sportCounts[sp] = (sportCounts[sp]||0) + 1;
+            });
+            ["hyrox","athx","running","trail","triathlon","spartan","crossfit","musculation"].forEach(function(s) {
+                var el = document.getElementById("ssc-"+s);
+                if(el) el.textContent = (sportCounts[s]||0) + " athlètes";
+            });
+            var total = all.length + demoCards.length;
+            var training = all.filter(function(a){
+                try{ var n=typeof a.needs==="string"?JSON.parse(a.needs):(a.needs||[]); return n.some(function(x){return x.includes("Entraîn");}); }catch(e){return false;}
+            }).length + 8;
+            var elA = document.getElementById("qa-sub-athletes");
+            if(elA) elA.textContent = total + " disponibles";
+            var elT = document.getElementById("qa-sub-training");
+            if(elT) elT.textContent = training + " disponibles";
+            var mcText = document.querySelector(".mc-text");
+            if(mcText) mcText.innerHTML = "<strong>"+total+" athlètes</strong> matchent avec ton profil";
+        }).catch(function(){});
     }
-
     // Counter inits handled in main DOMContentLoaded
 
 
@@ -4181,6 +4192,9 @@ setPlan('free');
             window.myProfile = {
                 prenom: p.prenom, pseudo: p.pseudo, ville: p.ville,
                 sports: p.sports||[], needs: p.needs||[], niveau: p.niveau||{},
+                bio: p.bio||'', instagram: p.instagram||'', strava: p.strava||'',
+                facebook: p.facebook||'', events: p.events||[],
+                best_time: p.best_time||'', nb_courses: p.nb_courses||'', pace: p.pace||'',
                 initials: p.initials||'RM', plan: p.plan||'free'
             };
             document.querySelectorAll('.user-av').forEach(el => el.textContent = window.myProfile.initials);

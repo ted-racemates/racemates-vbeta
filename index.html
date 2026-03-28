@@ -1318,57 +1318,19 @@
             <div style="font-size:1.4em">🎉</div>
             <div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;color:white;font-size:1em">Tu n'apparais plus dans le matching !</div><div style="font-size:0.72em;color:rgba(255,255,255,0.7);margin-top:2px">Repasse en Dispo quand tu cherches à nouveau.</div></div>
         </div>
-        <!-- STATUS TOGGLE CARD -->
-        <div class="status-toggle-card">
+        <!-- RECHERCHES ACTIVES DYNAMIQUES -->
+        <div class="status-toggle-card" id="profile-recherches-actives">
             <div class="stc-title">🎯 Mes recherches actives</div>
-            <div class="stc-event">
-                <div class="stc-event-name">📍 Hyrox Toulouse · Mars 2026</div>
-                <div class="stc-needs">
-                    <div class="stc-need-row">
-                        <div class="stc-need-label">🏠 Logement</div>
-                        <div class="stc-status-btn">
-                            <button class="ssb dispo" onclick="setMyStatus(this,'toulouse','logement','dispo')">🟢 Dispo</button>
-                            
-                            <button class="ssb" onclick="setMyStatus(this,'toulouse','logement','complet')">🔴 Complet</button>
-                        </div>
-                    </div>
-                    <div class="stc-need-row">
-                        <div class="stc-need-label">🏅 Duo</div>
-                        <div class="stc-status-btn">
-                            <button class="ssb dispo" onclick="setMyStatus(this,'toulouse','duo','dispo')">🟢 Dispo</button>
-                            
-                            <button class="ssb" onclick="setMyStatus(this,'toulouse','duo','complet')">🔴 Complet</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="stc-event">
-                <div class="stc-event-name">📍 Hyrox Grand Palais · Avr. 2026</div>
-                <div class="stc-needs">
-                    <div class="stc-need-row">
-                        <div class="stc-need-label">🏅 Duo</div>
-                        <div class="stc-status-btn">
-                            <button class="ssb dispo" onclick="setMyStatus(this,'grandpalais','duo','dispo')">🟢 Dispo</button>
-                            
-                            <button class="ssb" onclick="setMyStatus(this,'grandpalais','duo','complet')">🔴 Complet</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div id="profile-recherches-content"><div style="color:var(--grey);font-size:0.85em">Aucune recherche active.</div></div>
             <div style="margin-top:10px;padding:8px 10px;background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;font-size:0.72em;color:#92400E;line-height:1.5">
                 💡 Passe en <strong>Complet</strong> pour sortir de la liste de matching et éviter des messages inutiles.
             </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="profile-badges-dynamic"></div>
-        <!-- SPORT TABS PROFIL -->
         <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none" id="profile-sport-tabs"></div>
-        <!-- HYROX STATS -->
-        <div id="profile-pstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"><!-- stats dynamiques --></div>
-
-                <div class="profile-bio">"Passionné de Hyrox depuis 3 ans, je cherche une crew pour Toulouse et Paris. Niveau confirmé, sympa et motivé !"</div>
-        <div class="section-title" style="margin-bottom:10px">📅 Prochains événements</div>
-        <div id="profile-events-list"><div style="color:var(--grey);font-size:0.85em;padding:8px 0">Aucun événement inscrit pour l'instant.</div></div>
-        <div style="display:flex;gap:8px;margin-bottom:18px"><div class="social-btn">📸 @thomas.jarron</div><div class="social-btn">👤 Thomas Jarron</div></div>
+        <div id="profile-pstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"></div>
+        <div class="profile-bio" id="profile-bio-dynamic"></div>
+        <div id="profile-social-dynamic" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><button class="btn-edit" onclick="openEditProfile()">✏️ Modifier profil</button><button class="btn-saved-link" onclick="openSaved()">🔖 Profils sauvegardés</button></div>
         <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px">❓ Aide &amp; Support</button>
         <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
@@ -3623,6 +3585,54 @@ function toggleCompletFilter() {
             if(fill) fill.style.width = pct + '%';
             var pctEl = document.querySelector('.pcc-pct');
             if(pctEl) pctEl.textContent = pct + '%';
+        }
+
+        // Bio dynamique
+        var bioDyn = document.getElementById('profile-bio-dynamic');
+        if(bioDyn) bioDyn.textContent = p.bio ? '"'+p.bio+'"' : '';
+
+        // Réseaux sociaux dynamiques
+        var socialDyn = document.getElementById('profile-social-dynamic');
+        if(socialDyn) {
+            var socialHtml = '';
+            if(p.instagram) socialHtml += '<div class="social-btn">📸 @'+p.instagram+'</div>';
+            if(p.strava) socialHtml += '<div class="social-btn">🏃 Strava</div>';
+            if(p.facebook) socialHtml += '<div class="social-btn">👤 Facebook</div>';
+            socialDyn.innerHTML = socialHtml;
+        }
+
+        // Recherches actives dynamiques (events + needs)
+        var rechercheContent = document.getElementById('profile-recherches-content');
+        if(rechercheContent) {
+            var events = p.events && p.events.length ? p.events : [];
+            var needs = p.needs && p.needs.length ? p.needs : [];
+            var needIcons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
+            if(!events.length && !needs.length) {
+                rechercheContent.innerHTML = '<div style="color:var(--grey);font-size:0.85em">Aucune recherche active.</div>';
+            } else if(events.length) {
+                rechercheContent.innerHTML = events.map(function(ev) {
+                    var evName = typeof ev === 'string' ? ev : (ev.name || ev);
+                    var needRows = needs.map(function(n) {
+                        var icon = Object.keys(needIcons).find(function(k){return n.includes(k);})||'';
+                        return '<div class="stc-need-row"><div class="stc-need-label">'+(needIcons[icon]||'')+' '+n+'</div>'
+                            +'<div class="stc-status-btn">'
+                            +'<button class="ssb dispo">🟢 Dispo</button>'
+                            +'<button class="ssb">🔴 Complet</button>'
+                            +'</div></div>';
+                    }).join('');
+                    return '<div class="stc-event"><div class="stc-event-name">📍 '+evName+'</div><div class="stc-needs">'+needRows+'</div></div>';
+                }).join('');
+            } else {
+                var needRows = needs.map(function(n) {
+                    var icon = Object.keys(needIcons).find(function(k){return n.includes(k);})||'';
+                    return '<div class="stc-need-row"><div class="stc-need-label">'+(needIcons[icon]||'')+' '+n+'</div>'
+                        +'<div class="stc-status-btn">'
+                        +'<button class="ssb dispo">🟢 Dispo</button>'
+                        +'<button class="ssb">🔴 Complet</button>'
+                        +'</div></div>';
+                }).join('');
+                rechercheContent.innerHTML = '<div class="stc-needs">'+needRows+'</div>';
+            }
         }
 
         // Prochains événements

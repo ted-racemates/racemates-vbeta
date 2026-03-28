@@ -3783,10 +3783,16 @@ function toggleCompletFilter() {
         var profLoc = document.querySelector('#screen-profile .profile-loc');
         if(profLoc) profLoc.textContent = '📍 ' + (ville||'France');
         updateMyProfileScreen && updateMyProfileScreen();
-        closeEditProfile && closeEditProfile();
-        // Sync Supabase
-        sbUpdateProfile({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials })
-            .then(() => showStatusToast('✅ Profil mis à jour !'))
+        // Fermer immédiatement
+        document.getElementById('edit-profile-modal').style.display = 'none';
+        document.body.style.overflow = '';
+        // Sync Supabase puis recharger le profil
+        var updateFn = window.sbUpdateProfile || sbUpdateProfile;
+        updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials })
+            .then(function() {
+                showStatusToast('✅ Profil mis à jour !');
+                if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
+            })
             .catch(() => showStatusToast('✅ Profil mis à jour (hors ligne)'));
     }
 

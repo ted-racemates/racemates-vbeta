@@ -1456,9 +1456,9 @@
         <div id="pm-loc" style="font-size:0.82em;color:var(--grey);margin-bottom:14px">📍 Lyon, France</div>
         <div id="pm-badges" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-            <div class="pstat"><div id="pm-stat1" class="pstat-val">44:10</div><div class="pstat-lbl">10km</div></div>
-            <div class="pstat"><div id="pm-stat2" class="pstat-val">5</div><div class="pstat-lbl">Hyrox</div></div>
-            <div class="pstat"><div id="pm-stat3" class="pstat-val">4:55/km</div><div class="pstat-lbl">Pace</div></div>
+            <div class="pstat"><div id="pm-stat1" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl1">BEST PERF</div></div>
+            <div class="pstat"><div id="pm-stat2" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl2">COURSES</div></div>
+            <div class="pstat"><div id="pm-stat3" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl3">PACE / STAT</div></div>
         </div>
         <div id="pm-bio" class="profile-bio"></div>
         <div style="margin-top:14px;margin-bottom:16px" id="pm-event"></div>
@@ -1871,19 +1871,12 @@ function openRealProfile(userId) {
         var el=function(id){return document.getElementById(id);};
         if(el('pm-av')) el('pm-av').textContent=initials;
         if(el('pm-chrono')) el('pm-chrono').textContent = a.best_time || sports[0] || 'RaceMates';
-        // Stats bloc
-        if(el('pm-stat1')) {
-            el('pm-stat1').textContent = a.best_time || '-';
-            el('pm-stat1').parentElement.querySelector('.pstat-lbl') && (el('pm-stat1').parentElement.querySelector('.pstat-lbl').textContent = 'BEST PERF');
-        }
-        if(el('pm-stat2')) {
-            el('pm-stat2').textContent = a.nb_courses || '-';
-            el('pm-stat2').parentElement.querySelector('.pstat-lbl') && (el('pm-stat2').parentElement.querySelector('.pstat-lbl').textContent = 'COURSES');
-        }
-        if(el('pm-stat3')) {
-            el('pm-stat3').textContent = a.pace || '-';
-            el('pm-stat3').parentElement.querySelector('.pstat-lbl') && (el('pm-stat3').parentElement.querySelector('.pstat-lbl').textContent = 'PACE / STAT');
-        }
+        if(el('pm-stat1')) el('pm-stat1').textContent = a.best_time || '-';
+        if(el('pm-lbl1')) el('pm-lbl1').textContent = 'BEST PERF';
+        if(el('pm-stat2')) el('pm-stat2').textContent = a.nb_courses || '-';
+        if(el('pm-lbl2')) el('pm-lbl2').textContent = 'COURSES';
+        if(el('pm-stat3')) el('pm-stat3').textContent = a.pace || '-';
+        if(el('pm-lbl3')) el('pm-lbl3').textContent = 'PACE / STAT';
         if(el('pm-name')) el('pm-name').textContent=a.prenom+(a.pseudo?' @'+a.pseudo:'');
         if(el('pm-loc')) el('pm-loc').textContent='📍 '+(a.ville||'France');
         if(el('pm-bio')) el('pm-bio').textContent=a.bio||'';
@@ -2386,8 +2379,11 @@ function openAthleteProfile(initials) {
     document.getElementById('pm-name').textContent = d.name;
     document.getElementById('pm-loc').textContent = '📍 ' + d.loc;
     document.getElementById('pm-stat1').textContent = d.stat1;
+    if(document.getElementById('pm-lbl1')) document.getElementById('pm-lbl1').textContent = d.stat1_lbl || 'BEST PERF';
     document.getElementById('pm-stat2').textContent = d.stat2;
+    if(document.getElementById('pm-lbl2')) document.getElementById('pm-lbl2').textContent = d.stat2_lbl || 'COURSES';
     document.getElementById('pm-stat3').textContent = d.stat3;
+    if(document.getElementById('pm-lbl3')) document.getElementById('pm-lbl3').textContent = d.stat3_lbl || 'PACE';
     document.getElementById('pm-bio').textContent = d.bio;
     var badgesEl = document.getElementById('pm-badges');
     badgesEl.innerHTML = d.badges.map(function(b) {

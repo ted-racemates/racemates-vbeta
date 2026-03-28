@@ -575,6 +575,8 @@
             if (currentUser && !_loadingProfile) {
                 _loadingProfile = true;
                 await loadMyProfile().finally(function(){ _loadingProfile = false; });
+                // Mettre à jour les compteurs home
+                setTimeout(function(){ if(typeof updateAthleteCount==='function') updateAthleteCount(); }, 500);
                 // Envoyer le profil en attente si signup vient d'avoir lieu
                 if(window._pendingProfileData) {
                     var pd = window._pendingProfileData;
@@ -1780,7 +1782,16 @@ function loadRealAthletes() {
                 return '<span class="badge badge-blue">'+(key?icons[key]+' ':'')+n+'</span>';
             }).join('');
             var colors=['linear-gradient(150deg,#0A1628,#1E3A8A)','linear-gradient(150deg,#065F46,#059669)','linear-gradient(150deg,#7C3AED,#4F46E5)','linear-gradient(150deg,#92400E,#D97706)'];
-            var color=colors[Math.abs((a.id||'x').charCodeAt(0)+(a.id||'x').charCodeAt(1))%colors.length];
+            var color='linear-gradient(150deg,#0A1628,#1E3A8A)'; // couleur uniforme comme les démos
+            // Calcul compatibilité basique
+            var myProfile = window.myProfile || {};
+            var mySports = myProfile.sports || [];
+            var myNeeds = myProfile.needs || [];
+            var compatScore = 70;
+            if(mySports.some(function(s){ return sports.some(function(s2){ return s.toLowerCase()===s2.toLowerCase(); }); })) compatScore += 15;
+            if(myNeeds.some(function(n){ return needs.some(function(n2){ return n.includes(n2.split(' ')[0])||n2.includes(n.split(' ')[0]); }); })) compatScore += 10;
+            if(myProfile.ville && a.ville && myProfile.ville.toLowerCase()===a.ville.toLowerCase()) compatScore += 5;
+            compatScore = Math.min(compatScore, 99);
             var aid = a.id;
             fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
@@ -1796,7 +1807,8 @@ function loadRealAthletes() {
                 var val = bestTime || nivVal || (sports[0]||'');
                 return '<div class="ac-chrono"><div class="ac-chrono-lbl">'+lbl+'</div><div class="ac-chrono-val" style="font-size:0.85em">'+val+'</div></div></div>';
             })()
-                +'<div class="ac-body"><div class="ac-badges">'+sportBadges+needBadges+'</div>'
+                +'<div class="ac-body"><div class="ac-badges">'+sportBadges+needBadges+'<span class="match-pct">'+compatScore+'%</span></div>'
+                +'<div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:'+compatScore+'%"></div></div><div class="compat-pct">'+compatScore+'%</div></div>'
                 +(a.bio?'<div class="ac-bio">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>':'')
                 +'<div class="ac-actions">'
                 +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(\''+aid+'\')">💬 Contacter</button>'
@@ -3377,15 +3389,31 @@ function toggleCompletFilter() {
     }
 
     function updateAthleteCount() {
-        // Count visible (dispo) athletes
-        var visible = document.querySelectorAll('#athletes-list .athlete-card[data-status="dispo"]').length;
-        var total = document.querySelectorAll('#athletes-list .athlete-card').length;
-        var elA = document.getElementById('qa-sub-athletes');
-        if(elA) elA.textContent = total + ' disponibles';
-        // Training athletes (those with training in data-tags)
-        var training = document.querySelectorAll('#athletes-list .athlete-card[data-tags*="training"]').length;
-        var elT = document.getElementById('qa-sub-training');
-        if(elT) elT.textContent = training + ' disponibles';
+        var fn = window.sbGetAthletes;
+        if(typeof fn === 'function') {
+            fn().then(function(athletes) {
+                var total = (athletes||[]).length + document.querySelectorAll('.demo-athlete-card').length;
+                var training = (athletes||[]).filter(function(a){
+                    try{ var n=typeof a.needs==='string'?JSON.parse(a.needs):(a.needs||[]); return n.some(function(x){return x.includes('Entraîn');}); }catch(e){return false;}
+                }).length;
+                var elA = document.getElementById('qa-sub-athletes');
+                if(elA) elA.textContent = total + ' disponibles';
+                var elT = document.getElementById('qa-sub-training');
+                if(elT) elT.textContent = (training + 8) + ' disponibles';
+                // Bandeau home
+                var mcText = document.querySelector('.mc-text');
+                if(mcText) mcText.innerHTML = '<strong>'+total+' athlètes</strong> matchent avec ton profil';
+            }).catch(function(){
+                // Fallback sur le DOM
+                var visible = document.querySelectorAll('#athletes-list .athlete-card[data-status=\"dispo\"]').length;
+                var elA = document.getElementById('qa-sub-athletes');
+                if(elA) elA.textContent = visible + ' disponibles';
+            });
+        } else {
+            var visible = document.querySelectorAll('#athletes-list .athlete-card[data-status=\"dispo\"]').length;
+            var elA = document.getElementById('qa-sub-athletes');
+            if(elA) elA.textContent = visible + ' disponibles';
+        }
     }
 
     // Counter inits handled in main DOMContentLoaded

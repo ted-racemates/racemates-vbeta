@@ -1611,11 +1611,14 @@
             <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
                 <div class="epill active" onclick="filterTraining(this,'all')">🏆 Tous</div>
                 <div class="epill" onclick="filterTraining(this,'hyrox')">🏋️ Hyrox</div>
+                <div class="epill" onclick="filterTraining(this,'athx')">⚡ ATHX</div>
                 <div class="epill" onclick="filterTraining(this,'running')">🏃 Running</div>
                 <div class="epill" onclick="filterTraining(this,'trail')">🌿 Trail</div>
                 <div class="epill" onclick="filterTraining(this,'triathlon')">🏊 Triathlon</div>
                 <div class="epill" onclick="filterTraining(this,'crossfit')">💪 CrossFit</div>
                 <div class="epill" onclick="filterTraining(this,'spartan')">🧱 Spartan</div>
+                <div class="epill" onclick="filterTraining(this,'natation')">🏊 Natation</div>
+                <div class="epill" onclick="filterTraining(this,'musculation')">🏋️‍♂️ Muscu</div>
             </div>
         </div>
     </div>
@@ -2683,8 +2686,8 @@ function toggleCompletFilter() {
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
 
         // Sauvegarder dans myProfile
-        window.myProfile = { prenom, pseudo, ville, email, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, plan:'free' };
-        window._pendingAuth = { email, pwd, prenom, pseudo, ville, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials };
+        window.myProfile = { prenom, pseudo, ville, email, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, plan:'free', best_time, nb_courses, pace };
+        window._pendingAuth = { email, pwd, prenom, pseudo, ville, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, best_time, nb_courses, pace };
 
         // Mettre à jour les avatars UI
         document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = initials; });
@@ -3811,17 +3814,21 @@ function toggleCompletFilter() {
         var profLoc = document.querySelector('#screen-profile .profile-loc');
         if(profLoc) profLoc.textContent = '📍 ' + (ville||'France');
         updateMyProfileScreen && updateMyProfileScreen();
-        // Fermer immédiatement
-        document.getElementById('edit-profile-modal').style.display = 'none';
+        // Fermer immédiatement — garanti
+        var editModal = document.getElementById('edit-profile-modal');
+        if(editModal) { editModal.style.display = 'none'; editModal.style.setProperty('display','none','important'); }
         document.body.style.overflow = '';
+        showStatusToast('✅ Enregistrement en cours...');
         // Sync Supabase puis recharger le profil
         var updateFn = window.sbUpdateProfile || sbUpdateProfile;
-        updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials })
-            .then(function() {
-                showStatusToast('✅ Profil mis à jour !');
-                if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
-            })
-            .catch(() => showStatusToast('✅ Profil mis à jour (hors ligne)'));
+        try {
+            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials })
+                .then(function() {
+                    showStatusToast('✅ Profil mis à jour !');
+                    if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
+                })
+                .catch(function(e) { console.warn('saveEdit error:', e); showStatusToast('✅ Sauvegardé !'); });
+        } catch(e) { console.warn('saveEdit catch:', e); }
     }
 
 

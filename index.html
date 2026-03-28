@@ -1832,7 +1832,15 @@ function loadRealAthletes() {
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+a.prenom+(a.pseudo?' @'+a.pseudo:'')+'</div>'
                 +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
-                +'<div class="ac-chrono"><div class="ac-chrono-lbl">✅ Inscrit</div><div class="ac-chrono-val" style="font-size:0.75em">RaceMates</div></div></div>'
+                +( function(){
+                var niv = {};
+                try{ niv = typeof a.niveau === 'string' ? JSON.parse(a.niveau) : (a.niveau||{}); }catch(e){}
+                var nivVal = sports[0] ? (niv[sports[0]] || Object.values(niv)[0] || '') : '';
+                var bestTime = a.best_time || '';
+                var lbl = bestTime ? '⏱ Best' : (nivVal ? '🏆 Niveau' : '✅ RaceMates');
+                var val = bestTime || nivVal || (sports[0]||'');
+                return '<div class="ac-chrono"><div class="ac-chrono-lbl">'+lbl+'</div><div class="ac-chrono-val" style="font-size:0.85em">'+val+'</div></div></div>';
+            })()
                 +'<div class="ac-body"><div class="ac-badges">'+sportBadges+needBadges+'</div>'
                 +(a.bio?'<div class="ac-bio">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>':'')
                 +'<div class="ac-actions">'
@@ -1859,7 +1867,20 @@ function openRealProfile(userId) {
         if(!pm) return;
         var el=function(id){return document.getElementById(id);};
         if(el('pm-av')) el('pm-av').textContent=initials;
-        if(el('pm-chrono')) el('pm-chrono').textContent=sports[0]||'RaceMates';
+        if(el('pm-chrono')) el('pm-chrono').textContent = a.best_time || sports[0] || 'RaceMates';
+        // Stats bloc
+        if(el('pm-stat1')) {
+            el('pm-stat1').textContent = a.best_time || '-';
+            el('pm-stat1').parentElement.querySelector('.pstat-lbl') && (el('pm-stat1').parentElement.querySelector('.pstat-lbl').textContent = 'BEST PERF');
+        }
+        if(el('pm-stat2')) {
+            el('pm-stat2').textContent = a.nb_courses || '-';
+            el('pm-stat2').parentElement.querySelector('.pstat-lbl') && (el('pm-stat2').parentElement.querySelector('.pstat-lbl').textContent = 'COURSES');
+        }
+        if(el('pm-stat3')) {
+            el('pm-stat3').textContent = a.pace || '-';
+            el('pm-stat3').parentElement.querySelector('.pstat-lbl') && (el('pm-stat3').parentElement.querySelector('.pstat-lbl').textContent = 'PACE / STAT');
+        }
         if(el('pm-name')) el('pm-name').textContent=a.prenom+(a.pseudo?' @'+a.pseudo:'');
         if(el('pm-loc')) el('pm-loc').textContent='📍 '+(a.ville||'France');
         if(el('pm-bio')) el('pm-bio').textContent=a.bio||'';
@@ -2660,6 +2681,9 @@ function toggleCompletFilter() {
         var prenom   = (document.getElementById('f-prenom')||{}).value   || 'Athlète';
         var pseudo   = (document.getElementById('f-pseudo')||{}).value   || '';
         var ville    = (document.getElementById('f-ville')||{}).value    || 'France';
+        var best_time = (document.getElementById('f-best-time')||{}).value || '';
+        var nb_courses = (document.getElementById('f-nb-courses')||{}).value || '';
+        var pace = (document.getElementById('f-pace')||{}).value || '';
         var email    = (document.getElementById('f-email')||{}).value    || '';
         var pwd      = (document.getElementById('f-password')||{}).value || '';
         var bio      = (document.getElementById('f-bio')||{}).value      || '';
@@ -2731,7 +2755,10 @@ function toggleCompletFilter() {
             needs:  JSON.stringify(needs),
             niveau: JSON.stringify(niveau),
             events: JSON.stringify(events),
-            avatar_initials: initials
+            avatar_initials: initials,
+            best_time: best_time,
+            nb_courses: nb_courses,
+            pace: pace
         };
         sbSignUp(email, pwd, prenom, pseudo, ville)
             .then(async function(data) {
@@ -4242,6 +4269,17 @@ setPlan('free');
 
             <!-- Container dynamique — généré par JS selon les sports cochés -->
             <div id="level-sports-container"></div>
+
+            <div class="field-group" style="margin-top:20px">
+                <label class="field-label">🏅 Meilleure perf <span class="optional">champ libre</span></label>
+                <input class="ob-input" id="f-best-time" type="text" placeholder="ex: 1:05:00 · 3h45 · 180kg squat">
+                <div style="font-size:0.68em;color:#94A3B8;margin-top:4px;margin-bottom:14px">Ton meilleur temps, poids ou performance selon ton sport</div>
+                <label class="field-label">🔢 Nombre de courses / compétitions</label>
+                <input class="ob-input" id="f-nb-courses" type="number" min="0" placeholder="ex: 5">
+                <div style="font-size:0.68em;color:#94A3B8;margin-top:4px;margin-bottom:14px">Depuis que tu pratiques ce sport</div>
+                <label class="field-label">⚡ Pace / stat complémentaire <span class="optional">champ libre</span></label>
+                <input class="ob-input" id="f-pace" type="text" placeholder="ex: 4:55/km · 100kg bench · 6:30/km trail">
+            </div>
         </div>
 
         <div class="ob-slide" id="slide-5">

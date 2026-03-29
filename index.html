@@ -1720,19 +1720,27 @@ function goTo(page) {
     }
 }
 
+var _athletesLoading = false;
 function loadRealAthletes() {
+    if(_athletesLoading) return; // éviter les appels simultanés
+    _athletesLoading = true;
     var list = document.getElementById('athletes-list');
-    if(!list) return;
+    if(!list) { _athletesLoading = false; return; }
     list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
+    // Supprimer tout ancien loader
+    var old = document.getElementById('athletes-loading');
+    if(old) old.remove();
     var loadingEl = document.createElement('div');
     loadingEl.id = 'athletes-loading';
     loadingEl.style.cssText = 'text-align:center;padding:24px 0;color:#64748b;font-size:0.88em;font-weight:600';
     loadingEl.textContent = '⏳ Chargement des athlètes…';
     list.insertAdjacentElement('afterbegin', loadingEl);
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') { loadingEl.remove(); return; }
+    if(typeof fn !== 'function') { loadingEl.remove(); _athletesLoading = false; return; }
     fn().then(function(athletes) {
-        loadingEl.remove();
+        var loader = document.getElementById('athletes-loading');
+        if(loader) loader.remove();
+        _athletesLoading = false;
         if(!athletes || athletes.length === 0) { console.warn('Supabase: 0 athlète retourné'); return; }
         console.log('Supabase: ' + athletes.length + ' athlète(s) chargés');
         var fragment = '';
@@ -1794,7 +1802,7 @@ function loadRealAthletes() {
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
-    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); });
+    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); _athletesLoading = false; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
 }
 
 function openRealProfile(userId) {

@@ -572,6 +572,8 @@
 
         sb.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
+            // Reset flag à chaque changement d'auth (connexion ou déconnexion)
+            if(typeof loadRealAthletes !== 'undefined') window._athletesLoading = false;
             if (currentUser && !_loadingProfile) {
                 _loadingProfile = true;
                 await loadMyProfile().finally(function(){ _loadingProfile = false; });
@@ -625,14 +627,15 @@
                 if (typeof setPlan === 'function') setPlan(data.plan || 'free');
                 // Charger les vraies conversations
                 setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 500);
-                // Recharger les athlètes si l'écran matching est actif ou pour le prochain affichage
+                // Toujours reset le flag avant de recharger
+                window._athletesLoading = false;
                 window._athletesNeedReload = true;
                 var matchScreen = document.getElementById('screen-matching');
                 if(matchScreen && matchScreen.classList.contains('active')) {
-                    setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 300);
+                    setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 400);
                 }
                 // Subscription realtime globale pour les nouveaux messages
-                startGlobalMessagesSubscription();
+                if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
             }
         }
 
@@ -1749,12 +1752,12 @@ function goTo(page) {
     }
 }
 
-var _athletesLoading = false;
+window._athletesLoading = false;
 function loadRealAthletes() {
-    if(_athletesLoading) return; // éviter les appels simultanés
-    _athletesLoading = true;
+    if(window._athletesLoading) return; // éviter les appels simultanés
+    window._athletesLoading = true;
     var list = document.getElementById('athletes-list');
-    if(!list) { _athletesLoading = false; return; }
+    if(!list) { window._athletesLoading = false; return; }
     list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
     // Supprimer tout ancien loader
     var old = document.getElementById('athletes-loading');
@@ -1765,7 +1768,7 @@ function loadRealAthletes() {
     loadingEl.textContent = '⏳ Chargement des athlètes…';
     list.insertAdjacentElement('afterbegin', loadingEl);
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') { loadingEl.remove(); _athletesLoading = false; return; }
+    if(typeof fn !== 'function') { loadingEl.remove(); window._athletesLoading = false; return; }
     fn().then(function(athletes) {
         var loader = document.getElementById('athletes-loading');
         if(loader) loader.remove();
@@ -1831,7 +1834,7 @@ function loadRealAthletes() {
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
-    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); _athletesLoading = false; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
+    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); window._athletesLoading = false; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
 }
 
 function openRealProfile(userId) {
@@ -3533,6 +3536,17 @@ function toggleCompletFilter() {
             if(typeof updateProgress === 'function') updateProgress();
         }
         showStatusToast('👋 À bientôt sur RaceMates !');
+        // Reset flags
+        if(typeof window !== 'undefined') {
+            window._athletesLoading = false;
+            window._athletesNeedReload = true;
+        }
+        // Vider la liste athlètes
+        var athletesList = document.getElementById('athletes-list');
+        if(athletesList) athletesList.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
+        // Vider la liste conversations
+        var convList = document.getElementById('conv-list');
+        if(convList) convList.querySelectorAll('.conv-card').forEach(function(c){c.remove();});
         // Supabase sign out en arrière-plan
         if(typeof sbSignOut === 'function') sbSignOut().catch(()=>{});
     }

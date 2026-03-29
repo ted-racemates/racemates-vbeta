@@ -1703,6 +1703,20 @@
 </div>
 
 <script>
+// ===================== SPORT LABELS =====================
+var SPORT_LABELS = {
+    'Hyrox':      { name: 'Hyrox',      icon: '🏋️' },
+    'Running':    { name: 'Running',    icon: '🏃' },
+    'Trail':      { name: 'Trail',      icon: '🏔️' },
+    'Triathlon':  { name: 'Triathlon',  icon: '🏊' },
+    'CrossFit':   { name: 'CrossFit',   icon: '💪' },
+    'ATHX':       { name: 'ATHX',       icon: '⚡' },
+    'Spartan':    { name: 'Spartan',    icon: '🛡️' },
+    'Natation':   { name: 'Natation',   icon: '🏊' },
+    'Musculation':{ name: 'Muscu',      icon: '🏋️' },
+    'Cyclisme':   { name: 'Cyclisme',   icon: '🚴' }
+};
+
 // ===================== NAVIGATION =====================
 function goTo(page) {
     // Close chat overlay if open
@@ -4881,19 +4895,4 @@ setPlan('free');
 </div>
 
 </body>
-</html>function submitFeedback(type){
-        var textEl = type==='bug' ? document.getElementById('bug-text') : document.getElementById('feedback-text');
-        var emailEl = type==='bug' ? document.getElementById('bug-email') : document.getElementById('feedback-email');
-        var section = type==='bug' ? (document.getElementById('bug-section')||{}).value : null;
-        var activeCat = document.querySelector('.fb-cat.active');
-        var category = activeCat ? activeCat.textContent : null;
-        var message = textEl?.value?.trim() || '';
-        var email = emailEl?.value?.trim() || '';
-        if(!message){ showStatusToast(type==='bug' ? '⚠️ Décris le problème !' : '⚠️ Écris ta suggestion !'); return; }
-        closeHelp && closeHelp();
-        showStatusToast(type==='bug' ? '🐛 Bug signalé, merci !' : '🚀 Suggestion reçue, merci !');
-        if(textEl) textEl.value = '';
-        if(emailEl) emailEl.value = '';
-        // Save to Supabase
-        sbSubmitFeedback(type, category, message, email, section).catch(() => {});
-    }
+</html>

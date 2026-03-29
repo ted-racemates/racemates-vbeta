@@ -4644,36 +4644,41 @@ setPlan('free');
         document.getElementById('login-email').value = '';
         document.getElementById('login-pwd').value = '';
     }
+    function resetLoginBtn() {
+        var btn = document.getElementById('login-submit-btn');
+        if(btn) { btn.disabled = false; btn.textContent = 'Se connecter →'; btn.style.opacity = '1'; }
+    }
     function submitLogin() {
         var email = (document.getElementById('login-email')||{}).value.trim();
         var pwd   = (document.getElementById('login-pwd')||{}).value;
         if(!email || !email.includes('@')) { showStatusToast('⚠️ Entre une adresse email valide'); return; }
-        if(!pwd || pwd.length < 6) { showStatusToast('⚠️ Mot de passe trop court (6 caractères min)'); return; }
-        // Feedback visuel sur le bouton
+        if(!pwd || pwd.length < 6) { showStatusToast('⚠️ Mot de passe trop court (6 car. min)'); return; }
         var btn = document.getElementById('login-submit-btn');
         if(btn) { btn.disabled = true; btn.textContent = 'Connexion…'; btn.style.opacity = '0.7'; }
-        sbSignIn(email, pwd)
-            .then(function() {
-                closeLoginModal();
-                var ov = document.getElementById('onboarding-overlay');
-                if(ov) ov.style.display = 'none';
-                showStatusToast('✅ Connecté !');
-                goTo('home');
-                setTimeout(function(){ updateMyProfileScreen && updateMyProfileScreen(); }, 500);
-            })
-            .catch(function(err) {
-                var msg = '⚠️ Email ou mot de passe incorrect';
-                if(err && err.message) {
-                    if(err.message.includes('Email not confirmed')) msg = '⚠️ Confirme ton email avant de te connecter';
-                    else if(err.message.includes('Invalid login')) msg = '⚠️ Email ou mot de passe incorrect';
-                    else if(err.message.includes('Too many')) msg = '⚠️ Trop de tentatives, attends quelques minutes';
-                    else if(err.message.includes('network') || err.message.includes('fetch')) msg = '⚠️ Problème de connexion réseau';
-                }
-                showStatusToast(msg);
-            })
-            .finally(function() {
-                if(btn) { btn.disabled = false; btn.textContent = 'Se connecter →'; btn.style.opacity = '1'; }
-            });
+        var signInFn = window.sbSignIn;
+        if(typeof signInFn !== 'function') {
+            showStatusToast('⚠️ Erreur : service non disponible');
+            resetLoginBtn();
+            return;
+        }
+        signInFn(email, pwd).then(function() {
+            resetLoginBtn();
+            closeLoginModal();
+            var ov = document.getElementById('onboarding-overlay');
+            if(ov) ov.style.display = 'none';
+            showStatusToast('✅ Connecté !');
+            goTo('home');
+            setTimeout(function(){ if(typeof updateMyProfileScreen==='function') updateMyProfileScreen(); }, 500);
+        }, function(err) {
+            resetLoginBtn();
+            var msg = '⚠️ Email ou mot de passe incorrect';
+            if(err && err.message) {
+                if(err.message.indexOf('Email not confirmed') > -1) msg = '⚠️ Confirme ton email avant de te connecter';
+                else if(err.message.indexOf('Too many') > -1) msg = '⚠️ Trop de tentatives, attends quelques minutes';
+                else if(err.message.indexOf('network') > -1 || err.message.indexOf('fetch') > -1) msg = '⚠️ Problème de connexion réseau';
+            }
+            showStatusToast(msg);
+        });
     }
 
     function openHelp(){

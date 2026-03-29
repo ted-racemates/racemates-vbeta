@@ -631,6 +631,8 @@
                 if(matchScreen && matchScreen.classList.contains('active')) {
                     setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 300);
                 }
+                // Subscription realtime globale pour les nouveaux messages
+                startGlobalMessagesSubscription();
             }
         }
 
@@ -727,7 +729,20 @@
                 .select('*, user1:user1_id(prenom,pseudo,avatar_initials), user2:user2_id(prenom,pseudo,avatar_initials)')
                 .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
                 .order('last_message_at', { ascending: false });
-            return data || [];
+            if (!data) return [];
+            // Pour chaque conversation, compter les messages non lus
+            const convIds = data.map(c => c.id);
+            const { data: unreadData } = await sb
+                .from('messages')
+                .select('conversation_id')
+                .in('conversation_id', convIds)
+                .neq('sender_id', currentUser.id)
+                .is('read_at', null);
+            const unreadMap = {};
+            (unreadData || []).forEach(function(m) {
+                unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1;
+            });
+            return data.map(function(c) { return Object.assign({}, c, { unread_count: unreadMap[c.id] || 0 }); });
         }
 
         async function sbSendMessage(conversationId, content) {
@@ -1942,6 +1957,36 @@ function subscribeToMessages(convId) {
         .subscribe();
 }
 
+function startGlobalMessagesSubscription() {
+    if (!currentUser) return;
+    // Écoute tous les nouveaux messages dont je suis destinataire
+    var globalChannel = sb.channel('global-messages-' + currentUser.id);
+    globalChannel.on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages'
+    }, function(payload) {
+        var m = payload.new;
+        if (m.sender_id === currentUser.id) return; // c'est moi qui ai envoyé
+        // Rafraîchir la liste des conversations (avec nouveaux non-lus)
+        setTimeout(function() {
+            if (typeof loadConversationsList === 'function') loadConversationsList();
+        }, 300);
+        // Si le chat est ouvert sur cette conv, afficher le message directement
+        if (_currentConvId && m.conversation_id === _currentConvId) {
+            var msgs = document.getElementById('chat-messages');
+            if (msgs) {
+                var wrap = document.createElement('div');
+                wrap.className = 'msg-wrap recv';
+                var time = new Date(m.created_at);
+                var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
+                wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + '</div>';
+                msgs.appendChild(wrap);
+                msgs.scrollTop = msgs.scrollHeight;
+                sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id);
+            }
+        }
+    }).subscribe();
+}
+
 function openChat(name, initials, status, event) {
     document.getElementById('chat-name').textContent = name;
     document.getElementById('chat-av').textContent = initials;
@@ -2065,10 +2110,12 @@ async function loadConversationsList() {
             var colors = ['linear-gradient(150deg,#0A1628,#1E3A8A)','linear-gradient(150deg,#065F46,#059669)','linear-gradient(150deg,#7C3AED,#4F46E5)','linear-gradient(150deg,#92400E,#D97706)'];
             var color = colors[Math.abs((otherId||'x').charCodeAt(0))%colors.length];
             var card = document.createElement('div');
-            card.className = 'conv-card';
+            var isUnread = conv.unread_count > 0;
+            card.className = 'conv-card' + (isUnread ? ' unread' : '');
+            var unreadBadge = isUnread ? '<div class="conv-badge">'+conv.unread_count+'</div>' : '';
             card.innerHTML = '<div class="conv-av-wrap"><div class="conv-av" style="background:'+color+'">'+initials+'</div></div>'
-                + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+name+'</div><div class="conv-time">'+timeStr+'</div></div>'
-                + '<div class="conv-meta"><div class="conv-preview">'+lastMsg+'</div></div></div>';
+                + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+(isUnread?'<strong>'+name+'</strong>':name)+'</div><div class="conv-time">'+timeStr+'</div></div>'
+                + '<div class="conv-meta"><div class="conv-preview">'+(isUnread?'<strong>'+lastMsg+'</strong>':lastMsg)+'</div>'+unreadBadge+'</div></div>';
             card.onclick = function() {
                 _currentConvId = conv.id;
                 _currentConvUserId = otherId;

@@ -1365,13 +1365,13 @@
             <div class="logo"><span>RACE</span>MATES</div>
         </div>
         <div style="display:flex;align-items:flex-end;justify-content:space-between;position:relative;z-index:2">
-            <div><div style="font-size:0.62em;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--yellow);margin-bottom:4px">⏱ Meilleur temps</div><div id="pm-chrono" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3.2em;color:white;line-height:1">01:08:22</div></div>
-            <div id="pm-av" style="width:80px;height:80px;border-radius:50%;background:var(--blue-mid);border:3px solid white;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8em;color:white">SL</div>
+            <div><div style="font-size:0.62em;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--yellow);margin-bottom:4px">⏱ Meilleur temps</div><div id="pm-chrono" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3.2em;color:white;line-height:1"></div></div>
+            <div id="pm-av" style="width:80px;height:80px;border-radius:50%;background:var(--blue-mid);border:3px solid white;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8em;color:white"></div>
         </div>
     </div>
     <div style="padding:16px 20px 0">
-        <div id="pm-name" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2em;color:var(--dark);line-height:1;margin-bottom:4px">Sarah Lemaire</div>
-        <div id="pm-loc" style="font-size:0.82em;color:var(--grey);margin-bottom:14px">📍 Lyon, France</div>
+        <div id="pm-name" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2em;color:var(--dark);line-height:1;margin-bottom:4px"></div>
+        <div id="pm-loc" style="font-size:0.82em;color:var(--grey);margin-bottom:14px"></div>
         <div id="pm-badges" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
             <div class="pstat"><div id="pm-stat1" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl1">BEST PERF</div></div>
@@ -1857,7 +1857,7 @@ function openRealProfile(userId) {
     }).catch(function(){});
 }
 
-function openRealChat(userId) { window._chatFromProfile = true;
+function openRealChat(userId) { window._chatFromProfile = false;
     var fn = window.sbGetAthletes;
     if(typeof fn !== 'function') return;
     fn().then(function(athletes) {
@@ -2012,9 +2012,8 @@ function sendMsgBtn() {
         sb.from('conversations').update({ last_message: text, last_message_at: now.toISOString() })
             .eq('id', _currentConvId);
     } else {
-        // Pas de conv réelle — simulation
+        // Pas de conv réelle (démo sans compte)
         setTimeout(function() { var chk = wrap.querySelector('.rcheck'); if(chk) chk.textContent = '✓✓'; }, 800);
-        setTimeout(function() { showTyping(); setTimeout(function() { hideTyping(); autoReply(msgs); }, 2000 + Math.random()*2000); }, 1200);
     }
 }
 
@@ -2137,14 +2136,12 @@ function sendMsgBtn() {
     setTimeout(function() {
         showTyping();
         // After 2-4s → auto-response + mark as read (blue checks)
-        var delay = 2000 + Math.random() * 2000;
+        var delay = 1500;
         setTimeout(function() {
             hideTyping();
             // Mark message as read (blue)
             var chk = document.getElementById(msgId);
             if(chk) { chk.textContent = '✓✓'; chk.style.color = '#3B82F6'; }
-            // Auto reply
-            autoReply(msgs);
         }, delay);
     }, 1200);
 }
@@ -2165,26 +2162,7 @@ function hideTyping() {
     if(t) t.remove();
 }
 
-var AUTO_REPLIES = [
-    "Super, on se retrouve là-bas ! 💪",
-    "Parfait, j'ai hâte de courir avec toi !",
-    "Génial ! Tu prends le départ à quelle heure ?",
-    "Ok cool, on peut partager le logement si tu veux 🏠",
-    "Top ! Tu connais le parcours ?",
-    "Parfait. On s'organise quelques jours avant ?",
-    "Yes ! J'ai aussi des potes qui viennent, on peut former un groupe 🏃"
-];
-
-function autoReply(msgs) {
-    var now = new Date();
-    var time = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
-    var reply = AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)];
-    var wrap = document.createElement('div');
-    wrap.className = 'msg-wrap recv';
-    wrap.innerHTML = '<div class="msg-bubble">' + reply + '</div><div class="msg-time">' + time + '</div>';
-    msgs.appendChild(wrap);
-    msgs.scrollTop = msgs.scrollHeight;
-}
+// autoReply supprimé — messages gérés uniquement par Supabase
 
 // contactAndChat — remplacée par version Supabase ci-dessus
 

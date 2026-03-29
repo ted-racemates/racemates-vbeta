@@ -1152,66 +1152,13 @@
     </div>
     <div style="padding:14px 20px 8px;font-size:0.65em;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--grey)">Conversations récentes</div>
     <div id="conv-list" style="padding:0 20px;display:flex;flex-direction:column;gap:8px">
-        <div id="conv-empty" style="display:none;text-align:center;padding:40px 20px;color:var(--grey);font-size:0.88em">Aucune conversation dans cette catégorie</div>
-
-        <div class="conv-card unread" data-filter="logement entrainement hyrox" onclick="openChat('Sarah Lemaire','SL','online','🏠 Hyrox Toulouse · Mars 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#0A1628,#1E3A8A)">SL</div><div class="online-dot"></div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Sarah Lemaire</div><div class="conv-time">10:25</div></div>
-            <div class="conv-meta"><div class="conv-preview bold">Super Airbnb à 1km trouvé 🏠</div><div class="conv-badge">2</div></div>
-            <span class="conv-etag">🏠 Hyrox Toulouse · Confirmée</span></div>
+        <div id="conv-empty" style="text-align:center;padding:40px 20px;color:var(--grey);font-size:0.88em">
+            <div style="font-size:2em;margin-bottom:12px">💬</div>
+            <div style="font-weight:700;color:var(--dark);margin-bottom:6px">Aucune conversation</div>
+            <div>Contacte un athlète depuis le matching pour démarrer une conversation</div>
         </div>
-
-        <div class="conv-card unread" data-filter="duo hyrox" onclick="openChat('Marc Rousseau','MR','online','🏅 Hyrox Grand Palais · Avr. 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#1C1C2E,#374151)">MR</div><div class="online-dot"></div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Marc Rousseau</div><div class="conv-time">Hier</div></div>
-            <div class="conv-meta"><div class="conv-preview bold">Tu viens en voiture depuis Lyon ?</div><div class="conv-badge">1</div></div>
-            <span class="conv-etag">🏅 Hyrox Grand Palais · Duo</span></div>
-        </div>
-
-        <div class="conv-card" data-filter="logement hyrox" onclick="openChat('Julie Durand','JD','offline','🏠 Hyrox Toulouse · Mars 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#065F46,#059669)">JD</div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Julie Durand</div><div class="conv-time">Lun.</div></div>
-            <div class="conv-meta"><div class="conv-preview">Super, à bientôt à Toulouse !</div></div>
-            <span class="conv-etag">🏠 Hyrox Toulouse</span></div>
-        </div>
-
-        <div class="conv-card" data-filter="logement trail" onclick="openChat('Nina Bernard','NB','offline','🌿 UTMB · Août 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(135deg,#064E3B,#065F46)">NB</div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Nina Bernard</div><div class="conv-time">Dim.</div></div>
-            <div class="conv-meta"><div class="conv-preview">Oui je serai à Chamonix la semaine avant 🏔</div></div>
-            <span class="conv-etag">🌿 UTMB · Logement</span></div>
-        </div>
-
-        <div class="conv-card unread" data-filter="entrainement triathlon" onclick="openChat('Lucie Moreau','LM','online','🏊 Ironman Nice · Juin 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#1E3A5F,#1E4D8C)">LM</div><div class="online-dot"></div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Lucie Moreau</div><div class="conv-time">Aujourd.</div></div>
-            <div class="conv-meta"><div class="conv-preview bold">Tu t'entraînes sur quelle distance en ce moment ?</div><div class="conv-badge">1</div></div>
-            <span class="conv-etag">🏊 Ironman Nice · Entraîn.</span></div>
-        </div>
-
-        <div class="conv-card" data-filter="duo spartan" onclick="openChat('Kevin Faure','KF','offline','🧱 Spartan Lyon · Avr. 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#7C2D12,#9A3412)">KF</div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Kevin Faure</div><div class="conv-time">Sam.</div></div>
-            <div class="conv-meta"><div class="conv-preview">Ok pour se retrouver au départ !</div></div>
-            <span class="conv-etag">🧱 Spartan Lyon · Duo</span></div>
-        </div>
-
-        <div class="conv-card" data-filter="relais running" onclick="openChat('Alex Martin','AM','online','🏃 Marathon Paris · Avr. 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#1A1A2E,#1E3A5F)">AM</div><div class="online-dot"></div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Alex Martin</div><div class="conv-time">Vend.</div></div>
-            <div class="conv-meta"><div class="conv-preview">Notre relais est confirmé pour Paris 🏃</div></div>
-            <span class="conv-etag">🏃 Marathon Paris · Relais</span></div>
-        </div>
-
-        <div class="conv-card" data-filter="entrainement crossfit" onclick="openChat('Romain Dupont','RD','online','💪 CrossFit Open · Mars 2026')">
-            <div class="conv-av-wrap"><div class="conv-av" style="background:linear-gradient(150deg,#1C1917,#292524)">RD</div><div class="online-dot"></div></div>
-            <div class="conv-body"><div class="conv-top"><div class="conv-name">Romain Dupont</div><div class="conv-time">Jeu.</div></div>
-            <div class="conv-meta"><div class="conv-preview">Box ouverte samedi matin à 9h si tu veux 💪</div></div>
-            <span class="conv-etag">💪 CrossFit Open · Entraîn.</span></div>
-        </div>
-
     </div>
-</div
+</div>
 
 <!-- ===== EVENTS ===== -->
 <div class="screen" id="screen-events">
@@ -2048,37 +1995,49 @@ async function contactAndChat(name, initials, status, event, otherUserId) {
 
 async function loadConversationsList() {
     if (!currentUser) return;
-    const convs = await sbGetConversations();
-    if (!convs || convs.length === 0) return;
-    var list = document.getElementById('conv-list-real');
-    if (!list) {
-        // Créer le conteneur si absent
-        var msgList = document.querySelector('#screen-messages .conv-list') || document.querySelector('#screen-messages');
-        if (!msgList) return;
-        list = document.createElement('div');
-        list.id = 'conv-list-real';
-        msgList.insertAdjacentElement('afterbegin', list);
+    var list = document.getElementById('conv-list');
+    if (!list) return;
+    var empty = document.getElementById('conv-empty');
+
+    try {
+        const convs = await sbGetConversations();
+        // Supprimer les cartes existantes (garder conv-empty)
+        list.querySelectorAll('.conv-card').forEach(function(c){ c.remove(); });
+
+        if (!convs || convs.length === 0) {
+            if(empty) empty.style.display = '';
+            return;
+        }
+        if(empty) empty.style.display = 'none';
+
+        convs.forEach(function(conv) {
+            var other = conv.user1_id === currentUser.id ? conv.user2 : conv.user1;
+            if (!other) return;
+            var initials = (other.avatar_initials || ((other.prenom||'?')[0] + (other.pseudo||'?')[0]).toUpperCase());
+            var otherId = conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id;
+            var name = (other.prenom||'') + (other.pseudo ? ' @'+other.pseudo : '');
+            var lastMsg = conv.last_message || 'Nouvelle conversation';
+            var lastTime = conv.last_message_at ? new Date(conv.last_message_at) : null;
+            var timeStr = lastTime ? (lastTime.getHours() + ':' + String(lastTime.getMinutes()).padStart(2,'0')) : '';
+            var colors = ['linear-gradient(150deg,#0A1628,#1E3A8A)','linear-gradient(150deg,#065F46,#059669)','linear-gradient(150deg,#7C3AED,#4F46E5)','linear-gradient(150deg,#92400E,#D97706)'];
+            var color = colors[Math.abs((otherId||'x').charCodeAt(0))%colors.length];
+            var card = document.createElement('div');
+            card.className = 'conv-card';
+            card.innerHTML = '<div class="conv-av-wrap"><div class="conv-av" style="background:'+color+'">'+initials+'</div></div>'
+                + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+name+'</div><div class="conv-time">'+timeStr+'</div></div>'
+                + '<div class="conv-meta"><div class="conv-preview">'+lastMsg+'</div></div></div>';
+            card.onclick = function() {
+                _currentConvId = conv.id;
+                _currentConvUserId = otherId;
+                loadMessages(conv.id);
+                subscribeToMessages(conv.id);
+                openChat(name, initials, 'online', '');
+            };
+            list.appendChild(card);
+        });
+    } catch(e) {
+        console.warn('loadConversationsList error:', e);
     }
-    list.innerHTML = '';
-    convs.forEach(function(conv) {
-        var other = conv.user1_id === currentUser.id ? conv.user2 : conv.user1;
-        if (!other) return;
-        var initials = (other.avatar_initials || ((other.prenom||'?')[0] + (other.pseudo||'?')[0]).toUpperCase());
-        var otherId = conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id;
-        var card = document.createElement('div');
-        card.className = 'conv-card';
-        card.innerHTML = '<div class="conv-av">' + initials + '</div>'
-            + '<div style="flex:1"><div class="conv-name">' + (other.prenom||'') + (other.pseudo ? ' @'+other.pseudo : '') + '</div>'
-            + '<div class="conv-preview">' + (conv.last_message || 'Nouvelle conversation') + '</div></div>';
-        card.onclick = function() {
-            _currentConvId = conv.id;
-            _currentConvUserId = otherId;
-            loadMessages(conv.id);
-            subscribeToMessages(conv.id);
-            openChat(other.prenom + (other.pseudo?' @'+other.pseudo:''), initials, 'online', '');
-        };
-        list.appendChild(card);
-    });
 }
 
 

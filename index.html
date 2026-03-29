@@ -4618,19 +4618,31 @@ setPlan('free');
         var email = (document.getElementById('login-email')||{}).value.trim();
         var pwd   = (document.getElementById('login-pwd')||{}).value;
         if(!email || !email.includes('@')) { showStatusToast('⚠️ Entre une adresse email valide'); return; }
-        if(!pwd || pwd.length < 6) { showStatusToast('⚠️ Mot de passe trop court'); return; }
+        if(!pwd || pwd.length < 6) { showStatusToast('⚠️ Mot de passe trop court (6 caractères min)'); return; }
+        // Feedback visuel sur le bouton
+        var btn = document.getElementById('login-submit-btn');
+        if(btn) { btn.disabled = true; btn.textContent = 'Connexion…'; btn.style.opacity = '0.7'; }
         sbSignIn(email, pwd)
             .then(function() {
                 closeLoginModal();
-                // Cacher l'onboarding
                 var ov = document.getElementById('onboarding-overlay');
                 if(ov) ov.style.display = 'none';
                 showStatusToast('✅ Connecté !');
                 goTo('home');
                 setTimeout(function(){ updateMyProfileScreen && updateMyProfileScreen(); }, 500);
             })
-            .catch(function() {
-                showStatusToast('⚠️ Email ou mot de passe incorrect');
+            .catch(function(err) {
+                var msg = '⚠️ Email ou mot de passe incorrect';
+                if(err && err.message) {
+                    if(err.message.includes('Email not confirmed')) msg = '⚠️ Confirme ton email avant de te connecter';
+                    else if(err.message.includes('Invalid login')) msg = '⚠️ Email ou mot de passe incorrect';
+                    else if(err.message.includes('Too many')) msg = '⚠️ Trop de tentatives, attends quelques minutes';
+                    else if(err.message.includes('network') || err.message.includes('fetch')) msg = '⚠️ Problème de connexion réseau';
+                }
+                showStatusToast(msg);
+            })
+            .finally(function() {
+                if(btn) { btn.disabled = false; btn.textContent = 'Se connecter →'; btn.style.opacity = '1'; }
             });
     }
 
@@ -4685,13 +4697,13 @@ setPlan('free');
         </div>
         <div style="margin-bottom:14px">
             <label style="font-size:0.82em;font-weight:700;color:#0A1628;display:block;margin-bottom:6px">Email</label>
-            <input id="login-email" type="email" placeholder="ton@email.com" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">
+            <input id="login-email" type="email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')submitLogin()" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">
         </div>
         <div style="margin-bottom:20px">
             <label style="font-size:0.82em;font-weight:700;color:#0A1628;display:block;margin-bottom:6px">Mot de passe</label>
-            <input id="login-pwd" type="password" placeholder="••••••••" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">
+            <input id="login-pwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitLogin()" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">
         </div>
-        <button onclick="submitLogin()" style="width:100%;padding:16px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1em;letter-spacing:1px;cursor:pointer;margin-bottom:12px">Se connecter →</button>
+        <button id="login-submit-btn" onclick="submitLogin()" style="width:100%;padding:16px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1em;letter-spacing:1px;cursor:pointer;margin-bottom:12px">Se connecter →</button>
         <button onclick="closeLoginModal()" style="width:100%;padding:14px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-family:Barlow,sans-serif;font-size:0.95em;color:#64748B;cursor:pointer">Annuler</button>
     </div>
 </div>

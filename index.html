@@ -1913,10 +1913,13 @@ async function getOrCreateConversation(otherUserId) {
 async function loadMessages(convId) {
     var msgs = document.getElementById('chat-messages');
     if (!msgs) return;
-    const { data } = await sb.from('messages')
+    console.log('loadMessages: convId=', convId, '| user=', currentUser && currentUser.id);
+    const { data, error } = await sb.from('messages')
         .select('*, sender:sender_id(prenom, avatar_initials)')
         .eq('conversation_id', convId)
         .order('created_at');
+    if (error) { console.error('loadMessages erreur:', error.message, error.code); return; }
+    console.log('loadMessages: ' + (data ? data.length : 0) + ' message(s) reçus');
     msgs.innerHTML = '';
     (data || []).forEach(function(m) {
         var isMine = m.sender_id === (currentUser && currentUser.id);
@@ -2094,7 +2097,8 @@ async function contactAndChat(name, initials, status, event, otherUserId) {
 }
 
 async function loadConversationsList() {
-    if (!currentUser) return;
+    if (!currentUser) { console.log('loadConversationsList: pas de user connecté'); return; }
+    console.log('loadConversationsList: chargement...');
     var list = document.getElementById('conv-list');
     if (!list) return;
     var empty = document.getElementById('conv-empty');

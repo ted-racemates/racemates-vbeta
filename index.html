@@ -625,6 +625,12 @@
                 if (typeof setPlan === 'function') setPlan(data.plan || 'free');
                 // Charger les vraies conversations
                 setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 500);
+                // Recharger les athlètes si l'écran matching est actif ou pour le prochain affichage
+                window._athletesNeedReload = true;
+                var matchScreen = document.getElementById('screen-matching');
+                if(matchScreen && matchScreen.classList.contains('active')) {
+                    setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 300);
+                }
             }
         }
 
@@ -774,16 +780,21 @@
 
         // ── ATHLETES (matching) ──────────────────────────────────
         async function sbGetAthletes(filters = {}) {
-            // S'assurer que la session est établie
-            const session = await sb.auth.getSession();
-            const uid = session?.data?.session?.user?.id || currentUser?.id || '00000000-0000-0000-0000-000000000000';
-            let q = sb.from('profiles')
-                .select('*')
-                .neq('id', uid)
-                .limit(50);
-            if (filters.ville) q = q.ilike('ville', `%${filters.ville}%`);
+            // S'assurer que la session est bien établie avant de requêter
+            const sessionRes = await sb.auth.getSession();
+            const uid = sessionRes?.data?.session?.user?.id || (currentUser && currentUser.id) || null;
+            console.log('sbGetAthletes: uid=', uid, '| connecté=', !!uid);
+            let q = sb.from('profiles').select('*').limit(50);
+            // Exclure son propre profil seulement si connecté
+            if(uid) q = q.neq('id', uid);
+            if (filters.ville) q = q.ilike('ville', '%' + filters.ville + '%');
             const { data, error } = await q;
-            if(error) { console.warn('sbGetAthletes error:', error.message); return []; }
+            if(error) {
+                console.error('sbGetAthletes error:', error.message, '| code:', error.code);
+                // Si erreur RLS (non authentifié), retourner tableau vide sans planter
+                return [];
+            }
+            console.log('sbGetAthletes: ' + (data ? data.length : 0) + ' profils reçus');
             let athletes = data || [];
             // Filtrer par sport côté JS (sports stocké en JSON texte)
             if (filters.sport && athletes.length) {
@@ -1703,21 +1714,32 @@ function goTo(page) {
     if(document.getElementById('nav-' + page)) document.getElementById('nav-' + page).classList.add('active');
     document.getElementById('screen-' + page).scrollTop = 0;
     // Charger les vrais profils Supabase si on va sur matching
-    if(page === 'matching') loadRealAthletes();
+    if(page === 'matching') {
+        loadRealAthletes();
+        window._athletesNeedReload = false;
+    }
 }
 
 function loadRealAthletes() {
     var list = document.getElementById('athletes-list');
     if(!list) return;
     list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
+    var loadingEl = document.createElement('div');
+    loadingEl.id = 'athletes-loading';
+    loadingEl.style.cssText = 'text-align:center;padding:24px 0;color:#64748b;font-size:0.88em;font-weight:600';
+    loadingEl.textContent = '⏳ Chargement des athlètes…';
+    list.insertAdjacentElement('afterbegin', loadingEl);
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') return;
+    if(typeof fn !== 'function') { loadingEl.remove(); return; }
     fn().then(function(athletes) {
-        if(!athletes || athletes.length === 0) return;
+        loadingEl.remove();
+        if(!athletes || athletes.length === 0) { console.warn('Supabase: 0 athlète retourné'); return; }
+        console.log('Supabase: ' + athletes.length + ' athlète(s) chargés');
         var fragment = '';
         athletes.forEach(function(a) {
-            if(!a.prenom) return;
-            var initials = a.avatar_initials || ((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+            if(!a.prenom && !a.pseudo) return;
+            var displayName = a.prenom || a.pseudo || 'Athlète';
+            var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
             var sports = [];
             try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
             var needs = [];
@@ -1752,7 +1774,7 @@ function loadRealAthletes() {
             fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
-                +'<div class="ac-info"><div class="ac-name">'+a.prenom+(a.pseudo?' @'+a.pseudo:'')+'</div>'
+                +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
                 +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
                 +( function(){
                 var niv = {};
@@ -1772,7 +1794,7 @@ function loadRealAthletes() {
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
-    }).catch(function(){});
+    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); });
 }
 
 function openRealProfile(userId) {

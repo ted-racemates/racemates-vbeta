@@ -2048,19 +2048,28 @@ function sendMsgBtn() {
     msgs.appendChild(wrap);
     msgs.scrollTop = msgs.scrollHeight;
     // Envoyer dans Supabase si conversation réelle
+    console.log('sendMsg: _currentConvId=', _currentConvId, '| currentUser=', currentUser && currentUser.id);
     if (_currentConvId && currentUser) {
         sb.from('messages').insert({
             conversation_id: _currentConvId,
             sender_id: currentUser.id,
             content: text
-        }).then(function() {
-            wrap.querySelector('.rcheck') && (wrap.querySelector('.rcheck').textContent = '✓✓');
+        }).then(function(res) {
+            if (res.error) {
+                console.error('INSERT message erreur:', res.error.message, res.error.code, res.error.details);
+                showStatusToast('⚠️ Message non envoyé : ' + res.error.message);
+            } else {
+                console.log('INSERT message OK');
+                wrap.querySelector('.rcheck') && (wrap.querySelector('.rcheck').textContent = '✓✓');
+                // Update last_message
+                sb.from('conversations').update({ last_message: text, last_message_at: now.toISOString() })
+                    .eq('id', _currentConvId)
+                    .then(function(r){ if(r.error) console.error('UPDATE conv erreur:', r.error.message); });
+            }
         });
-        // Update last_message
-        sb.from('conversations').update({ last_message: text, last_message_at: now.toISOString() })
-            .eq('id', _currentConvId);
     } else {
         // Pas de conv réelle (démo sans compte)
+        console.warn('sendMsg: pas de conv réelle (_currentConvId=' + _currentConvId + ', user=' + (currentUser&&currentUser.id) + ')');
         setTimeout(function() { var chk = wrap.querySelector('.rcheck'); if(chk) chk.textContent = '✓✓'; }, 800);
     }
 }

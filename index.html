@@ -2285,12 +2285,12 @@ async function loadSavedProfiles() {
         div.className = 'saved-item';
         div.innerHTML = '<div class="saved-top"><div class="saved-av">'+initials+'</div>'
             +'<div class="saved-name">'+name+(p.ville?' · '+p.ville:'')+'</div>'
-            +'<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;color:white">'+( p.best_time||'' )+'</div></div>'
+            +'<div style="font-weight:900;font-size:0.9em;color:white">'+(p.best_time||'')+'</div></div>'
             +'<div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between">'
             +'<div style="display:flex;gap:5px;flex-wrap:wrap">'+sportBadges+'</div>'
             +'<div style="display:flex;gap:6px">'
-            +'<button class="btn-contact" style="font-size:0.78em;padding:7px 12px" onclick="closeSaved();openRealChat(''+p.id+'')">💬 Contacter</button>'
-            +'<button class="btn-unsave" onclick="unsaveProfil(this,''+p.id+'')" title="Supprimer">🗑</button>'
+            +'<button class="btn-contact" style="font-size:0.78em;padding:7px 12px" onclick="closeSaved();openRealChat(&quot;'+p.id+'&quot;)">💬 Contacter</button>'
+            +'<button class="btn-unsave" onclick="unsaveProfil(this,&quot;'+p.id+'&quot;)" title="Supprimer">🗑</button>'
             +'</div></div>';
         list.appendChild(div);
     });

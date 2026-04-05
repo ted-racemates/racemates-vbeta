@@ -1699,7 +1699,7 @@
 <div class="bottom-nav">
     <button class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-icon">🏠</div><div class="nav-label">Accueil</div></button>
     <button class="nav-item" id="nav-matching" onclick="goTo('sport-select')"><div class="nav-icon">🏃</div><div class="nav-label">Matching</div></button>
-    <button class="nav-item" id="nav-messages" onclick="goTo('messages')"><div class="nav-icon">💬</div><div class="nav-label">Messages</div><div class="nav-notif" id="nav-msg-badge">3</div></button>
+    <button class="nav-item" id="nav-messages" onclick="goTo('messages')"><div class="nav-icon">💬</div><div class="nav-label">Messages</div><div class="nav-notif" id="nav-msg-badge" style="display:none">0</div></button>
     <button class="nav-item" id="nav-training" onclick="goTo('training')"><div class="nav-icon">🤝</div><div class="nav-label">Entraîn.</div></button>
     <button class="nav-item" id="nav-events" onclick="goTo('events')"><div class="nav-icon">📅</div><div class="nav-label">Événements</div></button>
     <button class="nav-item" id="nav-profile" onclick="goTo('profile')"><div class="nav-icon">👤</div><div class="nav-label">Profil</div></button>
@@ -2099,8 +2099,7 @@ async function contactAndChat(name, initials, status, event, otherUserId) {
 }
 
 async function loadConversationsList() {
-    if (!currentUser) { console.log('loadConversationsList: pas de user connecté'); return; }
-    console.log('loadConversationsList: chargement...');
+    if (!currentUser) return;
     var list = document.getElementById('conv-list');
     if (!list) return;
     var empty = document.getElementById('conv-empty');
@@ -2144,6 +2143,10 @@ async function loadConversationsList() {
             };
             list.appendChild(card);
         });
+        // Mettre à jour le badge avec le vrai count
+        var totalUnread = 0;
+        convs.forEach(function(c){ totalUnread += (c.unread_count||0); });
+        _applyMsgBadge(totalUnread);
     } catch(e) {
         console.warn('loadConversationsList error:', e);
     }

@@ -1810,7 +1810,7 @@ function loadRealAthletes() {
                 +(a.bio?'<div class="ac-bio">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>':'')
                 +'<div class="ac-actions">'
                 +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(\''+aid+'\')">💬 Contacter</button>'
-                +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this)">🔖</button>'
+                +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this,&quot;'+aid+'&quot;)">🔖</button>'
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); window._athletesLoadedAt = Date.now(); if(typeof filterAthletes==='function') filterAthletes(); }
@@ -2048,7 +2048,7 @@ function startGlobalMessagesSubscription() {
             +'<div class="ac-body"><div class="ac-badges">'+sportBadges+'</div>'
             +'<div class="ac-actions">'
             +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(&quot;'+a.id+'&quot;)">💬 Contacter</button>'
-            +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this)">🔖</button>'
+            +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this,&quot;'+a.id+'&quot;)">🔖</button>'
             +'</div></div>';
         div.onclick = function(){ openRealProfile(a.id); };
         list.insertAdjacentElement('afterbegin', div);
@@ -2353,16 +2353,18 @@ async function loadSavedProfiles() {
             +'<div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between">'
             +'<div style="display:flex;gap:5px;flex-wrap:wrap">'+sportBadges+'</div>'
             +'<div style="display:flex;gap:6px">'
-            +'<button class="btn-contact" style="font-size:0.78em;padding:7px 12px" onclick="closeSaved();openRealChat(&quot;'+p.id+'&quot;)">💬 Contacter</button>'
-            +'<button class="btn-unsave" onclick="unsaveProfil(this,&quot;'+p.id+'&quot;)" title="Supprimer">🗑</button>'
+            +'<button class="btn-contact" style="font-size:0.78em;padding:7px 12px" data-uid="'+p.id+'">💬 Contacter</button>'
+            +'<button class="btn-unsave" data-uid="'+p.id+'" title="Supprimer">🗑</button>'
             +'</div></div>';
+        div.querySelector('.btn-contact').addEventListener('click', (function(uid){ return function(){ closeSaved(); openRealChat(uid); }; })(p.id));
+        div.querySelector('.btn-unsave').addEventListener('click', (function(uid, d){ return function(){ unsaveProfil(d, uid); }; })(p.id, div));
         list.appendChild(div);
     });
 }
-function unsaveProfil(btn, userId) {
+function unsaveProfil(el, userId) {
     if(!currentUser) return;
     sbUnsaveProfile(userId).then(function(){
-        var item = btn.closest('.saved-item');
+        var item = el.classList && el.classList.contains('saved-item') ? el : el.closest('.saved-item');
         if(item) item.remove();
         var remaining = document.querySelectorAll('#saved-profiles-list .saved-item').length;
         var countEl = document.getElementById('saved-modal-count');
@@ -3732,11 +3734,14 @@ function toggleCompletFilter() {
         updateNavEventBadge();
     }
 
-    function toggleSave(btn) {
+    function toggleSave(btn, directUserId) {
         var saved = btn.getAttribute('data-saved') === '1';
-        // Récupérer userId depuis data-user-id sur la carte parente
-        var card = btn.closest('[data-user-id]') || btn.closest('.athlete-card') || btn.closest('.real-athlete-card');
-        var userId = card ? card.getAttribute('data-user-id') : null;
+        // Priorité : ID passé directement, sinon chercher dans le DOM parent
+        var userId = directUserId || null;
+        if(!userId) {
+            var card = btn.closest('[data-user-id]') || btn.closest('.athlete-card') || btn.closest('.real-athlete-card');
+            userId = card ? card.getAttribute('data-user-id') : null;
+        }
         if(saved) {
             btn.removeAttribute('data-saved');
             btn.style.background = '';

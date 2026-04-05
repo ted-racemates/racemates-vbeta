@@ -1311,9 +1311,13 @@
         <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px">❓ Aide &amp; Support</button>
         <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
         <div class="section-title" style="margin-bottom:10px">⭐ Avis reçus</div>
-        <div class="rating-summary"><div class="rating-big">4.9</div><div><div style="font-size:1em;letter-spacing:2px;margin-bottom:2px">⭐⭐⭐⭐⭐</div><div style="font-size:0.75em;color:var(--grey)">8 avis · Très fiable</div></div></div>
-        <div class="review-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><div class="review-av">SL</div><div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">Sarah L.</div><div style="font-size:0.7em;color:var(--grey)">Hyrox Nice · Janv. 2026</div></div></div><div style="display:flex;align-items:center;gap:8px"><div>⭐⭐⭐⭐⭐</div><button onclick="openReportModal()" style="background:none;border:none;color:#CBD5E1;font-size:0.85em;cursor:pointer" title="Signaler">⚑</button></div></div><div style="font-size:0.82em;color:var(--grey);line-height:1.5">"Super colocataire, très organisé et sympa !"</div></div>
-        <div class="review-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><div class="review-av">MR</div><div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">Marc R.</div><div style="font-size:0.7em;color:var(--grey)">Hyrox Lyon · Nov. 2025</div></div></div><div style="display:flex;align-items:center;gap:8px"><div>⭐⭐⭐⭐⭐</div><button onclick="openReportModal()" style="background:none;border:none;color:#CBD5E1;font-size:0.85em;cursor:pointer" title="Signaler">⚑</button></div></div><div style="font-size:0.82em;color:var(--grey);line-height:1.5">"Excellent partenaire de duo, niveau solide."</div></div>
+        <div id="my-reviews-section">
+            <div id="my-reviews-empty" style="text-align:center;padding:20px;color:var(--grey);font-size:0.85em">
+                <div style="font-size:1.5em;margin-bottom:6px">⭐</div>
+                Pas encore d'avis reçus.<br>Ils apparaîtront ici après vos premiers échanges.
+            </div>
+            <div id="my-reviews-list"></div>
+        </div>
     </div>
     <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><div class="footer-logo"><span>RACE</span>MATES</div><div style="font-size:0.7em;color:var(--grey)">Membre depuis Fév. 2026</div></div>
 </div>
@@ -1322,12 +1326,7 @@
 <div class="chat-view" id="chat-view">
     <div class="chat-header"><button class="chat-back" onclick="closeChat()">←</button><div class="chat-hav" id="chat-av">SL</div><div style="flex:1"><div class="chat-hname" id="chat-name">Sarah Lemaire</div><div class="chat-hstatus" id="chat-status">🟢 En ligne</div></div><div class="chat-hactions">👤 📞</div></div>
     <div class="chat-ctx"><div class="chat-ctx-text" id="chat-event">🏠 Hyrox Toulouse</div><div style="font-size:0.72em;color:var(--blue);text-decoration:underline;cursor:pointer" onclick="openProfile()">Voir profil →</div></div>
-    <div class="chat-messages" id="chat-messages">
-        <div class="msg-date">Aujourd'hui</div>
-        <div class="msg-wrap recv"><div class="msg-bubble">Salut ! Tu cherches aussi un logement pour Toulouse ? 😊</div><div class="msg-time">10:22</div></div>
-        <div class="msg-wrap sent"><div class="msg-bubble">Oui ! J'arrive le vendredi soir, toi ?</div><div class="msg-time st">10:24 <span class="rcheck">✓✓</span></div></div>
-        <div class="msg-wrap recv"><div class="msg-bubble">Pareil ! J'ai un Airbnb à 1km du lieu 🏠</div><div class="msg-time">10:25</div></div>
-    </div>
+    <div class="chat-messages" id="chat-messages"></div>
     <div class="chat-bar"><input class="chat-inp" id="msg-input" placeholder="Message..." onkeypress="sendMsg(event)"><button class="chat-send" onclick="sendMsgBtn()">➤</button></div>
 </div>
 
@@ -1336,12 +1335,11 @@
     <div class="notif-overlay" onclick="closeNotifs()"></div>
     <div class="notif-drawer">
         <div class="notif-drawer-header"><div class="notif-drawer-title">🔔 Notifications</div><button class="notif-close" onclick="closeNotifs()">×</button></div>
-        <div class="notif-drawer-body">
-            <div class="nd-item unread" onclick="closeNotifs();goTo('matching')"><div class="nd-av">SL</div><div style="flex:1"><div class="nd-text"><strong>Sarah Lemaire</strong> correspond à ton profil pour Toulouse 🏠</div><div class="nd-time">Il y a 12 min</div></div><div class="nd-dot"></div></div>
-            <div class="nd-item unread" onclick="closeNotifs();openChat('Marc Rousseau','MR','online','🏅 Grand Palais')"><div class="nd-av">MR</div><div style="flex:1"><div class="nd-text"><strong>Marc Rousseau</strong> t'a envoyé un message 💬</div><div class="nd-time">Il y a 1h</div></div><div class="nd-dot"></div></div>
-            <div class="nd-item unread" onclick="closeNotifs();goTo('matching')"><div class="nd-av">JD</div><div style="flex:1"><div class="nd-text"><strong>Julie Durand</strong> a sauvegardé ton profil 🔖</div><div class="nd-time">Il y a 2h</div></div><div class="nd-dot"></div></div>
-            <div class="nd-item" onclick="closeNotifs();goTo('events')"><div class="nd-icon">🏅</div><div style="flex:1"><div class="nd-text">Nouveau profil duo dispo pour <strong>Hyrox Grand Palais</strong></div><div class="nd-time">Hier · 18:42</div></div></div>
-            <div class="nd-item" onclick="closeNotifs();goTo('events')"><div class="nd-icon">📅</div><div style="flex:1"><div class="nd-text">Plus que <strong>28 jours</strong> avant Hyrox Toulouse !</div><div class="nd-time">Hier · 08:00</div></div></div>
+        <div class="notif-drawer-body" id="notif-list">
+            <div id="notif-empty" style="text-align:center;padding:30px 20px;color:var(--grey);font-size:0.85em">
+                <div style="font-size:1.8em;margin-bottom:8px">🔔</div>
+                Aucune notification pour l'instant.
+            </div>
         </div>
     </div>
 </div>
@@ -1351,10 +1349,12 @@
     <div class="page-header"><div class="header-top"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><button onclick="closeSaved()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">← Retour</button></div></div>
     <div class="body">
         <div class="section-title" style="margin-bottom:12px">🔖 Mes profils sauvegardés <span id="saved-modal-count" style="font-size:0.75em;color:var(--grey);font-family:Barlow,sans-serif;font-weight:400">0 profil</span></div>
-        <div class="saved-item"><div class="saved-top"><div class="saved-av">SL</div><div class="saved-name">Sarah Lemaire · Lyon</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;color:white">1:08:22</div></div><div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="badge badge-dark">🏃 Runner</span><span class="badge badge-blue">🏠 Logement</span><span class="match-pct">98%</span></div><div style="display:flex;gap:6px"><button class="btn-contact" style="font-size:0.78em;padding:7px 12px" id="saved-btn-sarah">💬 Contacter</button><button class="btn-unsave" onclick="deleteSaved(this)" title="Supprimer">🗑</button></div></div></div>
-        <div class="saved-item"><div class="saved-top"><div class="saved-av">MR</div><div class="saved-name">Marc Rousseau · Paris</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;color:white">1:15:40</div></div><div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="badge badge-dark">💪 Force</span><span class="badge badge-blue">🏅 Duo</span><span class="match-pct">91%</span></div><div style="display:flex;gap:6px"><button class="btn-contact" style="font-size:0.78em;padding:7px 12px" id="saved-btn-marc">💬 Contacter</button><button class="btn-unsave" onclick="deleteSaved(this)" title="Supprimer">🗑</button></div></div></div>
-        <div class="saved-item"><div class="saved-top"><div class="saved-av">JD</div><div class="saved-name">Julie Durand · Bordeaux</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85em;color:white">1er Hyrox 🔥</div></div><div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="badge badge-dark">😅 Rookie</span><span class="badge badge-blue">🏠 Logement</span><span class="match-pct">85%</span></div><div style="display:flex;gap:6px"><button class="btn-contact" style="font-size:0.78em;padding:7px 12px" id="saved-btn-julie">💬 Contacter</button><button class="btn-unsave" onclick="deleteSaved(this)" title="Supprimer">🗑</button></div></div></div>
-        <div class="saved-item"><div class="saved-top"><div class="saved-av">AL</div><div class="saved-name">Alex Laurent · Bordeaux</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;color:white">1:20:15</div></div><div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between"><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="badge badge-dark">⚡ Hybride</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">80%</span></div><div style="display:flex;gap:6px"><button class="btn-contact" style="font-size:0.78em;padding:7px 12px" id="saved-btn-alex">💬 Contacter</button><button class="btn-unsave" onclick="deleteSaved(this)" title="Supprimer">🗑</button></div></div></div>
+        <div id="saved-profiles-list">
+            <div id="saved-profiles-empty" style="text-align:center;padding:30px 20px;color:var(--grey);font-size:0.85em">
+                <div style="font-size:1.8em;margin-bottom:8px">🔖</div>
+                Aucun profil sauvegardé.<br>Clique sur 🔖 depuis un profil pour le retrouver ici.
+            </div>
+        </div>
     </div>
     <!-- Bottom nav inside saved modal -->
     <div class="bottom-nav" style="position:sticky;bottom:0;z-index:10">
@@ -2247,7 +2247,69 @@ function hideTyping() {
 // contactAndChat — remplacée par version Supabase ci-dessus
 
 // ===================== MODALS =====================
-function openSaved() { document.getElementById('saved-modal').classList.add('open'); document.getElementById('saved-modal').scrollTop = 0; }
+function openSaved() {
+    var modal = document.getElementById('saved-modal');
+    if(modal) { modal.classList.add('open'); modal.scrollTop = 0; }
+    loadSavedProfiles();
+}
+async function loadSavedProfiles() {
+    if(!currentUser) return;
+    var list = document.getElementById('saved-profiles-list');
+    var empty = document.getElementById('saved-profiles-empty');
+    var countEl = document.getElementById('saved-modal-count');
+    if(!list) return;
+    // Récupérer les IDs sauvegardés
+    const { data: savedData } = await sb.from('saved_profiles')
+        .select('saved_user_id').eq('user_id', currentUser.id);
+    if(!savedData || savedData.length === 0) {
+        if(empty) empty.style.display = '';
+        if(countEl) countEl.textContent = '0 profil';
+        return;
+    }
+    if(empty) empty.style.display = 'none';
+    if(countEl) countEl.textContent = savedData.length + ' profil' + (savedData.length > 1 ? 's' : '');
+    // Récupérer les profils
+    const ids = savedData.map(function(s){ return s.saved_user_id; });
+    const { data: profiles } = await sb.from('profiles').select('*').in('id', ids);
+    // Vider et reconstruire
+    list.querySelectorAll('.saved-item').forEach(function(el){ el.remove(); });
+    (profiles||[]).forEach(function(p) {
+        var sports = [];
+        try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}
+        var needs = [];
+        try{ needs = typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]); }catch(e){}
+        var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
+        var name = (p.prenom||'') + (p.pseudo?' @'+p.pseudo:'');
+        var sportBadges = sports.slice(0,2).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
+        var div = document.createElement('div');
+        div.className = 'saved-item';
+        div.innerHTML = '<div class="saved-top"><div class="saved-av">'+initials+'</div>'
+            +'<div class="saved-name">'+name+(p.ville?' · '+p.ville:'')+'</div>'
+            +'<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;color:white">'+( p.best_time||'' )+'</div></div>'
+            +'<div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between">'
+            +'<div style="display:flex;gap:5px;flex-wrap:wrap">'+sportBadges+'</div>'
+            +'<div style="display:flex;gap:6px">'
+            +'<button class="btn-contact" style="font-size:0.78em;padding:7px 12px" onclick="closeSaved();openRealChat(''+p.id+'')">💬 Contacter</button>'
+            +'<button class="btn-unsave" onclick="unsaveProfil(this,''+p.id+'')" title="Supprimer">🗑</button>'
+            +'</div></div>';
+        list.appendChild(div);
+    });
+}
+function unsaveProfil(btn, userId) {
+    if(!currentUser) return;
+    sbUnsaveProfile(userId).then(function(){
+        var item = btn.closest('.saved-item');
+        if(item) item.remove();
+        var remaining = document.querySelectorAll('#saved-profiles-list .saved-item').length;
+        var countEl = document.getElementById('saved-modal-count');
+        if(countEl) countEl.textContent = remaining + ' profil' + (remaining > 1 ? 's' : '');
+        if(remaining === 0) {
+            var empty = document.getElementById('saved-profiles-empty');
+            if(empty) empty.style.display = '';
+        }
+        showStatusToast('🗑 Profil retiré');
+    }).catch(function(){ showStatusToast('⚠️ Erreur'); });
+}
 function closeSaved() { document.getElementById('saved-modal').classList.remove('open'); }
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); document.getElementById('profile-modal').scrollTop = 0; }
 function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
@@ -2629,8 +2691,7 @@ document.getElementById('profile-modal-contact-btn').onclick = function() {
 };
 
 // Saved profile buttons
-document.getElementById('saved-btn-sarah').onclick = function(){ closeSaved(); contactAndChat('Sarah Lemaire','SL','online','🏠 Hyrox Toulouse'); };
-document.getElementById('saved-btn-marc').onclick = function(){ closeSaved(); contactAndChat('Marc Rousseau','MR','online','🏅 Hyrox Grand Palais'); };
+// boutons fictifs supprimés
 document.getElementById('saved-btn-julie').onclick = function(){ closeSaved(); contactAndChat('Julie Durand','JD','offline','🏠 Hyrox Toulouse'); };
 document.getElementById('saved-btn-alex').onclick = function(){ closeSaved(); contactAndChat('Alex Laurent','AL','offline','🤝 Entraînement'); };
 
@@ -3943,6 +4004,48 @@ function toggleCompletFilter() {
             var searchEl = searchBanner.querySelector('.search-active-tags');
             if(searchEl) searchEl.innerHTML = needHtml;
         }
+        // Charger les avis reçus depuis Supabase
+        loadMyReviews();
+    }
+
+    async function loadMyReviews() {
+        if(!currentUser) return;
+        var section = document.getElementById('my-reviews-section');
+        var empty = document.getElementById('my-reviews-empty');
+        var list = document.getElementById('my-reviews-list');
+        if(!list) return;
+        const { data: reviews } = await sb.from('reviews')
+            .select('*, reviewer:reviewer_id(prenom, pseudo, avatar_initials)')
+            .eq('reviewed_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        if(!reviews || reviews.length === 0) {
+            if(empty) empty.style.display = '';
+            list.innerHTML = '';
+            return;
+        }
+        if(empty) empty.style.display = 'none';
+        // Calculer la moyenne
+        var avg = reviews.reduce(function(acc, r){ return acc + (r.stars||0); }, 0) / reviews.length;
+        var stars = '⭐'.repeat(Math.round(avg));
+        // Afficher résumé
+        list.innerHTML = '<div class="rating-summary"><div class="rating-big">'+avg.toFixed(1)+'</div>'
+            +'<div><div style="font-size:1em;letter-spacing:2px;margin-bottom:2px">'+stars+'</div>'
+            +'<div style="font-size:0.75em;color:var(--grey)">'+reviews.length+' avis</div></div></div>'
+            + reviews.map(function(r) {
+                var reviewer = r.reviewer || {};
+                var initials = reviewer.avatar_initials || ((reviewer.prenom||'?')[0]+(reviewer.pseudo||'A')[0]).toUpperCase();
+                var name = (reviewer.prenom||'') + (reviewer.pseudo?' @'+reviewer.pseudo:'');
+                var stars = '⭐'.repeat(r.stars||0);
+                var date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR',{month:'short',year:'numeric'}) : '';
+                return '<div class="review-card">'
+                    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+                    +'<div style="display:flex;align-items:center;gap:8px">'
+                    +'<div class="review-av">'+initials+'</div>'
+                    +'<div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">'+name+'</div>'
+                    +'<div style="font-size:0.7em;color:var(--grey)">'+date+'</div></div></div>'
+                    +'<div>'+stars+'</div></div>'
+                    +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+( r.comment||'' )+'"</div></div>';
+            }).join('');
     }
 
 

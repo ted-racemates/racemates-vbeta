@@ -2172,42 +2172,7 @@ function closeChat() {
         document.getElementById('profile-modal').classList.add('open');
     }
 }
-function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
-function sendMsgBtn() {
-    var input = document.getElementById('msg-input');
-    var text = input.value.trim();
-    if(!text) return;
-    var msgs = document.getElementById('chat-messages');
-    var now = new Date();
-    var time = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
-    // Create sent message with single check (sent)
-    var wrap = document.createElement('div');
-    wrap.className = 'msg-wrap sent';
-    var msgId = 'msg-' + Date.now();
-    wrap.innerHTML = '<div class="msg-bubble">' + text + '</div><div class="msg-time st" id="' + msgId + '-status">' + time + ' <span class="rcheck sent-check" id="' + msgId + '">✓</span></div>';
-    msgs.appendChild(wrap);
-    msgs.scrollTop = msgs.scrollHeight;
-    input.value = '';
-
-    // After 800ms → double check (delivered)
-    setTimeout(function() {
-        var chk = document.getElementById(msgId);
-        if(chk) chk.textContent = '✓✓';
-    }, 800);
-
-    // Show typing indicator after 1.2s
-    setTimeout(function() {
-        showTyping();
-        // After 2-4s → auto-response + mark as read (blue checks)
-        var delay = 1500;
-        setTimeout(function() {
-            hideTyping();
-            // Mark message as read (blue)
-            var chk = document.getElementById(msgId);
-            if(chk) { chk.textContent = '✓✓'; chk.style.color = '#3B82F6'; }
-        }, delay);
-    }, 1200);
-}
+// ancienne sendMsgBtn démo supprimée
 
 function showTyping() {
     var msgs = document.getElementById('chat-messages');

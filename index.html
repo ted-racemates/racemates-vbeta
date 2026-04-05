@@ -2383,14 +2383,17 @@ function unsaveProfil(el, userId) {
         var item = el.classList && el.classList.contains('saved-item') ? el : el.closest('.saved-item');
         if(item) item.remove();
         var remaining = document.querySelectorAll('#saved-profiles-list .saved-item').length;
+        // Mettre à jour tous les compteurs
         var countEl = document.getElementById('saved-modal-count');
         if(countEl) countEl.textContent = remaining + ' profil' + (remaining > 1 ? 's' : '');
+        var homeEl = document.getElementById('qa-sub-saved');
+        if(homeEl) homeEl.textContent = remaining + ' profil' + (remaining > 1 ? 's' : '');
         if(remaining === 0) {
             var empty = document.getElementById('saved-profiles-empty');
             if(empty) empty.style.display = '';
         }
         showStatusToast('🗑 Profil retiré');
-    }).catch(function(){ showStatusToast('⚠️ Erreur'); });
+    }).catch(function(){ showStatusToast('⚠️ Erreur lors de la suppression'); });
 }
 function closeSaved() { document.getElementById('saved-modal').classList.remove('open'); }
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); document.getElementById('profile-modal').scrollTop = 0; }

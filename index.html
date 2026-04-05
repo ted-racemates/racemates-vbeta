@@ -572,19 +572,21 @@
 
         sb.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
-            // Reset flag à chaque changement d'auth (connexion ou déconnexion)
-            if(typeof loadRealAthletes !== 'undefined')             if (currentUser && !_loadingProfile) {
+            // Reset timestamp pour forcer rechargement athlètes
+            window._athletesLastLoad = 0;
+            if (currentUser && !_loadingProfile) {
                 _loadingProfile = true;
-                await loadMyProfile().finally(function(){ _loadingProfile = false; });
-                // Mettre à jour les compteurs home
+                try {
+                    await loadMyProfile();
+                } finally {
+                    _loadingProfile = false;
+                }
                 setTimeout(function(){ if(typeof updateAthleteCount==='function') updateAthleteCount(); }, 500);
-                // Envoyer le profil en attente si signup vient d'avoir lieu
                 if(window._pendingProfileData) {
                     var pd = window._pendingProfileData;
                     window._pendingProfileData = null;
                     try {
                         await sbUpdateProfile(pd, currentUser.id);
-                        console.log('✅ Profil en attente envoyé');
                     } catch(e) { console.warn('Profil attente erreur:', e.message); }
                 }
             }
@@ -624,15 +626,17 @@
                 document.querySelectorAll('.user-av').forEach(el => el.textContent = data.avatar_initials || 'RM');
                 if (typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
                 if (typeof setPlan === 'function') setPlan(data.plan || 'free');
-                // Charger les vraies conversations
-                setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 500);
-                // Toujours reset le flag avant de recharger
-                                window._athletesNeedReload = true;
+                // Charger conversations + badge
+                setTimeout(function(){
+                    if(typeof loadConversationsList==='function') loadConversationsList();
+                }, 500);
+                // Recharger athlètes si matching actif
+                window._athletesLastLoad = 0;
                 var matchScreen = document.getElementById('screen-matching');
                 if(matchScreen && matchScreen.classList.contains('active')) {
                     setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 400);
                 }
-                // Subscription realtime globale pour les nouveaux messages
+                // Subscription realtime globale pour nouveaux messages
                 if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
             }
         }
@@ -1968,20 +1972,24 @@ function subscribeToMessages(convId) {
         .subscribe();
 }
 
+var _globalChannel = null;
 function startGlobalMessagesSubscription() {
     if (!currentUser) return;
-    // Écoute tous les nouveaux messages dont je suis destinataire
-    var globalChannel = sb.channel('global-messages-' + currentUser.id);
-    globalChannel.on('postgres_changes', {
+    // Éviter les doublons de subscription
+    if (_globalChannel) { try { sb.removeChannel(_globalChannel); } catch(e){} }
+    _globalChannel = sb.channel('global-' + currentUser.id);
+
+    // Écoute nouveaux messages
+    _globalChannel.on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'messages'
     }, function(payload) {
         var m = payload.new;
-        if (m.sender_id === currentUser.id) return; // c'est moi qui ai envoyé
-        // Rafraîchir la liste des conversations (avec nouveaux non-lus)
+        if (m.sender_id === currentUser.id) return;
+        // Rafraîchir liste conversations + badge
         setTimeout(function() {
             if (typeof loadConversationsList === 'function') loadConversationsList();
         }, 300);
-        // Si le chat est ouvert sur cette conv, afficher le message directement
+        // Si chat ouvert sur cette conv, afficher directement
         if (_currentConvId && m.conversation_id === _currentConvId) {
             var msgs = document.getElementById('chat-messages');
             if (msgs) {
@@ -1995,7 +2003,21 @@ function startGlobalMessagesSubscription() {
                 sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id);
             }
         }
-    }).subscribe();
+    });
+
+    // Écoute nouveaux profils → recharger la liste athlètes
+    _globalChannel.on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'profiles'
+    }, function() {
+        console.log('Nouveau profil détecté → rechargement athlètes');
+        window._athletesLastLoad = 0;
+        var matchScreen = document.getElementById('screen-matching');
+        if(matchScreen && matchScreen.classList.contains('active')) {
+            if(typeof loadRealAthletes === 'function') loadRealAthletes();
+        }
+    });
+
+    _globalChannel.subscribe();
 }
 
 function openChat(name, initials, status, event) {
@@ -2020,15 +2042,7 @@ function openChat(name, initials, status, event) {
     }
 }
 
-function updateMsgBadge() {
-    var unread = document.querySelectorAll('.conv-card.unread').length;
-    var badge = document.getElementById('nav-msg-badge');
-    if(badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
-    var unreadChip = document.getElementById('unread-count-badge');
-    if(unreadChip) unreadChip.textContent = unread;
-    var savedBadge = document.getElementById('saved-nav-msg-badge');
-    if(savedBadge) { savedBadge.textContent = unread; savedBadge.style.display = unread > 0 ? '' : 'none'; }
-}
+// updateMsgBadge défini plus bas
 
 function closeChat() {
     document.getElementById('chat-view').classList.remove('open');
@@ -2154,21 +2168,28 @@ async function loadConversationsList() {
 
 
 function updateMsgBadge() {
+    // Compter depuis les cartes déjà rendues
     var unread = document.querySelectorAll('.conv-card.unread').length;
-    var badge = document.getElementById('nav-msg-badge');
-    if(badge) {
-        badge.textContent = unread;
-        badge.style.display = unread > 0 ? '' : 'none';
+    _applyMsgBadge(unread);
+    // Aussi recharger depuis Supabase si connecté pour avoir le vrai count
+    if(currentUser && typeof sbGetConversations === 'function') {
+        sbGetConversations().then(function(convs) {
+            var total = (convs||[]).reduce(function(acc,c){ return acc + (c.unread_count||0); }, 0);
+            _applyMsgBadge(total);
+            // Mettre à jour les cartes si nécessaire
+            if(total > 0 && typeof loadConversationsList === 'function') {
+                loadConversationsList();
+            }
+        }).catch(function(){});
     }
-    // Unread count chip in filter
+}
+function _applyMsgBadge(unread) {
+    var badge = document.getElementById('nav-msg-badge');
+    if(badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
     var unreadChip = document.getElementById('unread-count-badge');
     if(unreadChip) unreadChip.textContent = unread;
-    // Sync saved modal badge too
     var savedBadge = document.getElementById('saved-nav-msg-badge');
-    if(savedBadge) {
-        savedBadge.textContent = unread;
-        savedBadge.style.display = unread > 0 ? '' : 'none';
-    }
+    if(savedBadge) { savedBadge.textContent = unread; savedBadge.style.display = unread > 0 ? '' : 'none'; }
 }
 function closeChat() {
     document.getElementById('chat-view').classList.remove('open');
@@ -3519,17 +3540,10 @@ function toggleCompletFilter() {
             if(typeof updateProgress === 'function') updateProgress();
         }
         showStatusToast('👋 À bientôt sur RaceMates !');
-        // Reset flags
-        if(typeof window !== 'undefined') {
-                        window._athletesNeedReload = true;
-        }
-        // Vider la liste athlètes
-        var athletesList = document.getElementById('athletes-list');
-        if(athletesList) athletesList.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
-        // Vider la liste conversations
-        var convList = document.getElementById('conv-list');
-        if(convList) convList.querySelectorAll('.conv-card').forEach(function(c){c.remove();});
-        // Supabase sign out en arrière-plan
+        // Reset uniquement les flags de chargement, pas les données affichées
+        window._athletesLastLoad = 0;
+        window._loadingProfile = false;
+        // Supabase sign out
         if(typeof sbSignOut === 'function') sbSignOut().catch(()=>{});
     }
 

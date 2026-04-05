@@ -615,6 +615,15 @@
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
             // Charger conversations et badge non-lus
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
+            // Charger le compteur profils sauvegardés
+            if(currentUser) {
+                sb.from('saved_profiles').select('saved_user_id', {count:'exact'}).eq('user_id', currentUser.id)
+                .then(function(res){
+                    var n = res.count || 0;
+                    var el = document.getElementById('qa-sub-saved');
+                    if(el) el.textContent = n + (n > 1 ? ' profils' : ' profil');
+                });
+            }
             // Démarrer realtime (messages + nouveaux profils)
             if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
             // Les athlètes se chargent uniquement via goTo('matching')
@@ -2337,6 +2346,12 @@ async function loadSavedProfiles() {
     const { data: profiles } = await sb.from('profiles').select('*').in('id', ids);
     // Vider et reconstruire
     list.querySelectorAll('.saved-item').forEach(function(el){ el.remove(); });
+    // Mettre à jour compteur accueil
+    var homeCount = document.getElementById('qa-sub-saved');
+    if(homeCount) homeCount.textContent = savedData.length + (savedData.length > 1 ? ' profils' : ' profil');
+    var modalCount = document.getElementById('saved-modal-count');
+    if(modalCount) modalCount.textContent = savedData.length + (savedData.length > 1 ? ' profils' : ' profil');
+
     (profiles||[]).forEach(function(p) {
         var sports = [];
         try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}

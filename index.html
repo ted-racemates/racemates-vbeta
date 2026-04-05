@@ -2012,12 +2012,12 @@ function startGlobalMessagesSubscription() {
             +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div></div>'
             +'<div class="ac-body"><div class="ac-badges">'+sportBadges+'</div>'
             +'<div class="ac-actions">'
-            +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(''+a.id+'')">💬 Contacter</button>'
+            +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(&quot;'+a.id+'&quot;)">💬 Contacter</button>'
             +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this)">🔖</button>'
             +'</div></div>';
         div.onclick = function(){ openRealProfile(a.id); };
         list.insertAdjacentElement('afterbegin', div);
-        showStatusToast('🆕 Nouvel athlète : ' + displayName + ' vient de s'inscrire !');
+        showStatusToast('🆕 Nouvel athlète : ' + displayName + ' vient de rejoindre !');
     });
 
     _globalChannel.subscribe();

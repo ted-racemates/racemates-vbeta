@@ -1827,10 +1827,10 @@ function loadRealAthletes() {
 }
 
 function openRealProfile(userId) {
-    var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') return;
-    fn().then(function(athletes) {
-        var a = athletes.find(function(x){return x.id===userId;});
+    if(!userId) return;
+    // Charger directement le profil par ID
+    sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
+        var a = res.data;
         if(!a) return;
         var sports=[];
         try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
@@ -1860,6 +1860,7 @@ function openRealProfile(userId) {
         }
         var contactBtn=el('profile-modal-contact-btn');
         if(contactBtn)(function(aa){contactBtn.onclick=function(){closeProfile();openRealChat(aa.id);};})(a);
+        window._currentReviewedId = userId; // stocker pour submitReview
         pm.classList.add('open');pm.scrollTop=0;
         // Charger les avis pour ce profil
         loadProfileReviews(userId);
@@ -1897,17 +1898,17 @@ async function loadProfileReviews(userId) {
         }).join('');
 }
 
-function openRealChat(userId) { window._chatFromProfile = false;
-    var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') return;
-    fn().then(function(athletes) {
-        var a=athletes.find(function(x){return x.id===userId;});
+function openRealChat(userId) {
+    window._chatFromProfile = false;
+    if(!userId) return;
+    sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
+        var a = res.data;
         if(!a) return;
         var sports=[];
         try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
-        var initials=a.avatar_initials||((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
-        contactAndChat(a.prenom+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'), userId);
-    }).catch(function(){});
+        var initials=a.avatar_initials||((a.prenom||'?')[0]+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+        contactAndChat((a.prenom||'')+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'), userId);
+    }).catch(function(err){ console.error('openRealChat:', err); });
 }
 
 // ===================== CHAT =====================
@@ -4169,27 +4170,24 @@ function toggleCompletFilter() {
     }
 
     function submitReview() {
-        if(!currentStars) { showStatusToast('⭐ Choisis une note d\'abord !'); return; }
+        if(!currentStars) { showStatusToast('⭐ Choisis une note !'); return; }
         var text = document.getElementById('review-text');
         if(!text || !text.value.trim()) { showStatusToast('✏️ Écris un commentaire !'); return; }
-        var name = document.getElementById('pm-name') ? document.getElementById('pm-name').textContent : 'cet athlète';
-        // Add review to the modal
-        var reviewsContainer = document.getElementById('profile-modal').querySelector('.rating-summary');
-        if(reviewsContainer) {
-            var stars = '⭐'.repeat(currentStars);
-            var myInitials = window.myProfile ? window.myProfile.initials : 'TJ';
-            var myName = window.myProfile ? window.myProfile.prenom : 'Thomas';
-            var newReview = document.createElement('div');
-            newReview.className = 'review-card';
-            newReview.style.border = '1.5px solid var(--blue)';
-            newReview.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><div class="review-av" style="background:var(--blue);color:white">' + myInitials + '</div><div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">' + myName + ' <span style="background:#DBEAFE;color:var(--blue);font-size:0.75em;padding:1px 6px;border-radius:6px;margin-left:4px">Nouveau</span></div></div></div><div>' + stars + '</div></div><div style="font-size:0.82em;color:var(--grey);line-height:1.5">' + text.value.trim() + '</div>';
-            reviewsContainer.after(newReview);
-        }
-        // Reset form
-        currentStars = 0;
-        document.querySelectorAll('#star-rating [data-star]').forEach(function(el){ el.style.opacity = '0.3'; });
-        text.value = '';
-        showStatusToast('✅ Avis publié, merci !');
+        var reviewedId = window._currentReviewedId;
+        if(!reviewedId) { showStatusToast('⚠️ Profil non identifié'); return; }
+        if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour laisser un avis'); return; }
+        var comment = text.value.trim();
+        var stars = currentStars;
+        sbSubmitReview(reviewedId, stars, comment).then(function() {
+            showStatusToast('✅ Avis publié, merci !');
+            loadProfileReviews(reviewedId);
+            currentStars = 0;
+            document.querySelectorAll('#star-rating [data-star]').forEach(function(el){ el.style.opacity = '0.3'; });
+            text.value = '';
+        }).catch(function(err) {
+            showStatusToast('⚠️ Erreur lors de la publication');
+            console.error(err);
+        });
     }
 
     // ===== MESSAGES COUNT =====

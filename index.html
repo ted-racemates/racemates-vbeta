@@ -1968,12 +1968,11 @@ function startGlobalMessagesSubscription() {
     }, function(payload) {
         var m = payload.new;
         if (m.sender_id === currentUser.id) return;
-        // Rafraîchir liste conversations + badge
-        setTimeout(function() {
-            if (typeof loadConversationsList === 'function') loadConversationsList();
-        }, 300);
-        // Si chat ouvert sur cette conv, afficher directement
-        if (_currentConvId && m.conversation_id === _currentConvId) {
+
+        var chatIsOpen = _currentConvId && m.conversation_id === _currentConvId;
+
+        if (chatIsOpen) {
+            // Chat ouvert sur cette conv → afficher + marquer lu immédiatement
             var msgs = document.getElementById('chat-messages');
             if (msgs) {
                 var wrap = document.createElement('div');
@@ -1983,8 +1982,14 @@ function startGlobalMessagesSubscription() {
                 wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + '</div>';
                 msgs.appendChild(wrap);
                 msgs.scrollTop = msgs.scrollHeight;
+                // Marquer lu en base
                 sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id);
+                // Badge reste à 0 pour cette conv, juste mettre à jour le preview
+                _updateConvPreview(m.conversation_id, m.content);
             }
+        } else {
+            // Chat fermé → incrémenter le badge et mettre à jour la carte
+            _incrementConvBadge(m.conversation_id, m.content);
         }
     });
 
@@ -2023,6 +2028,50 @@ function openChat(name, initials, status, event) {
     if (!_currentConvId) {
         setTimeout(function(){ var m = document.getElementById('chat-messages'); if(m) m.scrollTop = m.scrollHeight; }, 50);
     }
+}
+
+// Met à jour le preview d'une conv sans changer le badge (chat ouvert = déjà lu)
+function _updateConvPreview(convId, lastMsg) {
+    var card = document.querySelector('.conv-card[data-conv-id="'+convId+'"]');
+    if(!card) return;
+    var preview = card.querySelector('.conv-preview');
+    if(preview) preview.textContent = lastMsg;
+    var timeEl = card.querySelector('.conv-time');
+    var now = new Date();
+    if(timeEl) timeEl.textContent = now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+}
+
+// Incrémente le badge d'une conv et met la carte en "non lu" (chat fermé)
+function _incrementConvBadge(convId, lastMsg) {
+    var card = document.querySelector('.conv-card[data-conv-id="'+convId+'"]');
+    if(card) {
+        // Mettre la carte en unread
+        card.classList.add('unread');
+        // Incrémenter le badge sur la carte
+        var badge = card.querySelector('.conv-badge');
+        var count = badge ? (parseInt(badge.textContent)||0) + 1 : 1;
+        if(!badge) {
+            badge = document.createElement('div');
+            badge.className = 'conv-badge';
+            var meta = card.querySelector('.conv-meta');
+            if(meta) meta.appendChild(badge);
+        }
+        badge.textContent = count;
+        // Mettre le nom et preview en gras
+        var name = card.querySelector('.conv-name');
+        if(name && !name.querySelector('strong')) name.innerHTML = '<strong>'+name.textContent+'</strong>';
+        var preview = card.querySelector('.conv-preview');
+        if(preview) preview.innerHTML = '<strong>'+lastMsg+'</strong>';
+        var timeEl = card.querySelector('.conv-time');
+        var now = new Date();
+        if(timeEl) timeEl.textContent = now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+    } else {
+        // Carte pas encore affichée → recharger la liste
+        if(typeof loadConversationsList === 'function') loadConversationsList();
+        return;
+    }
+    // Mettre à jour le badge global nav
+    updateMsgBadge();
 }
 
 // updateMsgBadge défini plus bas

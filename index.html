@@ -1737,7 +1737,7 @@ function goTo(page) {
     // Charger les vrais profils Supabase si on va sur matching
     if(page === 'matching') {
         loadRealAthletes();
-        window._athletesNeedReload = false;
+        window._athletesStale = false;
     }
 }
 
@@ -1789,7 +1789,7 @@ function loadRealAthletes() {
             if(myProfile.ville && a.ville && myProfile.ville.toLowerCase()===a.ville.toLowerCase()) compatScore += 5;
             compatScore = Math.min(compatScore, 99);
             var aid = a.id;
-            fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
+            fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" data-user-id="'+aid+'" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
@@ -1981,14 +1981,43 @@ function startGlobalMessagesSubscription() {
         }
     });
 
-    // Écoute nouveaux profils → recharger si sur matching
+    // Nouveaux profils → ajouter en temps réel sans effacer la liste existante
     _globalChannel.on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'profiles'
-    }, function() {
+    }, function(payload) {
         var matchScreen = document.getElementById('screen-matching');
-        if(matchScreen && matchScreen.classList.contains('active')) {
-            if(typeof loadRealAthletes === 'function') loadRealAthletes();
-        }
+        if(!matchScreen || !matchScreen.classList.contains('active')) return;
+        var a = payload.new;
+        if(!a || (!a.prenom && !a.pseudo)) return;
+        if(a.id === (currentUser && currentUser.id)) return; // pas soi-même
+        // Vérifier que la carte n'est pas déjà dans la liste
+        if(document.querySelector('[data-user-id="'+a.id+'"]')) return;
+        // Construire et injecter la carte
+        var list = document.getElementById('athletes-list');
+        if(!list) return;
+        var displayName = a.prenom || a.pseudo || 'Athlète';
+        var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
+        var sportBadges = sports.slice(0,2).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
+        var div = document.createElement('div');
+        div.className = 'athlete-card real-athlete-card';
+        div.setAttribute('data-sport', sportKey);
+        div.setAttribute('data-user-id', a.id);
+        div.setAttribute('data-status', 'dispo');
+        div.style.cssText = 'cursor:pointer;border:2px solid #059669';
+        div.innerHTML = '<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px">NOUVEAU</div>'
+            +'<div class="ac-top"><div class="ac-av">'+initials+'</div>'
+            +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
+            +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div></div>'
+            +'<div class="ac-body"><div class="ac-badges">'+sportBadges+'</div>'
+            +'<div class="ac-actions">'
+            +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(''+a.id+'')">💬 Contacter</button>'
+            +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this)">🔖</button>'
+            +'</div></div>';
+        div.onclick = function(){ openRealProfile(a.id); };
+        list.insertAdjacentElement('afterbegin', div);
+        showStatusToast('🆕 Nouvel athlète : ' + displayName + ' vient de s'inscrire !');
     });
 
     _globalChannel.subscribe();
@@ -2216,6 +2245,9 @@ function _markConvAsRead(convId) {
 }
 function closeChat() {
     document.getElementById('chat-view').classList.remove('open');
+    _currentConvId = null;
+    _currentConvUserId = null;
+    if (_realtimeSubscription) { try{ sb.removeChannel(_realtimeSubscription); }catch(e){} _realtimeSubscription = null; }
     if(window._chatFromProfile) {
         window._chatFromProfile = false;
         document.getElementById('profile-modal').classList.add('open');
@@ -3667,31 +3699,28 @@ function toggleCompletFilter() {
 
     function toggleSave(btn) {
         var saved = btn.getAttribute('data-saved') === '1';
+        // Récupérer userId depuis data-user-id sur la carte parente
+        var card = btn.closest('[data-user-id]') || btn.closest('.athlete-card') || btn.closest('.real-athlete-card');
+        var userId = card ? card.getAttribute('data-user-id') : null;
         if(saved) {
-            // Unsave
             btn.removeAttribute('data-saved');
             btn.style.background = '';
             btn.style.color = '';
             btn.textContent = '🔖';
             savedCount = Math.max(0, savedCount - 1);
+            if(userId) sbUnsaveProfile(userId).catch(function(){});
         } else {
-            // Save
             btn.setAttribute('data-saved', '1');
             btn.style.background = 'var(--blue)';
             btn.style.color = 'white';
             btn.textContent = '✅';
             savedCount++;
             showStatusToast('🔖 Profil sauvegardé !');
+            if(userId) sbSaveProfile(userId).catch(function(){});
+            else showStatusToast('⚠️ Sauvegarde locale uniquement');
         }
         updateSavedCount();
         updateAthleteCount();
-    
-        // Sync with Supabase
-        var userId = btn?.closest('[data-user-id]')?.getAttribute('data-user-id');
-        if(userId){
-            if(btn.classList.contains('saved')){ sbSaveProfile(userId).catch(()=>{}); }
-            else { sbUnsaveProfile(userId).catch(()=>{}); }
-        }
     }
 
     function updateSavedCount() {

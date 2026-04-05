@@ -1356,14 +1356,7 @@
             </div>
         </div>
     </div>
-    <!-- Bottom nav inside saved modal -->
-    <div class="bottom-nav" style="position:sticky;bottom:0;z-index:10">
-        <button class="nav-item" onclick="closeSaved();goTo('home')"><div class="nav-icon">🏠</div><div class="nav-label">Accueil</div></button>
-        <button class="nav-item" onclick="closeSaved();goTo('sport-select')"><div class="nav-icon">🏃</div><div class="nav-label">Matching</div></button>
-        <button class="nav-item" onclick="closeSaved();goTo('messages')"><div class="nav-icon">💬</div><div class="nav-label">Messages</div><div id="saved-nav-msg-badge" class="nav-notif" style="display:none">0</div></button>
-        <button class="nav-item" onclick="closeSaved();goTo('training')"><div class="nav-icon">🤝</div><div class="nav-label">Training</div></button>
-        <button class="nav-item" onclick="closeSaved();goTo('events')"><div class="nav-icon">📅</div><div class="nav-label">Événements</div></button>
-    </div>
+    <!-- nav globale utilisée -->
 </div>
 
 <!-- ===== ATHLETE PROFILE MODAL (dynamic) ===== -->
@@ -1729,9 +1722,13 @@ var SPORT_LABELS = {
 
 // ===================== NAVIGATION =====================
 function goTo(page) {
-    // Close chat overlay if open
+    // Fermer les modals ouverts
     var chatView = document.getElementById('chat-view');
     if(chatView && chatView.classList.contains('open')) chatView.classList.remove('open');
+    var savedModal = document.getElementById('saved-modal');
+    if(savedModal && savedModal.classList.contains('open')) savedModal.classList.remove('open');
+    var profileModal = document.getElementById('profile-modal');
+    if(profileModal && profileModal.classList.contains('open')) profileModal.classList.remove('open');
     document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
     document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
     document.getElementById('screen-' + page).classList.add('active');
@@ -2250,9 +2247,6 @@ function hideTyping() {
 function openSaved() {
     var modal = document.getElementById('saved-modal');
     if(modal) { modal.classList.add('open'); modal.scrollTop = 0; }
-    // Cacher la nav globale
-    var globalNav = document.querySelector('.bottom-nav:not(#saved-modal .bottom-nav)');
-    if(globalNav) globalNav.style.display = 'none';
     loadSavedProfiles();
 }
 async function loadSavedProfiles() {
@@ -2313,11 +2307,7 @@ function unsaveProfil(btn, userId) {
         showStatusToast('🗑 Profil retiré');
     }).catch(function(){ showStatusToast('⚠️ Erreur'); });
 }
-function closeSaved() {
-    document.getElementById('saved-modal').classList.remove('open');
-    var globalNav = document.querySelector('.bottom-nav');
-    if(globalNav) globalNav.style.display = '';
-}
+function closeSaved() { document.getElementById('saved-modal').classList.remove('open'); }
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); document.getElementById('profile-modal').scrollTop = 0; }
 function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
 function openNotifs() { document.getElementById('notif-panel').classList.add('open'); }

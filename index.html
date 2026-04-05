@@ -1402,8 +1402,7 @@
             <textarea id="review-text" placeholder="Décris ton expérience avec cet athlète..." style="width:100%;border:1px solid #E2E8F0;border-radius:10px;padding:10px;font-size:0.85em;font-family:Barlow,sans-serif;resize:none;height:80px;box-sizing:border-box;outline:none"></textarea>
             <button onclick="submitReview()" style="width:100%;margin-top:8px;padding:12px;background:var(--dark);color:white;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95em;letter-spacing:0.5px;cursor:pointer">Publier l'avis ✓</button>
         </div>
-        <div class="rating-summary"><div class="rating-big">4.9</div><div><div style="font-size:1em;letter-spacing:2px;margin-bottom:2px">⭐⭐⭐⭐⭐</div><div style="font-size:0.75em;color:var(--grey)">6 avis · Très fiable</div></div></div>
-        <div class="review-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><div class="review-av">AL</div><div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">Alex L.</div><div style="font-size:0.7em;color:var(--grey)">Hyrox Paris · Oct. 2025</div></div></div><div>⭐⭐⭐⭐⭐</div></div><div style="font-size:0.82em;color:var(--grey);line-height:1.5">"Super coéquipière, très organisée. Je recommande !"</div></div>
+        <div id="pm-reviews-container"></div>
     </div>
 </div>
 
@@ -1736,7 +1735,12 @@ function goTo(page) {
     document.getElementById('screen-' + page).scrollTop = 0;
     // Charger les vrais profils Supabase si on va sur matching
     if(page === 'matching') {
-        loadRealAthletes();
+        var athletesList = document.getElementById('athletes-list');
+        var hasRealCards = athletesList && athletesList.querySelectorAll('.real-athlete-card').length > 0;
+        var lastLoad = window._athletesLoadedAt || 0;
+        var fiveMin = 5 * 60 * 1000;
+        // Charger si : pas encore de cartes, OU dernière charge > 5min
+        if(!hasRealCards || (Date.now() - lastLoad > fiveMin)) loadRealAthletes();
         window._athletesStale = false;
     }
 }
@@ -1746,8 +1750,6 @@ function loadRealAthletes() {
     if(!list) return;
     var fn = window.sbGetAthletes;
     if(typeof fn !== 'function') return;
-    // Nettoyer l'état précédent
-    list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
     document.getElementById('athletes-loading') && document.getElementById('athletes-loading').remove();
     fn().then(function(athletes) {
         
@@ -1811,7 +1813,7 @@ function loadRealAthletes() {
                 +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this)">🔖</button>'
                 +'</div></div></div>';
         });
-        if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
+        if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); window._athletesLoadedAt = Date.now(); if(typeof filterAthletes==='function') filterAthletes(); }
     }).catch(function(err){ console.error('loadRealAthletes erreur:', err); });
 }
 
@@ -1850,7 +1852,40 @@ function openRealProfile(userId) {
         var contactBtn=el('profile-modal-contact-btn');
         if(contactBtn)(function(aa){contactBtn.onclick=function(){closeProfile();openRealChat(aa.id);};})(a);
         pm.classList.add('open');pm.scrollTop=0;
+        // Charger les avis pour ce profil
+        loadProfileReviews(userId);
     }).catch(function(){});
+}
+
+async function loadProfileReviews(userId) {
+    var container = document.getElementById('pm-reviews-container');
+    if(!container) return;
+    container.innerHTML = '';
+    const { data: reviews } = await sb.from('reviews')
+        .select('*, reviewer:reviewer_id(prenom, pseudo, avatar_initials)')
+        .eq('reviewed_id', userId)
+        .order('created_at', { ascending: false });
+    if(!reviews || reviews.length === 0) return;
+    var avg = reviews.reduce(function(acc,r){ return acc+(r.stars||0); },0)/reviews.length;
+    var starsHtml = '';
+    for(var i=1;i<=5;i++) starsHtml += i<=Math.round(avg)?'⭐':'☆';
+    container.innerHTML = '<div class="rating-summary"><div class="rating-big">'+avg.toFixed(1)+'</div>'
+        +'<div><div style="font-size:1em;letter-spacing:2px;margin-bottom:2px">'+starsHtml+'</div>'
+        +'<div style="font-size:0.75em;color:var(--grey)">'+reviews.length+' avis</div></div></div>'
+        + reviews.map(function(r){
+            var rev = r.reviewer||{};
+            var ini = rev.avatar_initials||((rev.prenom||'?')[0]+(rev.pseudo||'A')[0]).toUpperCase();
+            var name = (rev.prenom||'')+(rev.pseudo?' @'+rev.pseudo:'');
+            var stars = '';
+            for(var i=1;i<=5;i++) stars += i<=(r.stars||0)?'⭐':'☆';
+            return '<div class="review-card">'
+                +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+                +'<div style="display:flex;align-items:center;gap:8px">'
+                +'<div class="review-av">'+ini+'</div>'
+                +'<div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">'+name+'</div></div></div>'
+                +'<div>'+stars+'</div></div>'
+                +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+(r.comment||'')+'"</div></div>';
+        }).join('');
 }
 
 function openRealChat(userId) { window._chatFromProfile = false;
@@ -2722,7 +2757,7 @@ document.getElementById('profile-modal-contact-btn').onclick = function() {
 // Saved profile buttons
 // boutons fictifs supprimés
 document.getElementById('saved-btn-julie').onclick = function(){ closeSaved(); contactAndChat('Julie Durand','JD','offline','🏠 Hyrox Toulouse'); };
-document.getElementById('saved-btn-alex').onclick = function(){ closeSaved(); contactAndChat('Alex Laurent','AL','offline','🤝 Entraînement'); };
+// saved-btn-alex supprimé
 
 
 // ===================== STATUS SYSTEM =====================

@@ -1940,13 +1940,35 @@ async function loadMessages(convId) {
         msgs.appendChild(wrap);
     });
     msgs.scrollTop = msgs.scrollHeight;
-    // Marquer comme lus
-    if (data && data.length > 0) {
+    // Marquer comme lus et mettre à jour le badge
+    if (data && data.length > 0 && currentUser) {
         sb.from('messages').update({ read_at: new Date().toISOString() })
             .eq('conversation_id', convId)
             .neq('sender_id', currentUser.id)
             .is('read_at', null)
-            .then(function() { updateMsgBadge(); });
+            .then(function(res) {
+                if (!res.error) {
+                    // Retirer le badge unread de cette conversation dans l'UI
+                    document.querySelectorAll('.conv-card').forEach(function(card) {
+                        var nameEl = card.querySelector('.conv-name');
+                        if(nameEl) {
+                            // Retirer le gras
+                            var name = nameEl.textContent || nameEl.innerText;
+                            nameEl.innerHTML = name;
+                        }
+                        var preview = card.querySelector('.conv-preview');
+                        if(preview) {
+                            var txt = preview.textContent || preview.innerText;
+                            preview.innerHTML = txt;
+                        }
+                        var badge = card.querySelector('.conv-badge');
+                        if(badge) badge.remove();
+                        card.classList.remove('unread');
+                    });
+                    // Recalculer le badge global
+                    updateMsgBadge();
+                }
+            });
     }
 }
 
@@ -2168,20 +2190,18 @@ async function loadConversationsList() {
 
 
 function updateMsgBadge() {
-    // Compter depuis les cartes déjà rendues
-    var unread = document.querySelectorAll('.conv-card.unread').length;
-    _applyMsgBadge(unread);
-    // Aussi recharger depuis Supabase si connecté pour avoir le vrai count
-    if(currentUser && typeof sbGetConversations === 'function') {
-        sbGetConversations().then(function(convs) {
-            var total = (convs||[]).reduce(function(acc,c){ return acc + (c.unread_count||0); }, 0);
-            _applyMsgBadge(total);
-            // Mettre à jour les cartes si nécessaire
-            if(total > 0 && typeof loadConversationsList === 'function') {
-                loadConversationsList();
-            }
-        }).catch(function(){});
+    if(!currentUser || typeof sbGetConversations !== 'function') {
+        _applyMsgBadge(0);
+        return;
     }
+    sbGetConversations().then(function(convs) {
+        var total = (convs||[]).reduce(function(acc,c){ return acc + (c.unread_count||0); }, 0);
+        _applyMsgBadge(total);
+        // Si nouveaux non-lus, recharger la liste pour afficher les badges sur les cartes
+        if(total > 0) {
+            if(typeof loadConversationsList === 'function') loadConversationsList();
+        }
+    }).catch(function(){});
 }
 function _applyMsgBadge(unread) {
     var badge = document.getElementById('nav-msg-badge');

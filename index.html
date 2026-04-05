@@ -572,72 +572,55 @@
 
         sb.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
-            // Reset timestamp pour forcer rechargement athlètes
-            window._athletesLastLoad = 0;
+            window._athletesLastLoad = 0; // forcer rechargement athlètes
+
+            if (event === 'SIGNED_OUT') {
+                // Stopper les subscriptions realtime
+                if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
+                if(window._realtimeSubscription) { try{ sb.removeChannel(window._realtimeSubscription); }catch(e){} window._realtimeSubscription = null; }
+                return;
+            }
+
             if (currentUser && !_loadingProfile) {
                 _loadingProfile = true;
-                try {
-                    await loadMyProfile();
-                } finally {
-                    _loadingProfile = false;
-                }
-                setTimeout(function(){ if(typeof updateAthleteCount==='function') updateAthleteCount(); }, 500);
+                try { await loadMyProfile(); } finally { _loadingProfile = false; }
+                // Profil en attente (signup)
                 if(window._pendingProfileData) {
-                    var pd = window._pendingProfileData;
-                    window._pendingProfileData = null;
-                    try {
-                        await sbUpdateProfile(pd, currentUser.id);
-                    } catch(e) { console.warn('Profil attente erreur:', e.message); }
+                    var pd = window._pendingProfileData; window._pendingProfileData = null;
+                    try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
                 }
             }
         });
 
         async function loadMyProfile() {
-            const { data, error } = await sb
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-            if (data) {
-                currentProfile = data;
-                // Parser les champs JSON stockés en texte
-                var parseSafe = function(v){ try{ return v ? (typeof v==='string'?JSON.parse(v):v) : []; }catch(e){ return []; }};
-                var parseSafeObj = function(v){ try{ return v ? (typeof v==='string'?JSON.parse(v):v) : {}; }catch(e){ return {}; }};
-                window.myProfile = {
-                    prenom: data.prenom,
-                    pseudo: data.pseudo,
-                    ville: data.ville,
-                    bio: data.bio || '',
-                    instagram: data.instagram || '',
-                    strava: data.strava || '',
-                    facebook: data.facebook || '',
-                    gender: data.gender || '',
-                    sports: parseSafe(data.sports),
-                    needs: parseSafe(data.needs),
-                    niveau: parseSafeObj(data.niveau),
-                    events: parseSafe(data.events),
-                    initials: data.avatar_initials || 'RM',
-                    plan: data.plan || 'free',
-                    best_time: data.best_time || '',
-                    nb_courses: data.nb_courses || '',
-                    pace: data.pace || ''
-                };
-                // Update UI avatars
-                document.querySelectorAll('.user-av').forEach(el => el.textContent = data.avatar_initials || 'RM');
-                if (typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
-                if (typeof setPlan === 'function') setPlan(data.plan || 'free');
-                // Charger conversations + badge
-                setTimeout(function(){
-                    if(typeof loadConversationsList==='function') loadConversationsList();
-                }, 500);
-                // Recharger athlètes si matching actif
-                window._athletesLastLoad = 0;
-                var matchScreen = document.getElementById('screen-matching');
-                if(matchScreen && matchScreen.classList.contains('active')) {
-                    setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 400);
-                }
-                // Subscription realtime globale pour nouveaux messages
-                if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
+            if(!currentUser) return;
+            var parseSafe = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):[];}catch(e){return[];} };
+            var parseSafeObj = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):{};}catch(e){return{};} };
+            const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (!data) return;
+            currentProfile = data;
+            window.myProfile = {
+                prenom: data.prenom, pseudo: data.pseudo, ville: data.ville,
+                bio: data.bio||'', instagram: data.instagram||'', strava: data.strava||'',
+                facebook: data.facebook||'', gender: data.gender||'',
+                sports: parseSafe(data.sports), needs: parseSafe(data.needs),
+                niveau: parseSafeObj(data.niveau), events: parseSafe(data.events),
+                initials: data.avatar_initials||'RM', plan: data.plan||'free',
+                best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||''
+            };
+            // Mettre à jour l'UI
+            document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = data.avatar_initials||'RM'; });
+            if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
+            if(typeof setPlan==='function') setPlan(data.plan||'free');
+            if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
+            // Charger conversations et badge non-lus
+            setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
+            // Démarrer realtime (messages + nouveaux profils)
+            if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
+            // Recharger athlètes si on est sur l'écran matching
+            var matchScreen = document.getElementById('screen-matching');
+            if(matchScreen && matchScreen.classList.contains('active')) {
+                setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 400);
             }
         }
 
@@ -1755,30 +1738,28 @@ function goTo(page) {
 }
 
 window._athletesLastLoad = 0;
+var _athletesInProgress = false;
 function loadRealAthletes() {
+    // Éviter les appels simultanés ET les appels trop rapprochés (< 1s)
+    if(_athletesInProgress) return;
     var now = Date.now();
-    if(now - window._athletesLastLoad < 2000) return; // throttle 2s
+    if(now - window._athletesLastLoad < 1000) return;
+    _athletesInProgress = true;
     window._athletesLastLoad = now;
-    // Annuler après 10s si toujours bloqué (sécurité)
-    var safetyTimer = setTimeout(function(){
-        var l = document.getElementById('athletes-loading');
-        if(l) l.remove();
-    }, 10000);
     var list = document.getElementById('athletes-list');
-    if(!list) { clearTimeout(safetyTimer); return; }
+    if(!list) { _athletesInProgress = false; return; }
     list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
-    // Supprimer tout ancien loader
-    var old = document.getElementById('athletes-loading');
-    if(old) old.remove();
+    var existingLoader = document.getElementById('athletes-loading');
+    if(existingLoader) existingLoader.remove();
     var loadingEl = document.createElement('div');
     loadingEl.id = 'athletes-loading';
     loadingEl.style.cssText = 'text-align:center;padding:24px 0;color:#64748b;font-size:0.88em;font-weight:600';
     loadingEl.textContent = '⏳ Chargement des athlètes…';
     list.insertAdjacentElement('afterbegin', loadingEl);
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') { loadingEl.remove();  return; }
+    if(typeof fn !== 'function') { loadingEl.remove(); _athletesInProgress = false; return; }
     fn().then(function(athletes) {
-        clearTimeout(safetyTimer);
+        _athletesInProgress = false;
         var loader = document.getElementById('athletes-loading');
         if(loader) loader.remove();
         
@@ -1843,7 +1824,7 @@ function loadRealAthletes() {
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
-    }).catch(function(err){ console.error('loadRealAthletes erreur:', err);  var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
+    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); _athletesInProgress = false; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
 }
 
 function openRealProfile(userId) {
@@ -1940,35 +1921,15 @@ async function loadMessages(convId) {
         msgs.appendChild(wrap);
     });
     msgs.scrollTop = msgs.scrollHeight;
-    // Marquer comme lus et mettre à jour le badge
+    // Marquer comme lus + mettre à jour badge immédiatement
     if (data && data.length > 0 && currentUser) {
+        // 1. Mettre à jour l'UI instantanément
+        _markConvAsRead(convId);
+        // 2. Marquer en base
         sb.from('messages').update({ read_at: new Date().toISOString() })
             .eq('conversation_id', convId)
             .neq('sender_id', currentUser.id)
-            .is('read_at', null)
-            .then(function(res) {
-                if (!res.error) {
-                    // Retirer le badge unread de cette conversation dans l'UI
-                    document.querySelectorAll('.conv-card').forEach(function(card) {
-                        var nameEl = card.querySelector('.conv-name');
-                        if(nameEl) {
-                            // Retirer le gras
-                            var name = nameEl.textContent || nameEl.innerText;
-                            nameEl.innerHTML = name;
-                        }
-                        var preview = card.querySelector('.conv-preview');
-                        if(preview) {
-                            var txt = preview.textContent || preview.innerText;
-                            preview.innerHTML = txt;
-                        }
-                        var badge = card.querySelector('.conv-badge');
-                        if(badge) badge.remove();
-                        card.classList.remove('unread');
-                    });
-                    // Recalculer le badge global
-                    updateMsgBadge();
-                }
-            });
+            .is('read_at', null);
     }
 }
 
@@ -2169,6 +2130,7 @@ async function loadConversationsList() {
             var card = document.createElement('div');
             var isUnread = conv.unread_count > 0;
             card.className = 'conv-card' + (isUnread ? ' unread' : '');
+            card.setAttribute('data-conv-id', conv.id);
             var unreadBadge = isUnread ? '<div class="conv-badge">'+conv.unread_count+'</div>' : '';
             card.innerHTML = '<div class="conv-av-wrap"><div class="conv-av" style="background:'+color+'">'+initials+'</div></div>'
                 + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+(isUnread?'<strong>'+name+'</strong>':name)+'</div><div class="conv-time">'+timeStr+'</div></div>'
@@ -2189,27 +2151,30 @@ async function loadConversationsList() {
 
 
 
+// Met à jour le badge depuis les cartes affichées (instantané)
 function updateMsgBadge() {
-    if(!currentUser || typeof sbGetConversations !== 'function') {
-        _applyMsgBadge(0);
-        return;
-    }
-    sbGetConversations().then(function(convs) {
-        var total = (convs||[]).reduce(function(acc,c){ return acc + (c.unread_count||0); }, 0);
-        _applyMsgBadge(total);
-        // Si nouveaux non-lus, recharger la liste pour afficher les badges sur les cartes
-        if(total > 0) {
-            if(typeof loadConversationsList === 'function') loadConversationsList();
-        }
-    }).catch(function(){});
+    var unread = document.querySelectorAll('.conv-card.unread').length;
+    _applyMsgBadge(unread);
 }
-function _applyMsgBadge(unread) {
+function _applyMsgBadge(n) {
     var badge = document.getElementById('nav-msg-badge');
-    if(badge) { badge.textContent = unread; badge.style.display = unread > 0 ? '' : 'none'; }
-    var unreadChip = document.getElementById('unread-count-badge');
-    if(unreadChip) unreadChip.textContent = unread;
-    var savedBadge = document.getElementById('saved-nav-msg-badge');
-    if(savedBadge) { savedBadge.textContent = unread; savedBadge.style.display = unread > 0 ? '' : 'none'; }
+    if(badge) { badge.textContent = n; badge.style.display = n > 0 ? '' : 'none'; }
+    var chip = document.getElementById('unread-count-badge');
+    if(chip) chip.textContent = n;
+    var saved = document.getElementById('saved-nav-msg-badge');
+    if(saved) { saved.textContent = n; saved.style.display = n > 0 ? '' : 'none'; }
+}
+// Marque une conv comme lue dans l'UI INSTANTANÉMENT
+function _markConvAsRead(convId) {
+    document.querySelectorAll('.conv-card[data-conv-id="'+convId+'"]').forEach(function(card) {
+        card.classList.remove('unread');
+        var b = card.querySelector('.conv-badge'); if(b) b.remove();
+        var n = card.querySelector('.conv-name strong');
+        if(n) { var txt = n.textContent; n.parentNode.textContent = txt; }
+        var p = card.querySelector('.conv-preview strong');
+        if(p) { var txt2 = p.textContent; p.parentNode.textContent = txt2; }
+    });
+    updateMsgBadge();
 }
 function closeChat() {
     document.getElementById('chat-view').classList.remove('open');
@@ -3560,11 +3525,12 @@ function toggleCompletFilter() {
             if(typeof updateProgress === 'function') updateProgress();
         }
         showStatusToast('👋 À bientôt sur RaceMates !');
-        // Reset uniquement les flags de chargement, pas les données affichées
+        // Reset flags de chargement uniquement
         window._athletesLastLoad = 0;
-        window._loadingProfile = false;
-        // Supabase sign out
-        if(typeof sbSignOut === 'function') sbSignOut().catch(()=>{});
+        window._athletesInProgress = false;
+        _athletesInProgress = false;
+        // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
+        if(typeof sbSignOut === 'function') sbSignOut().catch(function(){});
     }
 
 

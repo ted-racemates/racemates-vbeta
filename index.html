@@ -573,8 +573,7 @@
         sb.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
             // reset athletes flag
-            var al=document.getElementById('athletes-list'); if(al) al.dataset.loading='0';
-
+            
             if (event === 'SIGNED_OUT') {
                 // Stopper les subscriptions realtime
                 if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
@@ -618,11 +617,7 @@
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
             // Démarrer realtime (messages + nouveaux profils)
             if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
-            // Recharger athlètes si on est sur l'écran matching
-            var matchScreen = document.getElementById('screen-matching');
-            if(matchScreen && matchScreen.classList.contains('active')) {
-                setTimeout(function(){ if(typeof loadRealAthletes==='function') loadRealAthletes(); }, 400);
-            }
+            // Les athlètes se chargent uniquement via goTo('matching')
         }
 
         // ── AUTH FUNCTIONS ──────────────────────────────────────
@@ -1752,23 +1747,12 @@ function goTo(page) {
 function loadRealAthletes() {
     var list = document.getElementById('athletes-list');
     if(!list) return;
-    // Si déjà en cours de chargement, ne pas relancer
-    if(list.dataset.loading === '1') return;
-    list.dataset.loading = '1';
-    list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
-    var existingLoader = document.getElementById('athletes-loading');
-    if(existingLoader) existingLoader.remove();
-    var loadingEl = document.createElement('div');
-    loadingEl.id = 'athletes-loading';
-    loadingEl.style.cssText = 'text-align:center;padding:24px 0;color:#64748b;font-size:0.88em;font-weight:600';
-    loadingEl.textContent = '⏳ Chargement des athlètes…';
-    list.insertAdjacentElement('afterbegin', loadingEl);
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') { loadingEl.remove(); list.dataset.loading = '0'; return; }
+    if(typeof fn !== 'function') return;
+    // Nettoyer l'état précédent
+    list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
+    document.getElementById('athletes-loading') && document.getElementById('athletes-loading').remove();
     fn().then(function(athletes) {
-        list.dataset.loading = '0';
-        var loader = document.getElementById('athletes-loading');
-        if(loader) loader.remove();
         
         if(!athletes || athletes.length === 0) { console.warn('Supabase: 0 athlète retourné'); return; }
         console.log('Supabase: ' + athletes.length + ' athlète(s) chargés');
@@ -1831,7 +1815,7 @@ function loadRealAthletes() {
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
-    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); var list2=document.getElementById('athletes-list'); if(list2) list2.dataset.loading='0'; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
+    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); });
 }
 
 function openRealProfile(userId) {
@@ -2000,12 +1984,10 @@ function startGlobalMessagesSubscription() {
         }
     });
 
-    // Écoute nouveaux profils → recharger la liste athlètes
+    // Écoute nouveaux profils → recharger si sur matching
     _globalChannel.on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'profiles'
     }, function() {
-        console.log('Nouveau profil détecté → rechargement athlètes');
-        var alx=document.getElementById('athletes-list'); if(alx) alx.dataset.loading='0';
         var matchScreen = document.getElementById('screen-matching');
         if(matchScreen && matchScreen.classList.contains('active')) {
             if(typeof loadRealAthletes === 'function') loadRealAthletes();
@@ -3586,8 +3568,7 @@ function toggleCompletFilter() {
         showStatusToast('👋 À bientôt sur RaceMates !');
         // Reset flags de chargement uniquement
         // reset athletes
-        var al=document.getElementById('athletes-list'); if(al) al.dataset.loading='0';
-        // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
+                // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
         if(typeof sbSignOut === 'function') sbSignOut().catch(function(){});
     }
 

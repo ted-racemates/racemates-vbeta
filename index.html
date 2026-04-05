@@ -572,7 +572,8 @@
 
         sb.auth.onAuthStateChange(async (event, session) => {
             currentUser = session?.user || null;
-            window._athletesLastLoad = 0; // forcer rechargement athlètes
+            // reset athletes flag
+            var al=document.getElementById('athletes-list'); if(al) al.dataset.loading='0';
 
             if (event === 'SIGNED_OUT') {
                 // Stopper les subscriptions realtime
@@ -712,25 +713,36 @@
         // ── MESSAGES ────────────────────────────────────────────
         async function sbGetConversations() {
             if (!currentUser) return [];
-            const { data } = await sb
+            // 1. Récupérer les conversations sans jointure
+            const { data, error } = await sb
                 .from('conversations')
-                .select('*, user1:user1_id(prenom,pseudo,avatar_initials), user2:user2_id(prenom,pseudo,avatar_initials)')
+                .select('*')
                 .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
                 .order('last_message_at', { ascending: false });
-            if (!data) return [];
-            // Pour chaque conversation, compter les messages non lus
+            if (error) { console.error('sbGetConversations error:', error.message); return []; }
+            if (!data || data.length === 0) return [];
+            // 2. Récupérer les profils des interlocuteurs séparément
+            const otherIds = data.map(c => c.user1_id === currentUser.id ? c.user2_id : c.user1_id).filter(Boolean);
+            const { data: profiles } = await sb.from('profiles').select('id,prenom,pseudo,avatar_initials').in('id', otherIds);
+            const profileMap = {};
+            (profiles||[]).forEach(function(p){ profileMap[p.id] = p; });
+            // 3. Compter messages non lus
             const convIds = data.map(c => c.id);
             const { data: unreadData } = await sb
-                .from('messages')
-                .select('conversation_id')
+                .from('messages').select('conversation_id')
                 .in('conversation_id', convIds)
                 .neq('sender_id', currentUser.id)
                 .is('read_at', null);
             const unreadMap = {};
-            (unreadData || []).forEach(function(m) {
-                unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1;
+            (unreadData||[]).forEach(function(m){
+                unreadMap[m.conversation_id] = (unreadMap[m.conversation_id]||0) + 1;
             });
-            return data.map(function(c) { return Object.assign({}, c, { unread_count: unreadMap[c.id] || 0 }); });
+            // 4. Assembler
+            return data.map(function(c) {
+                var otherId = c.user1_id === currentUser.id ? c.user2_id : c.user1_id;
+                var other = profileMap[otherId] || null;
+                return Object.assign({}, c, { other: other, other_id: otherId, unread_count: unreadMap[c.id]||0 });
+            });
         }
 
         async function sbSendMessage(conversationId, content) {
@@ -1737,17 +1749,12 @@ function goTo(page) {
     }
 }
 
-window._athletesLastLoad = 0;
-var _athletesInProgress = false;
 function loadRealAthletes() {
-    // Éviter les appels simultanés ET les appels trop rapprochés (< 1s)
-    if(_athletesInProgress) return;
-    var now = Date.now();
-    if(now - window._athletesLastLoad < 1000) return;
-    _athletesInProgress = true;
-    window._athletesLastLoad = now;
     var list = document.getElementById('athletes-list');
-    if(!list) { _athletesInProgress = false; return; }
+    if(!list) return;
+    // Si déjà en cours de chargement, ne pas relancer
+    if(list.dataset.loading === '1') return;
+    list.dataset.loading = '1';
     list.querySelectorAll('.real-athlete-card').forEach(function(c){c.remove();});
     var existingLoader = document.getElementById('athletes-loading');
     if(existingLoader) existingLoader.remove();
@@ -1757,9 +1764,9 @@ function loadRealAthletes() {
     loadingEl.textContent = '⏳ Chargement des athlètes…';
     list.insertAdjacentElement('afterbegin', loadingEl);
     var fn = window.sbGetAthletes;
-    if(typeof fn !== 'function') { loadingEl.remove(); _athletesInProgress = false; return; }
+    if(typeof fn !== 'function') { loadingEl.remove(); list.dataset.loading = '0'; return; }
     fn().then(function(athletes) {
-        _athletesInProgress = false;
+        list.dataset.loading = '0';
         var loader = document.getElementById('athletes-loading');
         if(loader) loader.remove();
         
@@ -1824,7 +1831,7 @@ function loadRealAthletes() {
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); if(typeof filterAthletes==='function') filterAthletes(); }
-    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); _athletesInProgress = false; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
+    }).catch(function(err){ console.error('loadRealAthletes erreur:', err); var list2=document.getElementById('athletes-list'); if(list2) list2.dataset.loading='0'; var l=document.getElementById('athletes-loading'); if(l) l.remove(); });
 }
 
 function openRealProfile(userId) {
@@ -1998,7 +2005,7 @@ function startGlobalMessagesSubscription() {
         event: 'INSERT', schema: 'public', table: 'profiles'
     }, function() {
         console.log('Nouveau profil détecté → rechargement athlètes');
-        window._athletesLastLoad = 0;
+        var alx=document.getElementById('athletes-list'); if(alx) alx.dataset.loading='0';
         var matchScreen = document.getElementById('screen-matching');
         if(matchScreen && matchScreen.classList.contains('active')) {
             if(typeof loadRealAthletes === 'function') loadRealAthletes();
@@ -2165,11 +2172,11 @@ async function loadConversationsList() {
         if(empty) empty.style.display = 'none';
 
         convs.forEach(function(conv) {
-            var other = conv.user1_id === currentUser.id ? conv.user2 : conv.user1;
-            if (!other) return;
-            var initials = (other.avatar_initials || ((other.prenom||'?')[0] + (other.pseudo||'?')[0]).toUpperCase());
-            var otherId = conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id;
-            var name = (other.prenom||'') + (other.pseudo ? ' @'+other.pseudo : '');
+            var other = conv.other || null;
+            var otherId = conv.other_id || (conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id);
+            var initials = other ? (other.avatar_initials || ((other.prenom||'?')[0] + (other.pseudo||'A')[0]).toUpperCase()) : '?';
+            var name = other ? ((other.prenom||'') + (other.pseudo ? ' @'+other.pseudo : '')) : 'Athlète';
+            if (!name.trim()) name = 'Athlète';
             var lastMsg = conv.last_message || 'Nouvelle conversation';
             var lastTime = conv.last_message_at ? new Date(conv.last_message_at) : null;
             var timeStr = lastTime ? (lastTime.getHours() + ':' + String(lastTime.getMinutes()).padStart(2,'0')) : '';
@@ -3578,9 +3585,8 @@ function toggleCompletFilter() {
         }
         showStatusToast('👋 À bientôt sur RaceMates !');
         // Reset flags de chargement uniquement
-        window._athletesLastLoad = 0;
-        window._athletesInProgress = false;
-        _athletesInProgress = false;
+        // reset athletes
+        var al=document.getElementById('athletes-list'); if(al) al.dataset.loading='0';
         // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
         if(typeof sbSignOut === 'function') sbSignOut().catch(function(){});
     }

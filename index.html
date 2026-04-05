@@ -2250,6 +2250,9 @@ function hideTyping() {
 function openSaved() {
     var modal = document.getElementById('saved-modal');
     if(modal) { modal.classList.add('open'); modal.scrollTop = 0; }
+    // Cacher la nav globale
+    var globalNav = document.querySelector('.bottom-nav:not(#saved-modal .bottom-nav)');
+    if(globalNav) globalNav.style.display = 'none';
     loadSavedProfiles();
 }
 async function loadSavedProfiles() {
@@ -2310,7 +2313,11 @@ function unsaveProfil(btn, userId) {
         showStatusToast('🗑 Profil retiré');
     }).catch(function(){ showStatusToast('⚠️ Erreur'); });
 }
-function closeSaved() { document.getElementById('saved-modal').classList.remove('open'); }
+function closeSaved() {
+    document.getElementById('saved-modal').classList.remove('open');
+    var globalNav = document.querySelector('.bottom-nav');
+    if(globalNav) globalNav.style.display = '';
+}
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); document.getElementById('profile-modal').scrollTop = 0; }
 function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
 function openNotifs() { document.getElementById('notif-panel').classList.add('open'); }

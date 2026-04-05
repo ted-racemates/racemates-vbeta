@@ -2383,7 +2383,6 @@ function unsaveProfil(el, userId) {
         var item = el.classList && el.classList.contains('saved-item') ? el : el.closest('.saved-item');
         if(item) item.remove();
         var remaining = document.querySelectorAll('#saved-profiles-list .saved-item').length;
-        // Mettre à jour tous les compteurs
         var countEl = document.getElementById('saved-modal-count');
         if(countEl) countEl.textContent = remaining + ' profil' + (remaining > 1 ? 's' : '');
         var homeEl = document.getElementById('qa-sub-saved');
@@ -2391,6 +2390,14 @@ function unsaveProfil(el, userId) {
         if(remaining === 0) {
             var empty = document.getElementById('saved-profiles-empty');
             if(empty) empty.style.display = '';
+        }
+        // Remettre le bouton 🔖 à son état initial sur la carte athlète
+        var saveBtn = document.querySelector('[data-user-id="'+userId+'"] .btn-save');
+        if(saveBtn) {
+            saveBtn.removeAttribute('data-saved');
+            saveBtn.style.background = '';
+            saveBtn.style.color = '';
+            saveBtn.textContent = '🔖';
         }
         showStatusToast('🗑 Profil retiré');
     }).catch(function(){ showStatusToast('⚠️ Erreur lors de la suppression'); });

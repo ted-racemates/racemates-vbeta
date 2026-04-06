@@ -2252,7 +2252,7 @@ var ADMIN_EMAIL = 'teddy.jarron@hotmail.com'; // email admin // ton email admin
 
 function openAdminModal() {
     if(!currentUser || currentUser.email !== ADMIN_EMAIL) {
-        showStatusToast('⛔ Accès réservé à l'admin');
+        showStatusToast('⛔ Accès admin uniquement');
         return;
     }
     document.getElementById('admin-modal').style.display = 'flex';
@@ -2324,7 +2324,7 @@ async function adminSaveEvent() {
     loadEvents(); // recharger l'écran events
 }
 async function adminDeleteEvent(id) {
-    if(!confirm('Supprimer cet événement ?')) return;
+    if(!window.confirm('Supprimer ?')) return;
     await sb.from('events').delete().eq('id', id);
     showStatusToast('🗑 Événement supprimé');
     adminLoadEvents();

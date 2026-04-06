@@ -2543,12 +2543,16 @@ function renderEvents(events) {
                 +'</div>'
                 +'<div class="ec-footer">'
                 +'<div class="ec-mates" id="mates-'+ev.id+'"><strong>—</strong> mates inscrits</div>'
-                +'<button class="'+btnClass+'" style="'+btnStyle+'" onclick="toggleEvent(this,''+ev.id+'')">'+btnText+'</button>'
+                +'<button class="'+btnClass+' event-join-btn" data-ev-id="'+ev.id+'" style="'+btnStyle+'">'+btnText+'</button>'
                 +'</div></div></div>';
         });
     });
 
     list.innerHTML = html;
+    // Attacher les événements via addEventListener (évite les erreurs de quotes)
+    list.querySelectorAll('.event-join-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { toggleEvent(this, this.getAttribute('data-ev-id')); });
+    });
     // Charger les compteurs de mates
     loadMatesCounts(events.map(function(e){ return e.id; }));
 }
@@ -2587,7 +2591,7 @@ function renderMyEvents(events) {
         div.style.cssText = 'background:rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between';
         div.innerHTML = '<div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;color:white;font-size:0.95em">'+ev.name+'</div>'
             +'<div style="font-size:0.72em;color:rgba(255,255,255,0.5);margin-top:2px">📍 '+ev.city+' · '+date+'</div></div>'
-            +'<button onclick="toggleEvent(this,''+ev.id+'')" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:4px 10px;color:white;font-size:0.72em;cursor:pointer">✅ Inscrit</button>';
+            +'<button data-evid="'+ev.id+'" class="toggle-event-btn joined" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:4px 10px;color:white;font-size:0.72em;cursor:pointer">✅ Inscrit</button>';
         if(empty) empty.after(div);
     });
 
@@ -2599,7 +2603,7 @@ function renderMyEvents(events) {
 }
 
 async function toggleEvent(btn, eventId) {
-    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour t'inscrire'); return; }
+    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour participer'); return; }
     var isJoined = btn.classList.contains('joined');
     btn.disabled = true;
     try {

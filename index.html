@@ -2284,10 +2284,20 @@ async function adminLoadEvents() {
             +'<div><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+ev.name+'</div>'
             +'<div style="font-size:0.75em;color:#64748B">'+ev.sport+' · '+ev.city+' · '+date+'</div></div>'
             +'<div style="display:flex;gap:6px;flex-shrink:0">'
-            +'<button onclick="adminEditEvent('+JSON.stringify(ev).replace(/"/g,"&quot;")+'" style="padding:6px 10px;background:#EFF4FF;color:#1E3A8A;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">✏️</button>'
-            +'<button onclick="adminDeleteEvent(''+ev.id+'')" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑</button>'
+            +'<button data-ev-id="'+ev.id+'" class="admin-edit-btn" style="padding:6px 10px;background:#EFF4FF;color:#1E3A8A;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">✏️</button>'
+            +'<button data-ev-id="'+ev.id+'" class="admin-del-btn" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑</button>'
             +'</div></div>';
     }).join('');
+    // Attacher les événements via addEventListener
+    list.querySelectorAll('.admin-edit-btn').forEach(function(btn) {
+        var evId = btn.getAttribute('data-ev-id');
+        var ev = events.find(function(e){ return e.id === evId; });
+        if(ev) btn.addEventListener('click', function(){ adminEditEvent(ev); });
+    });
+    list.querySelectorAll('.admin-del-btn').forEach(function(btn) {
+        var evId = btn.getAttribute('data-ev-id');
+        btn.addEventListener('click', function(){ adminDeleteEvent(evId); });
+    });
 }
 function adminEditEvent(ev) {
     document.getElementById('admin-ev-id').value = ev.id;

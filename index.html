@@ -1194,7 +1194,7 @@
 <div class="screen" id="screen-events">
     <div class="page-header" style="padding-bottom:42px">
         <div class="header-top"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><div class="user-av" onclick="goTo('profile')">TJ</div></div>
-        <div style="position:relative;z-index:2;margin-top:14px"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:0.9em">🔍</span><input style="width:100%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:24px;padding:10px 16px 10px 38px;font-size:0.85em;font-family:Barlow,sans-serif;color:white;outline:none" placeholder="Rechercher un événement..."></div>
+        <div style="position:relative;z-index:2;margin-top:14px"><span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:0.9em">🔍</span><input id="events-search" oninput="searchEvents(this.value)" style="width:100%;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:24px;padding:10px 16px 10px 38px;font-size:0.85em;font-family:Barlow,sans-serif;color:white;outline:none" placeholder="Rechercher un événement..."></div>
     </div>
     <div class="body">
         <!-- FILTRE SPORT EVENTS SCREEN -->
@@ -2627,6 +2627,26 @@ async function toggleEvent(btn, eventId) {
     btn.disabled = false;
 }
 
+function searchEvents(query) {
+    query = query.toLowerCase().trim();
+    document.querySelectorAll('#events-list .event-card').forEach(function(card) {
+        var name = card.querySelector('.ec-name');
+        var loc = card.querySelector('.ec-loc');
+        var text = ((name ? name.textContent : '') + ' ' + (loc ? loc.textContent : '')).toLowerCase();
+        card.style.display = (!query || text.includes(query)) ? '' : 'none';
+    });
+    // Cacher les headers de section si tous les events sont cachés
+    document.querySelectorAll('#events-list .section-title').forEach(function(hdr) {
+        var next = hdr.nextElementSibling;
+        var hasVisible = false;
+        while(next && next.classList.contains('event-card')) {
+            if(next.style.display !== 'none') hasVisible = true;
+            next = next.nextElementSibling;
+        }
+        hdr.style.display = hasVisible ? '' : 'none';
+    });
+}
+
 function filterEventsScreen(el, sport) {
     document.querySelectorAll('#events-sport-filter .fchip').forEach(function(c){ c.classList.remove('active'); });
     el.classList.add('active');
@@ -3883,7 +3903,7 @@ function toggleCompletFilter() {
             events.forEach(function(ev) {
                 var onClass = ev.on ? ' on' : '';
                 var badgeStyle = ev.badge === 'Worlds' ? 'background:#FFD700;color:#0A1628;font-weight:900' : (ev.badge === 'International' ? 'background:var(--blue-light);color:var(--blue)' : '');
-                html += '<div class="event-card-sel' + onClass + '" onclick="toggleEvent(this)" style="margin-bottom:6px">';
+                html += '<div class="event-card-sel' + onClass + '" onclick="toggleEventCard(this)" style="margin-bottom:6px">';
                 html += '<div class="ecs-dot"><div class="ecs-dot-inner"></div></div>';
                 html += '<div class="ecs-info"><div class="ecs-name">' + ev.name + '</div><div class="ecs-date">' + ev.date + '</div></div>';
                 html += '<div class="ecs-badge" style="' + badgeStyle + '">' + ev.badge + '</div></div>';
@@ -4805,7 +4825,7 @@ setPlan('free');
         document.querySelectorAll('[onclick*="'+group+'"]').forEach(function(c){c.classList.remove('on','on-blue');});
         el.classList.add('on');
     }
-    function toggleEvent(el){el.classList.toggle('on');}
+    function toggleEventCard(el){el.classList.toggle('on');}
     function toggleNeed(el){el.classList.toggle('on');}
     function selLevel(el){
         document.querySelectorAll('.level-card').forEach(function(c){c.classList.remove('on');});

@@ -615,6 +615,11 @@
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
             // Charger conversations et badge non-lus
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
+            // Charger les événements si on est sur l'écran events
+            var evScreen = document.getElementById('screen-events');
+            if(evScreen && evScreen.classList.contains('active')) {
+                setTimeout(function(){ if(typeof loadEvents==='function') loadEvents(); }, 400);
+            }
             // Charger le compteur profils sauvegardés
             if(currentUser) {
                 sb.from('saved_profiles').select('saved_user_id', {count:'exact'}).eq('user_id', currentUser.id)
@@ -2467,7 +2472,11 @@ var _myEventIds = new Set();
 var _activeEventFilter = 'all';
 
 async function loadEvents() {
-    if(!currentUser) return;
+    if(!currentUser) {
+        // Réessayer dans 1s si la session n'est pas encore restaurée
+        setTimeout(function(){ if(currentUser && typeof loadEvents==='function') loadEvents(); }, 1000);
+        return;
+    }
     var list = document.getElementById('events-list');
     if(!list) return;
 

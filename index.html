@@ -3913,28 +3913,38 @@ function toggleCompletFilter() {
 
 
     function logoutApp(){
-        // Reset UI immédiatement (synchrone)
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.querySelectorAll('.btn-join.joined').forEach(btn => {
-            btn.classList.remove('joined');
-            btn.textContent = '+ Je participe';
-            btn.style.background = ''; btn.style.color = '';
-            var card = btn.closest('.event-card');
-            if(card) card.classList.remove('registered');
-        });
-        var block = document.getElementById('my-events-block');
-        if(block) block.querySelectorAll('.my-event-card').forEach(el => el.remove());
-        // Cacher l'onboarding et ouvrir le modal de connexion
-        var overlay = document.getElementById('onboarding-overlay');
-        if(overlay) overlay.style.display = 'none';
+        showStatusToast('👋 À bientôt sur RaceMates !');
+        // Reset complet état
         window.myProfile = null;
         window._pendingAuth = null;
-        setTimeout(function(){ if(typeof openLoginModal==='function') openLoginModal(); }, 300);
-        showStatusToast('👋 À bientôt sur RaceMates !');
-        // Reset flags de chargement uniquement
-        // reset athletes
-                // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
-        if(typeof sbSignOut === 'function') sbSignOut().catch(function(){});
+        window._pendingProfileData = null;
+        currentUser = null;
+        currentProfile = null;
+        // Reset UI
+        document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+        var block = document.getElementById('my-events-block');
+        if(block) block.querySelectorAll('.my-event-card').forEach(function(el){ el.remove(); });
+        // Supabase signOut complet (efface le localStorage de session)
+        sb.auth.signOut().then(function() {
+            // Après signOut confirmé → afficher onboarding (page d'accueil inscription/connexion)
+            var overlay = document.getElementById('onboarding-overlay');
+            if(overlay) {
+                overlay.style.display = 'flex';
+                // Reset onboarding à la slide 1
+                if(typeof currentStep !== 'undefined') currentStep = 1;
+                document.querySelectorAll('.ob-slide').forEach(function(s){ s.classList.remove('active','leaving'); });
+                var s1 = document.getElementById('slide-1');
+                if(s1) s1.classList.add('active');
+                // Vider les champs
+                ['f-email','f-pseudo','f-password','f-password2','f-prenom','f-ville'].forEach(function(id){
+                    var el = document.getElementById(id);
+                    if(el) el.value = '';
+                });
+            }
+        }).catch(function(){ 
+            // En cas d'erreur, ouvrir quand même le modal login
+            if(typeof openLoginModal==='function') openLoginModal();
+        });
     }
 
 

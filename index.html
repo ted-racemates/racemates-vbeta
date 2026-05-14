@@ -1637,6 +1637,7 @@ function loadRealAthletes() {
             var needs = [];
             try { needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs||[]); } catch(e){}
             var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
+            var allSportKeys = sports.map(function(s){ return s.toLowerCase().replace(/[^a-z]/g,''); }).join(' ');
             var needTags = needs.map(function(n){
                 if(n.includes('Logement')) return 'logement';
                 if(n.includes('Duo')) return 'duo';
@@ -1644,7 +1645,7 @@ function loadRealAthletes() {
                 if(n.includes('Entra')) return 'training';
                 return '';
             }).join(' ');
-            var dataTags = (sportKey+' '+needTags+' dispo').trim();
+            var dataTags = (allSportKeys+' '+needTags+' dispo').trim();
             var sportBadges = sports.slice(0,2).map(function(s){return '<span class="badge badge-dark">'+s+'</span>';}).join('');
             var needBadges = needs.slice(0,2).map(function(n){
                 var icons={'Logement':'🏠','Partenaire Duo':'🏅','Relais':'⚡','Entra':'🤝'};
@@ -2725,9 +2726,15 @@ function filterAthletes() {
             });
         }
 
-        if(pillText.includes('toulouse')) showByPill = tags.includes('toulouse');
-        else if(pillText.includes('grand palais')) showByPill = tags.includes('grandpalais');
-        else if(pillText.includes('lyon')) showByPill = tags.includes('lyon');
+        // Filtre par sport (epill)
+        var activePillSport = activePill ? (activePill.getAttribute('data-sport')||'').toLowerCase() : 'all';
+        if(activePillSport && activePillSport !== 'all' && activePillSport !== 'tous') {
+            showByPill = tags.includes(activePillSport) || (card.getAttribute('data-sport')||'').toLowerCase() === activePillSport;
+        }
+        // Filtre par événement
+        if(pillText.includes('toulouse')) showByPill = showByPill && tags.includes('toulouse');
+        else if(pillText.includes('grand palais')) showByPill = showByPill && tags.includes('grandpalais');
+        else if(pillText.includes('lyon')) showByPill = showByPill && tags.includes('lyon');
 
         var visible = showByChip && showByPill;
         card.style.display = visible ? '' : 'none';

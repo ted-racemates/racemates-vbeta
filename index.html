@@ -3171,7 +3171,7 @@ function toggleCompletFilter() {
             var sport = (card.getAttribute('data-sport') || '').toLowerCase();
             var showByChip = false;
             var showByPill = true;
-            var showBySport = (activeSport === 'all' || sport === activeSport);
+            var showBySport = (activeSport === 'all' || sport === activeSport || tags.includes(activeSport));
 
             if(activeChips.length === 0 || activeChips.some(function(t){ return t.includes('tous'); })) {
                 showByChip = true;

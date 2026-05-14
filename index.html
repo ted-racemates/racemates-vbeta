@@ -615,6 +615,8 @@
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
             // Charger conversations et badge non-lus
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
+            // Charger les matchs récents sur la home
+            setTimeout(function(){ if(typeof loadHomeMatches==='function') loadHomeMatches(); }, 500);
             // Charger le compteur profils sauvegardés
             if(currentUser) {
                 sb.from('saved_profiles').select('saved_user_id', {count:'exact'}).eq('user_id', currentUser.id)
@@ -873,8 +875,7 @@
             <div class="qa-card" onclick="openSaved()"><div class="qa-icon">🔖</div><div class="qa-label">Profils sauvegardés</div><div class="qa-sub" id="qa-sub-saved">0 profil</div></div>
         </div>
         <div class="section-title" style="margin-bottom:10px">⚡ Nouveaux matchs <span class="section-link" onclick="goTo('sport-select')">Voir tout →</span></div>
-        <div class="mini-match-card" onclick="openAthleteProfile('SL','Sarah Lemaire','Lyon','1:08:22','Runner','98','Logement + Entraînement','Toulouse')"><div class="mmc-top"><div class="mmc-av">SL</div><div class="mmc-name">Sarah Lemaire · Lyon</div><div class="mmc-chrono">1:08:22</div></div><div class="mmc-body"><div class="mmc-badges"><span class="badge badge-dark">🏃 Runner</span><span class="badge badge-blue">🏠 Logement</span><span class="badge badge-training">🤝 Entraîn.</span></div><div class="match-pct">98%</div></div></div>
-        <div class="mini-match-card" onclick="openAthleteProfile('JD','Julie Durand','Bordeaux','1er Hyrox 🔥','Rookie','85','Logement + Entraînement','Toulouse')"><div class="mmc-top"><div class="mmc-av">JD</div><div class="mmc-name">Julie Durand · Bordeaux</div><div class="mmc-chrono" style="font-size:0.85em">1er Hyrox 🔥</div></div><div class="mmc-body"><div class="mmc-badges"><span class="badge badge-dark">😅 Rookie</span><span class="badge badge-blue">🏠 Logement</span><span class="badge badge-training">🤝 Entraîn.</span></div><div class="match-pct">85%</div></div></div>
+        <div id="home-matches-list"></div>
     </div>
 </div>
 
@@ -1039,93 +1040,6 @@
                 </div></div></div>
             <div class="athletes-list" id="athletes-list">
 
-                <!-- SARAH — Toulouse + Entraînement -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-sarah" data-tags="logement training toulouse confirmé" data-sport="hyrox" data-status="dispo"><div class="card-status-badge csb-dispo" id="status-badge-sarah">🟢 Dispo</div>
-                    <div class="card-lock-overlay" id="lock-sarah" onclick="openSubSwitcher()"><div class="card-lock-badge">🔒 <span id="lock-sarah-txt">Plan requis</span></div><div class="card-lock-sub" id="lock-sarah-sub"></div></div>
-                    <div class="ac-top"><div class="ac-av">SL</div><div class="ac-info"><div class="ac-name">Sarah Lemaire</div><div class="ac-loc">📍 Lyon · Toulouse</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">1:08:22</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏋️ Hyrox</span><span class="badge badge-dark">🏃 Runner</span><span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">Confirmée</span><span class="badge badge-blue">🏠 Logement</span><span class="badge badge-training">🤝 Entraîn.</span><span class="badge" style="background:#0A0A0A;color:#FFD700;font-size:0.62em;padding:2px 6px;border-radius:3px">📍 Toulouse</span><span class="match-pct">98%</span></div><div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:98%"></div></div><div class="compat-pct">98%</div></div><div class="ac-actions"><button class="btn-contact" id="btn-sarah">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- MARC — Grand Palais only -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-marc" data-tags="duo grandpalais intermédiaire" data-sport="running" data-status="dispo"><div class="card-status-badge csb-discussion" id="status-badge-marc">🟡 En discussion</div>
-                    <div class="card-lock-overlay" id="lock-marc" onclick="openSubSwitcher()"><div class="card-lock-badge">🔒 <span id="lock-marc-txt">Plan requis</span></div><div class="card-lock-sub" id="lock-marc-sub"></div></div>
-                    <div class="ac-top"><div class="ac-av">MR</div><div class="ac-info"><div class="ac-name">Marc Rousseau</div><div class="ac-loc">📍 Paris · Grand Palais</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">1:15:40</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏃 Running</span><span class="badge badge-dark">💪 Force</span><span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">Intermédiaire</span><span class="badge badge-blue">🏅 Duo</span><span class="badge" style="background:#0A0A0A;color:#FFD700;font-size:0.62em;padding:2px 6px;border-radius:3px">📍 Grand Palais</span><span class="match-pct">91%</span></div><div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:91%"></div></div><div class="compat-pct">91%</div></div><div class="ac-actions"><button class="btn-contact" id="btn-marc">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- JULIE — Toulouse + Entraînement -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-julie" data-tags="logement training toulouse débutant" data-sport="hyrox" data-status="dispo"><div class="card-status-badge csb-dispo" id="status-badge-julie">🟢 Dispo</div>
-                    <div class="card-lock-overlay" id="lock-julie" onclick="openSubSwitcher()"><div class="card-lock-badge">🔒 <span id="lock-julie-txt">Plan requis</span></div><div class="card-lock-sub" id="lock-julie-sub"></div></div>
-                    <div class="ac-top"><div class="ac-av">JD</div><div class="ac-info"><div class="ac-name">Julie Durand</div><div class="ac-loc">📍 Bordeaux · Toulouse</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">🔥 Statut</div><div class="ac-chrono-val" style="font-size:0.9em">1er Hyrox</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏋️ Hyrox</span><span class="badge badge-dark">😅 Rookie</span><span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">Débutante</span><span class="badge badge-blue">🏠 Logement</span><span class="badge badge-training">🤝 Entraîn.</span><span class="badge" style="background:#0A0A0A;color:#FFD700;font-size:0.62em;padding:2px 6px;border-radius:3px">📍 Toulouse</span><span class="match-pct">85%</span></div><div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:85%"></div></div><div class="compat-pct">85%</div></div><div class="ac-actions"><button class="btn-contact" id="btn-julie">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- ALEX — Toulouse + Entraînement uniquement -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-alex" data-tags="training toulouse intermédiaire" data-sport="trail" data-status="dispo"><div class="card-status-badge csb-dispo" id="status-badge-alex">🟢 Dispo</div>
-                    <div class="card-lock-overlay" id="lock-alex" onclick="openSubSwitcher()"><div class="card-lock-badge">🔒 <span id="lock-alex-txt">Plan requis</span></div><div class="card-lock-sub" id="lock-alex-sub"></div></div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#065F46,#059669)">AL</div><div class="ac-info"><div class="ac-name">Alex Laurent</div><div class="ac-loc">📍 Bordeaux · Toulouse</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Pace</div><div class="ac-chrono-val">5:10/km</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🌿 Trail</span><span class="badge badge-dark">⚡ Hybride</span><span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">Intermédiaire</span><span class="badge badge-training">🤝 Entraîn.</span><span class="badge" style="background:#0A0A0A;color:#FFD700;font-size:0.62em;padding:2px 6px;border-radius:3px">📍 Toulouse</span><span class="match-pct">79%</span></div><div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:79%"></div></div><div class="compat-pct">79%</div></div><div class="ac-actions"><button class="btn-contact" id="btn-alex">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- EMMA — Grand Palais uniquement -->
-                <div class="athlete-card complet" id="card-emma" data-tags="logement grandpalais confirmé" data-sport="triathlon" data-status="complet"><div class="card-status-badge csb-complet" id="status-badge-emma">🔴 Complet</div>
-                    <div class="card-lock-overlay" id="lock-emma" onclick="openSubSwitcher()"><div class="card-lock-badge">🔒 <span id="lock-emma-txt">Plan requis</span></div><div class="card-lock-sub" id="lock-emma-sub"></div></div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#7C3AED,#4F46E5)">EF</div><div class="ac-info"><div class="ac-name">Emma Fontaine</div><div class="ac-loc">📍 Paris · Grand Palais</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">1:11:30</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏋️ Hyrox</span><span class="badge badge-dark">🏃 Runner</span><span class="badge" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1">Confirmée</span><span class="badge badge-blue">🏠 Logement</span><span class="badge" style="background:#0A0A0A;color:#FFD700;font-size:0.62em;padding:2px 6px;border-radius:3px">📍 Grand Palais</span><span class="match-pct">88%</span></div><div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:88%"></div></div><div class="compat-pct">88%</div></div><div class="ac-actions"><button class="btn-contact" id="btn-emma">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- TRIATHLON ATHLETES -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-lucie" data-tags="logement training ironman nice confirmé" data-sport="triathlon" data-status="dispo">
-                    <div class="card-status-badge csb-dispo">🟢 Dispo</div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1E3A5F,#1E4D8C)">LM</div><div class="ac-info"><div class="ac-name">Lucie Moreau</div><div class="ac-loc">📍 Nice · PACA</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">10:42:00</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏊 Triathlon</span><span class="badge badge-dark">🌟 Confirmée</span><span class="badge badge-blue">🏠 Logement</span><span class="match-pct">91%</span></div>
-                    <div class="ac-bio">Ironman Nice 2026, cherche coloc sur Nice et partenaire run/vélo. Groupe swim déjà constitué.</div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Lucie Moreau','LM','online','🏊 Ironman Nice · Juin 2026')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-theo" data-tags="duo triathlon paris triathlonparis intermédiaire" data-sport="triathlon" data-status="dispo">
-                    <div class="card-status-badge csb-dispo">🟢 Dispo</div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1E4D8C,#3B82F6)">TB</div><div class="ac-info"><div class="ac-name">Théo Blanc</div><div class="ac-loc">📍 Paris · Île-de-France</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">5:15:30</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏊 Triathlon</span><span class="badge badge-dark">🏃 Intermédiaire</span><span class="badge badge-blue">🏅 Duo</span><span class="match-pct">84%</span></div>
-                    <div class="ac-bio">Triathlon Paris 2026 en M. Cherche partenaire pour s'entraîner et partager les frais de déplacement.</div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Théo Blanc','TB','offline','🏊 Triathlon Paris · Juil 2026')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- CROSSFIT ATHLETES -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-romain" data-tags="training crossfit toulouse throwdown confirmé" data-sport="crossfit" data-status="dispo">
-                    <div class="card-status-badge csb-dispo">🟢 Dispo</div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1C1917,#44403C)">RD</div><div class="ac-info"><div class="ac-name">Romain Dupont</div><div class="ac-loc">📍 Toulouse · Occitanie</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">🏆 Niveau</div><div class="ac-chrono-val">RX+</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">💪 CrossFit</span><span class="badge badge-dark">🌟 Confirmé</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">88%</span></div>
-                    <div class="ac-bio">French Throwdown 2026 en prépa. Box CrossFit Toulouse, cherche partenaire WOD matin 6h.</div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Romain Dupont','RD','online','💪 CrossFit Open · Mars 2026')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- SPARTAN ATHLETES -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-nina" data-tags="logement spartan lyon spartanlyon intermédiaire" data-sport="spartan" data-status="dispo">
-                    <div class="card-status-badge csb-dispo">🟢 Dispo</div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#7F1D1D,#991B1B)">NF</div><div class="ac-info"><div class="ac-name">Nina Faure</div><div class="ac-loc">📍 Lyon · Auvergne-R.A.</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">🧱 Race</div><div class="ac-chrono-val">Beast</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🧱 Spartan</span><span class="badge badge-dark">🏃 Intermédiaire</span><span class="badge badge-blue">🏠 Logement</span><span class="match-pct">79%</span></div>
-                    <div class="ac-bio">Spartan Beast Lyon avril 2026. Cherche coloc sur place et équipe pour la race.</div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Nina Faure','NF','online','🧱 Spartan Lyon · Avr 2026')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- TRAIL ATHLETES -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-nina2" data-tags="training trail chamonix utmb confirmé" data-sport="trail" data-status="dispo">
-                    <div class="card-status-badge csb-dispo">🟢 Dispo</div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#064E3B,#065F46)">NB</div><div class="ac-info"><div class="ac-name">Nina Bernard</div><div class="ac-loc">📍 Grenoble · Auvergne-R.A.</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Pace</div><div class="ac-chrono-val">6:30/km</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🌿 Trail</span><span class="badge badge-dark">🌟 Confirmée</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">86%</span></div>
-                    <div class="ac-bio">UTMB 2026. Cherche groupe trail Grenoble/Chartreuse pour sorties longues WE.</div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Nina Bernard','NB','offline','🌿 UTMB · Août 2026')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
-
-                <!-- MUSCULATION ATHLETES -->
-                <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" id="card-kevin" data-tags="training musculation paris confirmé" data-sport="musculation" data-status="dispo">
-                    <div class="card-status-badge csb-dispo">🟢 Dispo</div>
-                    <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1E1B4B,#3730A3)">KM</div><div class="ac-info"><div class="ac-name">Kévin Martin</div><div class="ac-loc">📍 Paris · Île-de-France</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">💪 Squat</div><div class="ac-chrono-val">180kg</div></div></div>
-                    <div class="ac-body"><div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏋️‍♂️ Muscu</span><span class="badge badge-dark">🌟 Confirmé</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">75%</span></div>
-                    <div class="ac-bio">Cherche partenaire salle Paris 15e, powerlifting focus. Séances lundi/mercredi/vendredi matin.</div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Kévin Martin','KM','online','🏋️‍♂️ Musculation · Paris')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div></div>
-                </div>
 
             </div>
         </div>
@@ -2191,8 +2105,22 @@ async function loadConversationsList() {
             card.setAttribute('data-conv-id', conv.id);
             var unreadBadge = isUnread ? '<div class="conv-badge">'+conv.unread_count+'</div>' : '';
             card.innerHTML = '<div class="conv-av-wrap"><div class="conv-av" style="background:'+color+'">'+initials+'</div></div>'
-                + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+(isUnread?'<strong>'+name+'</strong>':name)+'</div><div class="conv-time">'+timeStr+'</div></div>'
+                + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+(isUnread?'<strong>'+name+'</strong>':name)+'</div>'
+                + '<div style="display:flex;align-items:center;gap:6px"><div class="conv-time">'+timeStr+'</div>'
+                + '<button class="conv-del-btn" style="background:none;border:none;color:#CBD5E1;font-size:1em;cursor:pointer;padding:2px 6px;line-height:1" title="Supprimer">✕</button></div></div>'
                 + '<div class="conv-meta"><div class="conv-preview">'+(isUnread?'<strong>'+lastMsg+'</strong>':lastMsg)+'</div>'+unreadBadge+'</div></div>';
+            // Bouton supprimer conversation
+            (function(convId, c) {
+                var delBtn = c.querySelector('.conv-del-btn');
+                if(delBtn) delBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if(!window.confirm('Supprimer cette conversation ?')) return;
+                    sb.from('messages').delete().eq('conversation_id', convId)
+                        .then(function(){ return sb.from('conversations').delete().eq('id', convId); })
+                        .then(function(){ c.remove(); showStatusToast('🗑 Conversation supprimée'); })
+                        .catch(function(){ showStatusToast('⚠️ Erreur'); });
+                });
+            })(conv.id, card);
             card.onclick = function() {
                 _currentConvId = conv.id;
                 _currentConvUserId = otherId;
@@ -3043,20 +2971,34 @@ document.getElementById('profile-modal-contact-btn').onclick = function() {
 // saved-btn-julie supprimé
 // saved-btn-alex supprimé
 
-// Attacher les listeners des profils fictifs via addEventListener
-(function() {
-    var fakeContacts = {
-        'btn-sarah': function(){ contactAndChat('Sarah Lemaire','SL','online','🏠 Hyrox Toulouse'); },
-        'btn-marc':  function(){ contactAndChat('Marc Rousseau','MR','online','🏅 Hyrox Grand Palais'); },
-        'btn-julie': function(){ contactAndChat('Julie Durand','JD','offline','🏠 Hyrox Toulouse'); },
-        'btn-alex':  function(){ contactAndChat('Alex Laurent','AL','offline','🤝 Entraînement'); },
-        'btn-emma':  function(){ contactAndChat('Emma Girard','EG','online','🏠 Hyrox Grand Palais'); }
-    };
-    Object.keys(fakeContacts).forEach(function(id) {
-        var el = document.getElementById(id);
-        if(el) el.addEventListener('click', fakeContacts[id]);
+// listeners fictifs supprimés
+
+// Charger les vrais matchs récents sur l'accueil
+async function loadHomeMatches() {
+    if(!currentUser) return;
+    var list = document.getElementById('home-matches-list');
+    if(!list) return;
+    var { data: athletes } = await sb.from('profiles').select('id,prenom,pseudo,ville,sports,best_time,avatar_initials')
+        .neq('id', currentUser.id).limit(3).order('created_at', { ascending: false });
+    if(!athletes || athletes.length === 0) { list.innerHTML = '<div style="color:var(--grey);font-size:0.85em;text-align:center;padding:12px">Aucun match pour le moment.</div>'; return; }
+    list.innerHTML = athletes.map(function(a) {
+        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
+        var name = (a.prenom||'') + (a.pseudo?' @'+a.pseudo:'') + ' · ' + (a.ville||'');
+        var badge = sports[0] ? '<span class="badge badge-dark">'+sports[0]+'</span>' : '';
+        return '<div class="mini-match-card" data-uid="'+a.id+'">'
+            +'<div class="mmc-top"><div class="mmc-av">'+initials+'</div>'
+            +'<div class="mmc-name">'+name+'</div>'
+            +'<div class="mmc-chrono">'+(a.best_time||'')+'</div></div>'
+            +'<div class="mmc-body"><div class="mmc-badges">'+badge+'</div>'
+            +'<div class="match-pct">✅</div></div></div>';
+    }).join('');
+    list.querySelectorAll('.mini-match-card').forEach(function(card) {
+        card.addEventListener('click', function() { openRealProfile(card.getAttribute('data-uid')); });
     });
-})();
+    var statMatch = document.getElementById('stat-val-matches');
+    if(statMatch) statMatch.textContent = athletes.length;
+}
 
 
 // ===================== STATUS SYSTEM =====================
@@ -3404,9 +3346,6 @@ function toggleCompletFilter() {
                 console.log('sbSignUp userId:', userId);
                 if(userId) {
                     var fn = window.sbUpdateProfile || sbUpdateProfile;
-                    // Uploader la photo si présente
-                    var photoUrl = await uploadProfilePhoto(userId);
-                    if(photoUrl) profileData.avatar_url = photoUrl;
                     await fn(profileData, userId);
                     console.log('✅ Profil complet envoyé à Supabase');
                 } else {
@@ -3953,21 +3892,16 @@ function toggleCompletFilter() {
         });
         var block = document.getElementById('my-events-block');
         if(block) block.querySelectorAll('.my-event-card').forEach(el => el.remove());
-        // Afficher l'écran de connexion (pas l'onboarding complet)
+        // Cacher l'onboarding et ouvrir le modal de connexion
         var overlay = document.getElementById('onboarding-overlay');
         if(overlay) overlay.style.display = 'none';
-        // Ouvrir le modal de connexion
-        setTimeout(function(){
-            if(typeof openLoginModal === 'function') openLoginModal();
-        }, 300);
-        showStatusToast('👋 À bientôt sur RaceMates !');
-        // Reset complet du profil
         window.myProfile = null;
         window._pendingAuth = null;
-        window._pendingProfileData = null;
-        // Reset athletes
-        window._athletesLoadedAt = 0;
-        // Supabase sign out
+        setTimeout(function(){ if(typeof openLoginModal==='function') openLoginModal(); }, 300);
+        showStatusToast('👋 À bientôt sur RaceMates !');
+        // Reset flags de chargement uniquement
+        // reset athletes
+                // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
         if(typeof sbSignOut === 'function') sbSignOut().catch(function(){});
     }
 
@@ -4838,35 +4772,10 @@ setPlan('free');
     function triggerPhoto(){document.getElementById('photo-input').click();}
     function handlePhoto(input){
         if(input.files&&input.files[0]){
-            var file = input.files[0];
-            // Aperçu local immédiat
             var r=new FileReader();
-            r.onload=function(e){
-                document.getElementById('photo-preview').src=e.target.result;
-                document.getElementById('photo-upload').classList.add('has-photo');
-            };
-            r.readAsDataURL(file);
-            // Stocker le fichier pour upload après inscription
-            window._pendingPhotoFile = file;
+            r.onload=function(e){document.getElementById('photo-preview').src=e.target.result;document.getElementById('photo-upload').classList.add('has-photo');};
+            r.readAsDataURL(input.files[0]);
         }
-    }
-
-    async function uploadProfilePhoto(userId) {
-        if(!window._pendingPhotoFile || !userId) return null;
-        var file = window._pendingPhotoFile;
-        var ext = file.name.split('.').pop() || 'jpg';
-        var path = 'avatars/' + userId + '.' + ext;
-        var sb = window._sbClient || (typeof createClient !== 'undefined' ? null : null);
-        // Utiliser le client Supabase global
-        var client = window.sb || (typeof sb !== 'undefined' ? sb : null);
-        if(!client) return null;
-        try {
-            var { error } = await client.storage.from('avatars').upload(path, file, { upsert: true });
-            if(error) { console.warn('Photo upload error:', error.message); return null; }
-            var { data } = client.storage.from('avatars').getPublicUrl(path);
-            window._pendingPhotoFile = null;
-            return data ? data.publicUrl : null;
-        } catch(e) { console.warn('Photo upload:', e); return null; }
     }
     function selSingle(el,group){
         document.querySelectorAll('[onclick*="'+group+'"]').forEach(function(c){c.classList.remove('on','on-blue');});

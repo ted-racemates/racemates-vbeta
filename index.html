@@ -3404,6 +3404,9 @@ function toggleCompletFilter() {
                 console.log('sbSignUp userId:', userId);
                 if(userId) {
                     var fn = window.sbUpdateProfile || sbUpdateProfile;
+                    // Uploader la photo si présente
+                    var photoUrl = await uploadProfilePhoto(userId);
+                    if(photoUrl) profileData.avatar_url = photoUrl;
                     await fn(profileData, userId);
                     console.log('✅ Profil complet envoyé à Supabase');
                 } else {
@@ -3950,25 +3953,21 @@ function toggleCompletFilter() {
         });
         var block = document.getElementById('my-events-block');
         if(block) block.querySelectorAll('.my-event-card').forEach(el => el.remove());
-        // Réafficher onboarding slide 1
+        // Afficher l'écran de connexion (pas l'onboarding complet)
         var overlay = document.getElementById('onboarding-overlay');
-        if(overlay){
-            overlay.style.display = 'flex';
-            currentStep = 1;
-            document.querySelectorAll('.ob-slide').forEach(s => s.classList.remove('active','leaving'));
-            // Vider les champs
-            ['f-email','f-pseudo','f-password','f-password2','f-prenom','f-ville'].forEach(id => {
-                var el = document.getElementById(id);
-                if(el) el.value = '';
-            });
-            var s1 = document.getElementById('slide-1');
-            if(s1) s1.classList.add('active');
-            if(typeof updateProgress === 'function') updateProgress();
-        }
+        if(overlay) overlay.style.display = 'none';
+        // Ouvrir le modal de connexion
+        setTimeout(function(){
+            if(typeof openLoginModal === 'function') openLoginModal();
+        }, 300);
         showStatusToast('👋 À bientôt sur RaceMates !');
-        // Reset flags de chargement uniquement
-        // reset athletes
-                // Supabase sign out (déclenche onAuthStateChange → SIGNED_OUT → nettoie realtime)
+        // Reset complet du profil
+        window.myProfile = null;
+        window._pendingAuth = null;
+        window._pendingProfileData = null;
+        // Reset athletes
+        window._athletesLoadedAt = 0;
+        // Supabase sign out
         if(typeof sbSignOut === 'function') sbSignOut().catch(function(){});
     }
 
@@ -4839,10 +4838,35 @@ setPlan('free');
     function triggerPhoto(){document.getElementById('photo-input').click();}
     function handlePhoto(input){
         if(input.files&&input.files[0]){
+            var file = input.files[0];
+            // Aperçu local immédiat
             var r=new FileReader();
-            r.onload=function(e){document.getElementById('photo-preview').src=e.target.result;document.getElementById('photo-upload').classList.add('has-photo');};
-            r.readAsDataURL(input.files[0]);
+            r.onload=function(e){
+                document.getElementById('photo-preview').src=e.target.result;
+                document.getElementById('photo-upload').classList.add('has-photo');
+            };
+            r.readAsDataURL(file);
+            // Stocker le fichier pour upload après inscription
+            window._pendingPhotoFile = file;
         }
+    }
+
+    async function uploadProfilePhoto(userId) {
+        if(!window._pendingPhotoFile || !userId) return null;
+        var file = window._pendingPhotoFile;
+        var ext = file.name.split('.').pop() || 'jpg';
+        var path = 'avatars/' + userId + '.' + ext;
+        var sb = window._sbClient || (typeof createClient !== 'undefined' ? null : null);
+        // Utiliser le client Supabase global
+        var client = window.sb || (typeof sb !== 'undefined' ? sb : null);
+        if(!client) return null;
+        try {
+            var { error } = await client.storage.from('avatars').upload(path, file, { upsert: true });
+            if(error) { console.warn('Photo upload error:', error.message); return null; }
+            var { data } = client.storage.from('avatars').getPublicUrl(path);
+            window._pendingPhotoFile = null;
+            return data ? data.publicUrl : null;
+        } catch(e) { console.warn('Photo upload:', e); return null; }
     }
     function selSingle(el,group){
         document.querySelectorAll('[onclick*="'+group+'"]').forEach(function(c){c.classList.remove('on','on-blue');});

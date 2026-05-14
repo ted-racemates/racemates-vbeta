@@ -1849,6 +1849,7 @@ function openRealChat(userId) {
     window._chatFromProfile = false;
     if(!userId) { console.error('openRealChat: userId manquant'); return; }
     if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour contacter'); return; }
+    if(currentPlan === 'free') { openSubSwitcher(); return; }
     console.log('openRealChat:', userId);
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
@@ -2962,11 +2963,13 @@ function setPlan(plan) {
             btn.style.cursor = 'pointer';
             btn.style.opacity = '1';
             btn.disabled = false;
+            btn.removeAttribute('data-locked');
         } else {
             btn.style.background = '#94A3B8';
             btn.style.cursor = 'not-allowed';
             btn.style.opacity = '0.7';
-            btn.onclick = function(){ openSubSwitcher(); };
+            btn.setAttribute('data-locked', '1');
+            // Ne pas écraser onclick — intercepter via data-locked
         }
     });
     // Lodging access

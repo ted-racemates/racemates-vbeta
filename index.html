@@ -1847,10 +1847,12 @@ async function loadProfileReviews(userId) {
 
 function openRealChat(userId) {
     window._chatFromProfile = false;
-    if(!userId) return;
+    if(!userId) { console.error('openRealChat: userId manquant'); return; }
+    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour contacter'); return; }
+    console.log('openRealChat:', userId);
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
-        if(!a) return;
+        if(!a) { console.error('openRealChat: profil non trouvé pour', userId); return; }
         var sports=[];
         try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
         var initials=a.avatar_initials||((a.prenom||'?')[0]+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
@@ -2467,7 +2469,10 @@ var _myEventIds = new Set();
 var _activeEventFilter = 'all';
 
 async function loadEvents() {
-    if(!currentUser) return;
+    if(!currentUser) {
+        setTimeout(function(){ if(currentUser) loadEvents(); }, 1000);
+        return;
+    }
     var list = document.getElementById('events-list');
     if(!list) return;
 
@@ -3034,6 +3039,21 @@ document.getElementById('profile-modal-contact-btn').onclick = function() {
 // boutons fictifs supprimés
 // saved-btn-julie supprimé
 // saved-btn-alex supprimé
+
+// Attacher les listeners des profils fictifs via addEventListener
+(function() {
+    var fakeContacts = {
+        'btn-sarah': function(){ contactAndChat('Sarah Lemaire','SL','online','🏠 Hyrox Toulouse'); },
+        'btn-marc':  function(){ contactAndChat('Marc Rousseau','MR','online','🏅 Hyrox Grand Palais'); },
+        'btn-julie': function(){ contactAndChat('Julie Durand','JD','offline','🏠 Hyrox Toulouse'); },
+        'btn-alex':  function(){ contactAndChat('Alex Laurent','AL','offline','🤝 Entraînement'); },
+        'btn-emma':  function(){ contactAndChat('Emma Girard','EG','online','🏠 Hyrox Grand Palais'); }
+    };
+    Object.keys(fakeContacts).forEach(function(id) {
+        var el = document.getElementById(id);
+        if(el) el.addEventListener('click', fakeContacts[id]);
+    });
+})();
 
 
 // ===================== STATUS SYSTEM =====================

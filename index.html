@@ -617,6 +617,8 @@
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
             // Charger les matchs récents sur la home
             setTimeout(function(){ if(typeof loadHomeMatches==='function') loadHomeMatches(); }, 500);
+            // Mettre à jour les compteurs sport
+            setTimeout(function(){ if(typeof updateSportCounts==='function') updateSportCounts(); }, 600);
             // Charger le compteur profils sauvegardés
             if(currentUser) {
                 sb.from('saved_profiles').select('saved_user_id', {count:'exact'}).eq('user_id', currentUser.id)
@@ -2973,6 +2975,36 @@ document.getElementById('profile-modal-contact-btn').onclick = function() {
 
 // listeners fictifs supprimés
 
+// Mettre à jour les compteurs réels dans le sport-select
+async function updateSportCounts() {
+    var { data: profiles } = await sb.from('profiles').select('sports');
+    if(!profiles) return;
+    var counts = {};
+    profiles.forEach(function(p) {
+        var sports = [];
+        try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}
+        sports.forEach(function(s) {
+            var key = s.toLowerCase().replace(/[^a-z]/g,'');
+            counts[key] = (counts[key]||0) + 1;
+        });
+    });
+    // Mapper les IDs des compteurs sport-select
+    var map = {
+        'hyrox': 'ssc-hyrox',
+        'athx': 'ssc-athx',
+        'running': 'ssc-running',
+        'trail': 'ssc-trail',
+        'triathlon': 'ssc-triathlon',
+        'spartan': 'ssc-spartan',
+        'crossfit': 'ssc-crossfit',
+        'musculation': 'ssc-musculation'
+    };
+    Object.keys(map).forEach(function(key) {
+        var el = document.getElementById(map[key]);
+        if(el) el.textContent = (counts[key]||0) + ' athlète' + ((counts[key]||0) > 1 ? 's' : '');
+    });
+}
+
 // Charger les vrais matchs récents sur l'accueil
 async function loadHomeMatches() {
     if(!currentUser) return;
@@ -2985,12 +3017,12 @@ async function loadHomeMatches() {
         var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
         var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
         var name = (a.prenom||'') + (a.pseudo?' @'+a.pseudo:'') + ' · ' + (a.ville||'');
-        var badge = sports[0] ? '<span class="badge badge-dark">'+sports[0]+'</span>' : '';
+        var badges = sports.slice(0,3).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
         return '<div class="mini-match-card" data-uid="'+a.id+'">'
             +'<div class="mmc-top"><div class="mmc-av">'+initials+'</div>'
             +'<div class="mmc-name">'+name+'</div>'
             +'<div class="mmc-chrono">'+(a.best_time||'')+'</div></div>'
-            +'<div class="mmc-body"><div class="mmc-badges">'+badge+'</div>'
+            +'<div class="mmc-body"><div class="mmc-badges">'+badges+'</div>'
             +'<div class="match-pct">✅</div></div></div>';
     }).join('');
     list.querySelectorAll('.mini-match-card').forEach(function(card) {

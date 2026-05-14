@@ -1646,7 +1646,7 @@ function loadRealAthletes() {
                 return '';
             }).join(' ');
             var dataTags = (allSportKeys+' '+needTags+' dispo').trim();
-            var sportBadges = sports.slice(0,2).map(function(s){return '<span class="badge badge-dark">'+s+'</span>';}).join('');
+            var sportBadges = sports.slice(0,4).map(function(s){return '<span class="badge badge-dark">'+s+'</span>';}).join('');
             var needBadges = needs.slice(0,2).map(function(n){
                 var icons={'Logement':'🏠','Partenaire Duo':'🏅','Relais':'⚡','Entra':'🤝'};
                 var key=Object.keys(icons).find(function(k){return n.includes(k);});
@@ -2726,12 +2726,14 @@ function filterAthletes() {
             });
         }
 
-        // Filtre par sport (epill)
-        var activePillSport = activePill ? (activePill.getAttribute('data-sport')||'').toLowerCase() : 'all';
-        if(activePillSport && activePillSport !== 'all' && activePillSport !== 'tous') {
-            showByPill = tags.includes(activePillSport) || (card.getAttribute('data-sport')||'').toLowerCase() === activePillSport;
+        // Filtre par sport (epill) - vérifier dans data-tags ET data-sport
+        var activePillSport = activePill ? (activePill.getAttribute('data-sport')||'').toLowerCase().replace(/[^a-z]/g,'') : 'all';
+        if(activePillSport && activePillSport !== 'all' && !pillText.includes('tous')) {
+            var cardTags = (card.getAttribute('data-tags')||'').toLowerCase();
+            var cardSport = (card.getAttribute('data-sport')||'').toLowerCase().replace(/[^a-z]/g,'');
+            showByPill = cardTags.includes(activePillSport) || cardSport === activePillSport;
         }
-        // Filtre par événement
+        // Filtre par événement (ne remplace pas le filtre sport)
         if(pillText.includes('toulouse')) showByPill = showByPill && tags.includes('toulouse');
         else if(pillText.includes('grand palais')) showByPill = showByPill && tags.includes('grandpalais');
         else if(pillText.includes('lyon')) showByPill = showByPill && tags.includes('lyon');
@@ -2892,22 +2894,13 @@ function setPlan(plan) {
     };
     var banner = document.getElementById('access-banner');
     if(banner) banner.innerHTML = banners[plan] || '';
-    // Lock/unlock contact buttons based on plan
-    var canContact = (plan !== 'free');
+    // Bouton contacter toujours actif - pas de blocage par plan
     document.querySelectorAll('.btn-contact, [id^="contact-btn-"]').forEach(function(btn){
-        if(canContact) {
-            btn.style.background = 'var(--red)';
-            btn.style.cursor = 'pointer';
-            btn.style.opacity = '1';
-            btn.disabled = false;
-            btn.removeAttribute('data-locked');
-        } else {
-            btn.style.background = '#94A3B8';
-            btn.style.cursor = 'not-allowed';
-            btn.style.opacity = '0.7';
-            btn.setAttribute('data-locked', '1');
-            // Ne pas écraser onclick — intercepter via data-locked
-        }
+        btn.style.background = 'var(--red)';
+        btn.style.cursor = 'pointer';
+        btn.style.opacity = '1';
+        btn.disabled = false;
+        btn.removeAttribute('data-locked');
     });
     // Lodging access
     var lodgingCol = document.getElementById('lodging-col');

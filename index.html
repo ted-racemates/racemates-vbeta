@@ -2922,24 +2922,31 @@ async function loadTraining() {
     if(loading) loading.style.display = '';
     if(empty) empty.style.display = 'none';
 
-    // Charger les profils qui cherchent un partenaire d'entraînement
-    var { data } = await sb.from('profiles').select('*')
-        .neq('id', currentUser.id)
-        .contains('needs', ['Entraînement']);
+    // Charger TOUS les profils (sauf soi-même), filtrer côté JS sur needs
+    var { data, error } = await sb.from('profiles').select('*').neq('id', currentUser.id).limit(50);
+    if(error) { console.error('loadTraining error:', error.message); data = []; }
+    console.log('loadTraining: total profils reçus =', (data||[]).length);
+
+    // Filtrer côté JS les profils cherchant un partenaire entraînement
+    var filtered = (data||[]).filter(function(a) {
+        try {
+            var needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs || []);
+            return needs.some(function(n){ return (n||'').toLowerCase().includes('entra'); });
+        } catch(e) { return false; }
+    });
+    console.log('loadTraining: profils avec needs=Entrainement =', filtered.length);
+
+    // Si aucun profil avec needs=Entraînement, afficher tous
+    var athletes = filtered.length > 0 ? filtered : (data || []);
+    console.log('loadTraining: profils affichés =', athletes.length);
 
     if(loading) loading.style.display = 'none';
 
-    // Si pas de needs=Entraînement, charger tous
-    if(!data || data.length === 0) {
-        var res = await sb.from('profiles').select('*').neq('id', currentUser.id).limit(20);
-        data = res.data || [];
-    }
-
-    _trainingData = data;
+    _trainingData = athletes;
     // Mettre à jour le compteur accueil
     var homeTraining = document.getElementById('qa-sub-training');
-    if(homeTraining) homeTraining.textContent = data.length + ' disponible' + (data.length > 1 ? 's' : '');
-    renderTraining(data);
+    if(homeTraining) homeTraining.textContent = athletes.length + ' disponible' + (athletes.length > 1 ? 's' : '');
+    renderTraining(athletes);
 }
 
 function renderTraining(athletes) {
@@ -2961,14 +2968,19 @@ function renderTraining(athletes) {
         'hauts-de-france': ['lille','amiens','dunkerque','valenciennes','lens','calais','roubaix','tourcoing']
     };
 
+    // Utiliser les variables globales (source de vérité unique)
+    var activeSport = _trainingActiveSport || 'all';
+    var activeReg = _trainingActiveRegion || 'all';
+    var normSport = activeSport.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+
     var filtered = athletes.filter(function(a) {
         var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
-        var sportMatch = _trainingActiveSport === 'all' || sports.some(function(s){
-            return s.toLowerCase().replace(/[^a-z]/g,'').includes(_trainingActiveSport.replace(/[^a-z]/g,''));
+        var sportMatch = activeSport === 'all' || sports.some(function(s){
+            return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'').includes(normSport);
         });
-        var ville = (a.ville||'').toLowerCase().replace(/[éèêë]/g,'e').replace(/[àâ]/g,'a').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/[^a-z0-9 ]/g,'');
-        var regionVilles = REGION_VILLES[_trainingActiveRegion] || [];
-        var regionMatch = _trainingActiveRegion === 'all' || regionVilles.some(function(v){ return ville.includes(v); });
+        var ville = (a.ville||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'');
+        var regionVilles = REGION_VILLES[activeReg] || [];
+        var regionMatch = activeReg === 'all' || regionVilles.some(function(v){ return ville.includes(v); });
         return sportMatch && regionMatch;
     });
 
@@ -2993,9 +3005,37 @@ function renderTraining(athletes) {
         var sportBadges = sports.slice(0,3).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
         var perf = a.best_time ? '<div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">'+a.best_time+'</div>' : '';
 
+        // Normaliser sport principal pour data-sport
+        var mainSport = sports.length ? sports[0].toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+            .replace(/[^a-z]/g,'') : '';
+        // Normaliser ville pour data-region
+        var villeNorm = (a.ville||'').toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+            .replace(/[^a-z0-9 ]/g,'');
+        var VILLE_REGION = {
+            'ile-de-france': ['paris','versailles','boulogne','saint-denis','montreuil','nanterre','creteil','vincennes'],
+            'auvergne-rhone-alpes': ['lyon','grenoble','clermont','saint-etienne','annecy','chambery','valence','bourg','roanne','villeurbanne','vienne'],
+            'occitanie': ['toulouse','montpellier','nimes','perpignan','carcassonne','albi','beziers','tarbes'],
+            'nouvelle-aquitaine': ['bordeaux','pau','bayonne','limoges','poitiers','la rochelle','angouleme','agen'],
+            'paca': ['marseille','nice','toulon','aix','avignon','cannes','antibes','gap'],
+            'bretagne': ['rennes','brest','nantes','lorient','vannes','quimper','saint-malo'],
+            'hauts-de-france': ['lille','amiens','dunkerque','valenciennes','lens','calais','roubaix','tourcoing']
+        };
+        var cardRegion = 'all';
+        Object.keys(VILLE_REGION).forEach(function(reg) {
+            if(VILLE_REGION[reg].some(function(v){ return villeNorm.includes(v); })) cardRegion = reg;
+        });
+
         var div = document.createElement('div');
         div.className = 'athlete-card training-card';
         div.setAttribute('data-user-id', a.id);
+        div.setAttribute('data-sport', mainSport);
+        div.setAttribute('data-region', cardRegion);
+        // Stocker TOUS les sports pour le filtre multi-sport
+        div.setAttribute('data-sports-json', JSON.stringify(sports.map(function(s){
+            return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+        })));
         div.style.cursor = 'pointer';
         div.innerHTML = '<div class="ac-top">'
             +'<div class="ac-av">'+initials+'</div>'
@@ -3033,6 +3073,8 @@ function filterTraining(el, sport) {
     document.querySelectorAll('#screen-training .epill').forEach(function(p){ p.classList.remove('active'); });
     el.classList.add('active');
     _trainingActiveSport = sport;
+    // Sync avec la variable locale du bloc (si définie)
+    if(typeof activeTrainingSport !== 'undefined') window._syncTrainingSport = sport;
     renderTraining(_trainingData);
 }
 
@@ -3040,6 +3082,7 @@ function selRegion(el, region) {
     document.querySelectorAll('#region-chips .fchip').forEach(function(c){ c.classList.remove('active'); });
     el.classList.add('active');
     _trainingActiveRegion = region;
+    if(typeof activeRegion !== 'undefined') window._syncTrainingRegion = region;
     renderTraining(_trainingData);
 }
 
@@ -3289,39 +3332,11 @@ function toggleCompletFilter() {
         }
     }
 
-    // ===== TRAINING SCREEN =====
+    // ===== TRAINING SCREEN — variables locales sync =====
     var activeTrainingSport = 'all';
     var activeRegion = 'all';
-
-    function filterTraining(el, sport) {
-        document.querySelectorAll('#screen-training .epill').forEach(function(p){ p.classList.remove('active'); });
-        el.classList.add('active');
-        activeTrainingSport = sport;
-        applyTrainingFilters();
-    }
-
-    function selRegion(el, region) {
-        document.querySelectorAll('#region-chips .fchip').forEach(function(c){ c.classList.remove('active'); });
-        el.classList.add('active');
-        activeRegion = region;
-        applyTrainingFilters();
-    }
-
-    function applyTrainingFilters() {
-        var cards = document.querySelectorAll('#training-list .athlete-card');
-        var count = 0;
-        cards.forEach(function(card) {
-            var sport = (card.getAttribute('data-sport') || '').toLowerCase();
-            var region = (card.getAttribute('data-region') || '').toLowerCase();
-            var showSport = (activeTrainingSport === 'all' || sport === activeTrainingSport);
-            var showRegion = (activeRegion === 'all' || region === activeRegion);
-            var visible = showSport && showRegion;
-            card.style.display = visible ? '' : 'none';
-            if(visible) count++;
-        });
-        var countEl = document.getElementById('training-count');
-        if(countEl) countEl.textContent = '(' + count + ')';
-    }
+    // Ces fonctions sont définies globalement (filterTraining / selRegion)
+    // et utilisent _trainingActiveSport / _trainingActiveRegion comme source de vérité
 
     function toggleTrainingSortMenu() {
         var menu = document.getElementById('training-sort-menu');

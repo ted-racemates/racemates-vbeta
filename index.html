@@ -1484,82 +1484,11 @@
             </button>
         </div>
         <div id="training-list" style="display:flex;flex-direction:column;gap:10px">
-
-            <!-- TRAINING ATHLETE 1 -->
-            <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" data-sport="hyrox" data-region="auvergne-rhone-alpes">
-                <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#065F46,#059669)">CM</div><div class="ac-info"><div class="ac-name">Camille Martin</div><div class="ac-loc">📍 Lyon · Auvergne-R.A.</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">1:06:44</div></div></div>
-                <div class="ac-body">
-                    <div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏋️ Hyrox</span><span class="badge badge-dark">🌟 Confirmée</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">96%</span></div>
-                    <div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">Séances mardi/jeudi soir + samedi matin sur Lyon. Cherche partenaire sérieux niveau confirmé+.</div>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge badge-grey">📅 3x/semaine</span>
-                        <span class="badge badge-grey">🌅 Matin</span>
-                        <span class="badge badge-grey">🌃 Soir</span>
-                    </div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Camille Martin','CM','online','🤝 Entraînement Hyrox · Lyon')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div>
-                </div>
+            <div id="training-loading" style="text-align:center;padding:30px;color:var(--grey);font-size:0.85em">⏳ Chargement des partenaires...</div>
+            <div id="training-empty" style="display:none;text-align:center;padding:30px;color:var(--grey);font-size:0.85em">
+                <div style="font-size:1.8em;margin-bottom:8px">🤝</div>
+                Aucun partenaire disponible pour ce sport.<br>Reviens bientôt !
             </div>
-
-            <!-- TRAINING ATHLETE 2 -->
-            <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" data-sport="running" data-region="ile-de-france">
-                <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1A1A2E,#16213E)">PL</div><div class="ac-info"><div class="ac-name">Pierre Lambert</div><div class="ac-loc">📍 Paris · Île-de-France</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Pace</div><div class="ac-chrono-val">4:15/km</div></div></div>
-                <div class="ac-body">
-                    <div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏃 Running</span><span class="badge badge-dark">🏆 Élite</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">89%</span></div>
-                    <div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">Prépare le Marathon de Paris. Sorties longues le dimanche, fractionné le mercredi. Bois de Boulogne.</div>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge badge-grey">📅 4x/semaine</span>
-                        <span class="badge badge-grey">🌅 Matin</span>
-                        <span class="badge badge-grey">🎯 Marathon Paris</span>
-                    </div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Pierre Lambert','PL','online','🤝 Entraînement Running · Paris')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div>
-                </div>
-            </div>
-
-            <!-- TRAINING ATHLETE 3 -->
-            <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" data-sport="trail" data-region="auvergne-rhone-alpes">
-                <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#064E3B,#065F46)">NB</div><div class="ac-info"><div class="ac-name">Nina Bernard</div><div class="ac-loc">📍 Grenoble · Auvergne-R.A.</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Pace</div><div class="ac-chrono-val">6:30/km</div></div></div>
-                <div class="ac-body">
-                    <div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🌿 Trail</span><span class="badge badge-dark">🏃 Intermédiaire</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">83%</span></div>
-                    <div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">Sorties montagne le WE, prépare l'UTMB. Cherche groupe trail Grenoble/Chartreuse.</div>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge badge-grey">📅 2x/semaine</span>
-                        <span class="badge badge-grey">🏔️ Montagne</span>
-                        <span class="badge badge-grey">🎯 UTMB</span>
-                    </div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Nina Bernard','NB','offline','🤝 Entraînement Trail · Grenoble')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div>
-                </div>
-            </div>
-
-            <!-- TRAINING ATHLETE 4 -->
-            <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" data-sport="crossfit" data-region="occitanie">
-                <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1C1917,#292524)">RD</div><div class="ac-info"><div class="ac-name">Romain Dupont</div><div class="ac-loc">📍 Toulouse · Occitanie</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">🏆 Niveau</div><div class="ac-chrono-val">RX+</div></div></div>
-                <div class="ac-body">
-                    <div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">💪 CrossFit</span><span class="badge badge-dark">🌟 Confirmé</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">78%</span></div>
-                    <div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">Box CrossFit Toulouse, cherche partenaire WOD matin. French Throwdown 2026 en prépa.</div>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge badge-grey">📅 5x/semaine</span>
-                        <span class="badge badge-grey">🌅 Matin 6h</span>
-                        <span class="badge badge-grey">🎯 French Throwdown</span>
-                    </div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Romain Dupont','RD','online','🤝 Entraînement CrossFit · Toulouse')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div>
-                </div>
-            </div>
-
-            <!-- TRAINING ATHLETE 5 -->
-            <div class="athlete-card" onclick="openProfile()" style="cursor:pointer" data-sport="triathlon" data-region="paca">
-                <div class="ac-top"><div class="ac-av" style="background:linear-gradient(150deg,#1E3A5F,#1E4D8C)">LM</div><div class="ac-info"><div class="ac-name">Lucie Moreau</div><div class="ac-loc">📍 Nice · PACA</div></div><div class="ac-chrono"><div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">10:42:00</div></div></div>
-                <div class="ac-body">
-                    <div class="ac-badges"><span class="badge" style="background:#0A1628;color:white;border:none">🏊 Triathlon</span><span class="badge badge-dark">🌟 Confirmée</span><span class="badge badge-training">🤝 Entraîn.</span><span class="match-pct">91%</span></div>
-                    <div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">Ironman Nice 2026, cherche partenaire vélo/course à pied. Groupe swim le matin déjà constitué.</div>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-                        <span class="badge badge-grey">📅 6x/semaine</span>
-                        <span class="badge badge-grey">🏊 Natation</span>
-                        <span class="badge badge-grey">🎯 Ironman Nice</span>
-                    </div>
-                    <div class="ac-actions"><button class="btn-contact" onclick="contactAndChat('Lucie Moreau','LM','online','🤝 Entraînement Triathlon · Nice')">💬 Contacter</button><button class="btn-save" onclick="toggleSave(this)">🔖</button><button class="btn-profil" onclick="openProfile()">Profil</button></div>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
@@ -1614,6 +1543,9 @@ function goTo(page) {
     }
     if(page === 'events') {
         if(typeof loadEvents === 'function') loadEvents();
+    }
+    if(page === 'training') {
+        if(typeof loadTraining === 'function') loadTraining();
     }
 }
 
@@ -2974,6 +2906,125 @@ document.getElementById('profile-modal-contact-btn').onclick = function() {
 // saved-btn-alex supprimé
 
 // listeners fictifs supprimés
+
+// ===================== TRAINING DYNAMIQUE =====================
+var _trainingActiveSport = 'all';
+var _trainingActiveRegion = 'all';
+var _trainingData = [];
+
+async function loadTraining() {
+    if(!currentUser) {
+        setTimeout(function(){ if(currentUser) loadTraining(); }, 1000);
+        return;
+    }
+    var loading = document.getElementById('training-loading');
+    var empty = document.getElementById('training-empty');
+    if(loading) loading.style.display = '';
+    if(empty) empty.style.display = 'none';
+
+    // Charger les profils qui cherchent un partenaire d'entraînement
+    var { data } = await sb.from('profiles').select('*')
+        .neq('id', currentUser.id)
+        .contains('needs', ['Entraînement']);
+
+    if(loading) loading.style.display = 'none';
+
+    // Si pas de needs=Entraînement, charger tous
+    if(!data || data.length === 0) {
+        var res = await sb.from('profiles').select('*').neq('id', currentUser.id).limit(20);
+        data = res.data || [];
+    }
+
+    _trainingData = data;
+    renderTraining(data);
+}
+
+function renderTraining(athletes) {
+    var list = document.getElementById('training-list');
+    if(!list) return;
+    var loading = document.getElementById('training-loading');
+    var empty = document.getElementById('training-empty');
+    if(loading) loading.style.display = 'none';
+
+    // Filtrer
+    var filtered = athletes.filter(function(a) {
+        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var sportMatch = _trainingActiveSport === 'all' || sports.some(function(s){ return s.toLowerCase().includes(_trainingActiveSport); });
+        var ville = (a.ville||'').toLowerCase();
+        var regionMatch = _trainingActiveRegion === 'all' || ville.includes(_trainingActiveRegion.split('-')[0]);
+        return sportMatch && regionMatch;
+    });
+
+    // Supprimer les anciennes cartes
+    list.querySelectorAll('.training-card').forEach(function(c){ c.remove(); });
+
+    if(filtered.length === 0) {
+        if(empty) empty.style.display = '';
+        var countEl = document.getElementById('training-count');
+        if(countEl) countEl.textContent = '(0)';
+        return;
+    }
+    if(empty) empty.style.display = 'none';
+
+    var countEl = document.getElementById('training-count');
+    if(countEl) countEl.textContent = '(' + filtered.length + ')';
+
+    filtered.forEach(function(a) {
+        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
+        var name = (a.prenom||'') + (a.pseudo?' @'+a.pseudo:'');
+        var sportBadges = sports.slice(0,3).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
+        var perf = a.best_time ? '<div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">'+a.best_time+'</div>' : '';
+
+        var div = document.createElement('div');
+        div.className = 'athlete-card training-card';
+        div.setAttribute('data-user-id', a.id);
+        div.style.cursor = 'pointer';
+        div.innerHTML = '<div class="ac-top">'
+            +'<div class="ac-av">'+initials+'</div>'
+            +'<div class="ac-info"><div class="ac-name">'+name+'</div><div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
+            +'<div class="ac-chrono">'+perf+'</div></div>'
+            +'<div class="ac-body">'
+            +'<div class="ac-badges">'+sportBadges+'<span class="badge badge-training">🤝 Entraîn.</span></div>'
+            +(a.bio ? '<div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">'+a.bio.substring(0,100)+'</div>' : '')
+            +'<div class="ac-actions">'
+            +'<button class="btn-contact training-contact-btn" data-uid="'+a.id+'">💬 Contacter</button>'
+            +'<button class="btn-save training-save-btn" data-uid="'+a.id+'">🔖</button>'
+            +'<button class="btn-profil training-profil-btn" data-uid="'+a.id+'">Profil</button>'
+            +'</div></div>';
+
+        // Listeners
+        div.querySelector('.training-contact-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            openRealChat(a.id);
+        });
+        div.querySelector('.training-save-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleSave(this, a.id);
+        });
+        div.querySelector('.training-profil-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            openRealProfile(a.id);
+        });
+        div.addEventListener('click', function() { openRealProfile(a.id); });
+
+        list.appendChild(div);
+    });
+}
+
+function filterTraining(el, sport) {
+    document.querySelectorAll('#screen-training .epill').forEach(function(p){ p.classList.remove('active'); });
+    el.classList.add('active');
+    _trainingActiveSport = sport;
+    renderTraining(_trainingData);
+}
+
+function selRegion(el, region) {
+    document.querySelectorAll('#region-chips .fchip').forEach(function(c){ c.classList.remove('active'); });
+    el.classList.add('active');
+    _trainingActiveRegion = region;
+    renderTraining(_trainingData);
+}
 
 // Mettre à jour les compteurs réels dans le sport-select
 async function updateSportCounts() {
@@ -5132,9 +5183,11 @@ setPlan('free');
         document.getElementById('login-email').value = '';
         document.getElementById('login-pwd').value = '';
     }
-    function resetLoginBtn() {
+    function resetLoginBtn(errMsg) {
         var btn = document.getElementById('login-submit-btn');
         if(btn) { btn.disabled = false; btn.textContent = 'Se connecter →'; btn.style.opacity = '1'; }
+        var errEl = document.getElementById('login-error-msg');
+        if(errEl) { errEl.textContent = errMsg || ''; errEl.style.display = errMsg ? '' : 'none'; }
     }
     function submitLogin() {
         var email = (document.getElementById('login-email')||{}).value.trim();
@@ -5150,7 +5203,7 @@ setPlan('free');
             return;
         }
         signInFn(email, pwd).then(function() {
-            resetLoginBtn();
+            resetLoginBtn('');
             closeLoginModal();
             var ov = document.getElementById('onboarding-overlay');
             if(ov) ov.style.display = 'none';
@@ -5158,14 +5211,13 @@ setPlan('free');
             goTo('home');
             setTimeout(function(){ if(typeof updateMyProfileScreen==='function') updateMyProfileScreen(); }, 500);
         }, function(err) {
-            resetLoginBtn();
             var msg = '⚠️ Email ou mot de passe incorrect';
             if(err && err.message) {
                 if(err.message.indexOf('Email not confirmed') > -1) msg = '⚠️ Confirme ton email avant de te connecter';
                 else if(err.message.indexOf('Too many') > -1) msg = '⚠️ Trop de tentatives, attends quelques minutes';
                 else if(err.message.indexOf('network') > -1 || err.message.indexOf('fetch') > -1) msg = '⚠️ Problème de connexion réseau';
             }
-            showStatusToast(msg);
+            resetLoginBtn(msg);
         });
     }
 
@@ -5226,6 +5278,7 @@ setPlan('free');
             <label style="font-size:0.82em;font-weight:700;color:#0A1628;display:block;margin-bottom:6px">Mot de passe</label>
             <input id="login-pwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitLogin()" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">
         </div>
+        <div id="login-error-msg" style="display:none;color:#DC2626;font-size:0.82em;font-weight:600;text-align:center;margin-bottom:8px;padding:8px;background:#FEE2E2;border-radius:8px"></div>
         <button id="login-submit-btn" onclick="submitLogin()" style="width:100%;padding:16px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1em;letter-spacing:1px;cursor:pointer;margin-bottom:12px">Se connecter →</button>
         <button onclick="closeLoginModal()" style="width:100%;padding:14px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-family:Barlow,sans-serif;font-size:0.95em;color:#64748B;cursor:pointer">Annuler</button>
     </div>

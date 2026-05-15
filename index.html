@@ -628,6 +628,8 @@
                     if(el) el.textContent = n + (n > 1 ? ' profils' : ' profil');
                 });
             }
+            // Charger les compteurs dashboard (matchs / messages / events)
+            setTimeout(function(){ if(typeof loadDashboardStats==='function') loadDashboardStats(); }, 400);
             // Démarrer realtime (messages + nouveaux profils)
             if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
             // Les athlètes se chargent uniquement via goTo('matching')
@@ -864,9 +866,9 @@
     </div>
     <div class="body">
         <div class="stats-grid">
-            <div class="stat-box" onclick="goTo('sport-select')"><div class="stat-icon">🏃</div><div class="stat-val">3</div><div class="stat-lbl">Matchs</div></div>
-            <div class="stat-box" onclick="goTo('messages')"><div class="stat-icon">💬</div><div class="stat-val red">2</div><div class="stat-lbl">Messages</div></div>
-            <div class="stat-box" onclick="goTo('events')"><div class="stat-icon">📅</div><div class="stat-val" id="stat-val-events">0</div><div class="stat-lbl">Événements</div></div>
+            <div class="stat-box" onclick="goTo('sport-select')"><div class="stat-icon">🏃</div><div class="stat-val" id="stat-val-matches">-</div><div class="stat-lbl">Matchs</div></div>
+            <div class="stat-box" onclick="goTo('messages')"><div class="stat-icon">💬</div><div class="stat-val red" id="stat-val-messages">-</div><div class="stat-lbl">Messages</div></div>
+            <div class="stat-box" onclick="goTo('events')"><div class="stat-icon">📅</div><div class="stat-val" id="stat-val-events">-</div><div class="stat-lbl">Événements</div></div>
         </div>
         <div class="section-title" style="margin-bottom:10px">🚀 Que cherches-tu aujourd'hui ?</div>
         <div class="quick-grid">
@@ -1927,6 +1929,8 @@ function _incrementConvBadge(convId, lastMsg) {
     } else {
         // Carte pas encore affichée → recharger la liste
         if(typeof loadConversationsList === 'function') loadConversationsList();
+        // Rafraîchir stats dashboard (nouvelle conv)
+        if(typeof loadDashboardStats === 'function') loadDashboardStats();
         return;
     }
     // Mettre à jour le badge global nav
@@ -2492,6 +2496,8 @@ async function toggleEvent(btn, eventId) {
         // Recharger mes events et compteurs
         const { data: events } = await sb.from('events').select('*').order('event_date');
         if(events) { renderMyEvents(events); loadMatesCounts(events.map(function(e){ return e.id; })); }
+        // Rafraîchir les stats dashboard
+        if(typeof loadDashboardStats === 'function') loadDashboardStats();
     } catch(e) { showStatusToast('⚠️ Erreur'); }
     btn.disabled = false;
 }
@@ -3086,7 +3092,45 @@ function selRegion(el, region) {
     renderTraining(_trainingData);
 }
 
-// Mettre à jour les compteurs réels dans le sport-select
+// ===================== DASHBOARD STATS =====================
+async function loadDashboardStats() {
+    if(!currentUser) return;
+
+    // --- MATCHS : profils dispo (hors soi-même) ---
+    sb.from('profiles').select('id', {count: 'exact'}).neq('id', currentUser.id)
+    .then(function(res) {
+        var n = res.count || 0;
+        var el = document.getElementById('stat-val-matches');
+        if(el) el.textContent = n;
+        var sub = document.getElementById('qa-sub-athletes');
+        if(sub) sub.textContent = n + ' disponible' + (n > 1 ? 's' : '');
+    });
+
+    // --- MESSAGES : conversations actives ---
+    sb.from('conversations').select('id', {count: 'exact'})
+    .or('user1_id.eq.' + currentUser.id + ',user2_id.eq.' + currentUser.id)
+    .then(function(res) {
+        var n = res.count || 0;
+        var el = document.getElementById('stat-val-messages');
+        if(el) {
+            el.textContent = n;
+            // Rouge seulement si > 0
+            el.style.color = n > 0 ? 'var(--red)' : 'var(--blue)';
+        }
+    });
+
+    // --- ÉVÉNEMENTS : mes inscriptions ---
+    sb.from('event_registrations').select('event_id', {count: 'exact'}).eq('user_id', currentUser.id)
+    .then(function(res) {
+        var n = res.count || 0;
+        var el = document.getElementById('stat-val-events');
+        if(el) el.textContent = n;
+        var sub = document.getElementById('qa-sub-events');
+        if(sub) sub.textContent = n + ' inscrit' + (n > 1 ? 's' : '');
+    });
+}
+
+
 async function updateSportCounts() {
     var { data: profiles } = await sb.from('profiles').select('sports');
     if(!profiles) return;
@@ -4534,6 +4578,25 @@ function toggleCompletFilter() {
         if(el('edit-best-time')) el('edit-best-time').value = p.best_time || '';
         if(el('edit-nb-courses')) el('edit-nb-courses').value = p.nb_courses || '';
         if(el('edit-pace')) el('edit-pace').value = p.pace || '';
+        // Pré-cocher les needs actuels
+        var currentNeeds = [];
+        try { currentNeeds = typeof p.needs === 'string' ? JSON.parse(p.needs) : (p.needs || []); } catch(e){}
+        document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
+            var need = chip.getAttribute('data-need');
+            var active = currentNeeds.some(function(n){ return n === need; });
+            chip.style.background = active ? '#0A1628' : '#F8F9FC';
+            chip.style.color = active ? 'white' : '#64748B';
+            chip.style.borderColor = active ? '#0A1628' : '#E2E8F0';
+        });
+        // Listener toggle needs
+        document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
+            chip.onclick = function() {
+                var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
+                chip.style.background = on ? '#F8F9FC' : '#0A1628';
+                chip.style.color = on ? '#64748B' : 'white';
+                chip.style.borderColor = on ? '#E2E8F0' : '#0A1628';
+            };
+        });
         var initials = ((p.prenom||'T')[0] + (p.pseudo||'J')[0]).toUpperCase();
         if(el('edit-avatar-preview')) el('edit-avatar-preview').textContent = initials;
         el('edit-profile-modal').style.display = 'block';
@@ -4558,9 +4621,15 @@ function toggleCompletFilter() {
         var nb_courses= (el('edit-nb-courses')||{}).value?.trim() || '';
         var pace      = (el('edit-pace')||{}).value?.trim() || '';
         if(!prenom){ showStatusToast('⚠️ Entre ton prénom !'); return; }
+        // Lire les needs cochés
+        var newNeeds = [];
+        document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
+            var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
+            if(on) newNeeds.push(chip.getAttribute('data-need'));
+        });
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
         if(!window.myProfile) window.myProfile = {};
-        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials });
+        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds });
         // Update UI
         document.querySelectorAll('.user-av').forEach(av => av.textContent = initials);
         var profName = document.querySelector('#screen-profile .profile-name');
@@ -4576,7 +4645,7 @@ function toggleCompletFilter() {
         // Sync Supabase puis recharger le profil
         var updateFn = window.sbUpdateProfile || sbUpdateProfile;
         try {
-            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials })
+            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds) })
                 .then(function() {
                     showStatusToast('✅ Profil mis à jour !');
                     if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
@@ -5376,6 +5445,16 @@ setPlan('free');
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">Facebook</label>
                 <input id="edit-facebook" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="Lien profil Facebook">
             </div>
+            <div style="border-top:1px solid #E2E8F0;padding-top:14px">
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🤝 Je recherche</label>
+                <div id="edit-needs-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                    <div class="edit-need-chip" data-need="Entraînement" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🤝 Entraînement</div>
+                    <div class="edit-need-chip" data-need="Partenaire Duo" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏅 Partenaire Duo</div>
+                    <div class="edit-need-chip" data-need="Équipe Relais" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">⚡ Équipe Relais</div>
+                    <div class="edit-need-chip" data-need="Logement" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏠 Logement</div>
+                </div>
+            </div>
+
             <div style="border-top:1px solid #E2E8F0;padding-top:14px">
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🏅 Meilleure perf</label>
                 <input id="edit-best-time" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="ex: 1:05:00 · 3h45 · 180kg squat">

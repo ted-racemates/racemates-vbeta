@@ -2936,6 +2936,9 @@ async function loadTraining() {
     }
 
     _trainingData = data;
+    // Mettre à jour le compteur accueil
+    var homeTraining = document.getElementById('qa-sub-training');
+    if(homeTraining) homeTraining.textContent = data.length + ' disponible' + (data.length > 1 ? 's' : '');
     renderTraining(data);
 }
 
@@ -2947,11 +2950,25 @@ function renderTraining(athletes) {
     if(loading) loading.style.display = 'none';
 
     // Filtrer
+    // Map région → villes associées
+    var REGION_VILLES = {
+        'ile-de-france': ['paris','versailles','boulogne','saint-denis','montreuil','nanterre','creteil','vincennes'],
+        'auvergne-rhone-alpes': ['lyon','grenoble','clermont','saint-etienne','annecy','chambery','valence','bourg','roanne','villeurbanne','vienne'],
+        'occitanie': ['toulouse','montpellier','nimes','perpignan','carcassonne','albi','beziers','tarbes'],
+        'nouvelle-aquitaine': ['bordeaux','pau','bayonne','limoges','poitiers','la rochelle','angouleme','agen'],
+        'paca': ['marseille','nice','toulon','aix','avignon','cannes','antibes','gap'],
+        'bretagne': ['rennes','brest','nantes','lorient','vannes','quimper','saint-malo'],
+        'hauts-de-france': ['lille','amiens','dunkerque','valenciennes','lens','calais','roubaix','tourcoing']
+    };
+
     var filtered = athletes.filter(function(a) {
         var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
-        var sportMatch = _trainingActiveSport === 'all' || sports.some(function(s){ return s.toLowerCase().includes(_trainingActiveSport); });
-        var ville = (a.ville||'').toLowerCase();
-        var regionMatch = _trainingActiveRegion === 'all' || ville.includes(_trainingActiveRegion.split('-')[0]);
+        var sportMatch = _trainingActiveSport === 'all' || sports.some(function(s){
+            return s.toLowerCase().replace(/[^a-z]/g,'').includes(_trainingActiveSport.replace(/[^a-z]/g,''));
+        });
+        var ville = (a.ville||'').toLowerCase().replace(/[éèêë]/g,'e').replace(/[àâ]/g,'a').replace(/[îï]/g,'i').replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace(/[^a-z0-9 ]/g,'');
+        var regionVilles = REGION_VILLES[_trainingActiveRegion] || [];
+        var regionMatch = _trainingActiveRegion === 'all' || regionVilles.some(function(v){ return ville.includes(v); });
         return sportMatch && regionMatch;
     });
 

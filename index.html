@@ -3165,26 +3165,109 @@ async function loadHomeMatches() {
     if(!currentUser) return;
     var list = document.getElementById('home-matches-list');
     if(!list) return;
-    var { data: athletes } = await sb.from('profiles').select('id,prenom,pseudo,ville,sports,best_time,avatar_initials')
-        .neq('id', currentUser.id).limit(3).order('created_at', { ascending: false });
-    if(!athletes || athletes.length === 0) { list.innerHTML = '<div style="color:var(--grey);font-size:0.85em;text-align:center;padding:12px">Aucun match pour le moment.</div>'; return; }
-    list.innerHTML = athletes.map(function(a) {
+
+    // Charger mon profil pour avoir mes sports et needs
+    var myP = window.myProfile || {};
+    var mySports = [];
+    var myNeeds = [];
+    try { mySports = typeof myP.sports === 'string' ? JSON.parse(myP.sports) : (myP.sports || []); } catch(e){}
+    try { myNeeds = typeof myP.needs === 'string' ? JSON.parse(myP.needs) : (myP.needs || []); } catch(e){}
+
+    // Normaliser pour comparaison
+    var normStr = function(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); };
+    var mySportsNorm = mySports.map(normStr);
+    var myNeedsNorm = myNeeds.map(normStr);
+
+    // Charger tous les profils (hors soi-même)
+    var { data: athletes } = await sb.from('profiles')
+        .select('id,prenom,pseudo,ville,sports,needs,best_time,avatar_initials,created_at')
+        .neq('id', currentUser.id)
+        .limit(50);
+
+    if(!athletes || athletes.length === 0) {
+        list.innerHTML = '<div style="color:var(--grey);font-size:0.85em;text-align:center;padding:12px">Aucun match pour le moment.</div>';
+        return;
+    }
+
+    // Scorer chaque profil
+    var scored = athletes.map(function(a) {
+        var aSports = []; try{ aSports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var aNeeds = []; try{ aNeeds = typeof a.needs==='string'?JSON.parse(a.needs):(a.needs||[]); }catch(e){}
+        var aSportsNorm = aSports.map(normStr);
+        var aNeedsNorm = aNeeds.map(normStr);
+
+        var score = 0;
+        var commonSports = [];
+
+        // +30 par sport en commun
+        mySportsNorm.forEach(function(ms) {
+            if(aSportsNorm.some(function(as){ return as === ms || as.includes(ms) || ms.includes(as); })) {
+                score += 30;
+                var original = aSports[aSportsNorm.findIndex(function(as){ return as === ms || as.includes(ms) || ms.includes(as); })];
+                if(original) commonSports.push(original);
+            }
+        });
+
+        // +20 par need compatible (ses needs matchent les miens et vice-versa)
+        myNeedsNorm.forEach(function(mn) {
+            if(aNeedsNorm.some(function(an){ return an === mn || an.includes(mn.slice(0,5)) || mn.includes(an.slice(0,5)); })) {
+                score += 20;
+            }
+        });
+
+        // +5 si profil récent (moins de 7 jours)
+        if(a.created_at) {
+            var daysOld = (Date.now() - new Date(a.created_at).getTime()) / (1000 * 60 * 60 * 24);
+            if(daysOld < 7) score += 5;
+        }
+
+        return { athlete: a, score: score, commonSports: commonSports };
+    });
+
+    // Trier par score décroissant, garder les 3 meilleurs
+    scored.sort(function(a, b){ return b.score - a.score; });
+    var top = scored.slice(0, 3);
+
+    // Si aucun sport en commun avec personne, afficher quand même les 3 premiers (récents)
+    if(top.every(function(t){ return t.score === 0; })) {
+        top = scored.slice(0, 3);
+    }
+
+    list.innerHTML = top.map(function(t) {
+        var a = t.athlete;
         var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
         var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
-        var name = (a.prenom||'') + (a.pseudo?' @'+a.pseudo:'') + ' · ' + (a.ville||'');
-        var badges = sports.slice(0,3).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
+        var name = (a.prenom||'Athlète') + (a.pseudo?' @'+a.pseudo:'') + ' · ' + (a.ville||'France');
+        // Afficher les sports en commun en priorité, puis les autres
+        var displaySports = t.commonSports.length ? t.commonSports : sports;
+        var badges = displaySports.slice(0,2).map(function(s){
+            var isCommon = t.commonSports.includes(s);
+            return '<span class="badge ' + (isCommon ? 'badge-blue' : 'badge-dark') + '">' + s + '</span>';
+        }).join('');
+        // Indicateur de compatibilité
+        var pct = t.score > 0 ? Math.min(100, t.score) + '%' : '🆕';
+        var pctColor = t.score >= 50 ? 'var(--green)' : t.score >= 30 ? 'var(--blue)' : 'var(--grey)';
         return '<div class="mini-match-card" data-uid="'+a.id+'">'
             +'<div class="mmc-top"><div class="mmc-av">'+initials+'</div>'
             +'<div class="mmc-name">'+name+'</div>'
             +'<div class="mmc-chrono">'+(a.best_time||'')+'</div></div>'
             +'<div class="mmc-body"><div class="mmc-badges">'+badges+'</div>'
-            +'<div class="match-pct">✅</div></div></div>';
+            +'<div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-size:0.85em;color:'+pctColor+'">'+pct+'</div>'
+            +'</div></div>';
     }).join('');
+
     list.querySelectorAll('.mini-match-card').forEach(function(card) {
         card.addEventListener('click', function() { openRealProfile(card.getAttribute('data-uid')); });
     });
-    var statMatch = document.getElementById('stat-val-matches');
-    if(statMatch) statMatch.textContent = athletes.length;
+
+    // Mettre à jour le sous-titre
+    var subtitle = document.querySelector('#screen-home .welcome-sub');
+    var nbMatches = top.filter(function(t){ return t.score > 0; }).length;
+    if(subtitle) {
+        subtitle.textContent = nbMatches > 0
+            ? nbMatches + ' athlète' + (nbMatches > 1 ? 's' : '') + ' compatible' + (nbMatches > 1 ? 's' : '') + ' avec ton profil'
+            : 'Nouveaux athlètes disponibles';
+    }
 }
 
 

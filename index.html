@@ -915,7 +915,7 @@
         <div class="quick-grid">
             <div class="qa-card primary" onclick="goTo('sport-select')"><div class="qa-icon">🏃</div><div class="qa-label">Trouver un athlète</div><div class="qa-sub" id="qa-sub-athletes">42 disponibles</div></div>
             <div class="qa-card green" onclick="goTo('matching')"><div class="qa-icon">🏨</div><div class="qa-label">Trouver un logement</div><div class="qa-sub">Partage & économies</div></div>
-            <div class="qa-card" style="background:linear-gradient(135deg,#0A1628,#065F46);color:white;border:none" onclick="goTo('training')"><div class="qa-icon">🤝</div><div class="qa-label" style="color:white">Partenaire entraîn.</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-training">12 disponibles</div></div>
+            <div class="qa-card" style="background:linear-gradient(135deg,#0A1628,#065F46);color:white;border:none" onclick="goTo('training')"><div class="qa-icon">🤝</div><div class="qa-label" style="color:white">Partenaire entraîn.</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-training">...</div></div>
             <div class="qa-card" onclick="goTo('events')"><div class="qa-icon">📅</div><div class="qa-label">Mes événements</div><div class="qa-sub" id="qa-sub-events">0 inscrit</div></div>
             <div class="qa-card" onclick="openSaved()"><div class="qa-icon">🔖</div><div class="qa-label">Profils sauvegardés</div><div class="qa-sub" id="qa-sub-saved">0 profil</div></div>
         </div>
@@ -4417,7 +4417,7 @@ function toggleCompletFilter() {
             var total = all.length + demoCards.length;
             var training = all.filter(function(a){
                 try{ var n=typeof a.needs==="string"?JSON.parse(a.needs):(a.needs||[]); return n.some(function(x){return x.includes("Entraîn");}); }catch(e){return false;}
-            }).length + 8;
+            }).length;
             var elA = document.getElementById("qa-sub-athletes");
             if(elA) elA.textContent = total + " disponibles";
             var elT = document.getElementById("qa-sub-training");
@@ -4878,6 +4878,27 @@ function toggleCompletFilter() {
         if(el('edit-best-time')) el('edit-best-time').value = p.best_time || '';
         if(el('edit-nb-courses')) el('edit-nb-courses').value = p.nb_courses || '';
         if(el('edit-pace')) el('edit-pace').value = p.pace || '';
+        // Pré-cocher les sports actuels
+        var currentSports = [];
+        try { currentSports = typeof p.sports === 'string' ? JSON.parse(p.sports) : (p.sports || []); } catch(e){}
+        var currentSportsNorm = currentSports.map(function(s){ return s.toLowerCase().replace(/[^a-z]/g,''); });
+        document.querySelectorAll('.edit-sport-chip').forEach(function(chip) {
+            var sport = chip.getAttribute('data-sport');
+            var sportNorm = sport.toLowerCase().replace(/[^a-z]/g,'');
+            var active = currentSportsNorm.some(function(s){ return s === sportNorm; });
+            chip.style.background = active ? '#0A1628' : '#F8F9FC';
+            chip.style.color = active ? 'white' : '#64748B';
+            chip.style.borderColor = active ? '#0A1628' : '#E2E8F0';
+        });
+        // Listener toggle sports
+        document.querySelectorAll('.edit-sport-chip').forEach(function(chip) {
+            chip.onclick = function() {
+                var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
+                chip.style.background = on ? '#F8F9FC' : '#0A1628';
+                chip.style.color = on ? '#64748B' : 'white';
+                chip.style.borderColor = on ? '#E2E8F0' : '#0A1628';
+            };
+        });
         // Pré-cocher les needs actuels
         var currentNeeds = [];
         try { currentNeeds = typeof p.needs === 'string' ? JSON.parse(p.needs) : (p.needs || []); } catch(e){}
@@ -5000,6 +5021,13 @@ function toggleCompletFilter() {
         var nb_courses= (el('edit-nb-courses')||{}).value?.trim() || '';
         var pace      = (el('edit-pace')||{}).value?.trim() || '';
         if(!prenom){ showStatusToast('⚠️ Entre ton prénom !'); return; }
+        // Lire les sports cochés
+        var newSports = [];
+        document.querySelectorAll('.edit-sport-chip').forEach(function(chip) {
+            var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
+            if(on) newSports.push(chip.getAttribute('data-sport'));
+        });
+        if(!newSports.length){ showStatusToast('⚠️ Sélectionne au moins un sport !'); return; }
         // Lire les needs cochés
         var newNeeds = [];
         document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
@@ -5008,7 +5036,7 @@ function toggleCompletFilter() {
         });
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
         if(!window.myProfile) window.myProfile = {};
-        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds });
+        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds, sports: newSports });
         // Update UI
         document.querySelectorAll('.user-av').forEach(av => av.textContent = initials);
         var profName = document.querySelector('#screen-profile .profile-name');
@@ -5024,7 +5052,7 @@ function toggleCompletFilter() {
         // Sync Supabase puis recharger le profil
         var updateFn = window.sbUpdateProfile || sbUpdateProfile;
         try {
-            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds) })
+            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds), sports: JSON.stringify(newSports) })
                 .then(function() {
                     showStatusToast('✅ Profil mis à jour !');
                     if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
@@ -5829,6 +5857,22 @@ setPlan('free');
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">Facebook</label>
                 <input id="edit-facebook" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="Lien profil Facebook">
             </div>
+            <div style="border-top:1px solid #E2E8F0;padding-top:14px">
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🏆 Mes sports</label>
+                <div id="edit-sports-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                    <div class="edit-sport-chip" data-sport="Hyrox" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏋️ Hyrox</div>
+                    <div class="edit-sport-chip" data-sport="ATHX" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">⚡ ATHX</div>
+                    <div class="edit-sport-chip" data-sport="Running" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏃 Running</div>
+                    <div class="edit-sport-chip" data-sport="Trail" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🌿 Trail</div>
+                    <div class="edit-sport-chip" data-sport="Triathlon" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏊 Triathlon</div>
+                    <div class="edit-sport-chip" data-sport="CrossFit" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">💪 CrossFit</div>
+                    <div class="edit-sport-chip" data-sport="Spartan" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🧱 Spartan</div>
+                    <div class="edit-sport-chip" data-sport="Musculation" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏋️‍♂️ Muscu</div>
+                    <div class="edit-sport-chip" data-sport="Natation" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏊 Natation</div>
+                    <div class="edit-sport-chip" data-sport="Cyclisme" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🚴 Cyclisme</div>
+                </div>
+            </div>
+
             <div style="border-top:1px solid #E2E8F0;padding-top:14px">
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🤝 Je recherche</label>
                 <div id="edit-needs-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">

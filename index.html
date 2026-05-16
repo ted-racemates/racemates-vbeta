@@ -1353,114 +1353,91 @@
 
 <!-- ===== SUBSCRIPTION SWITCHER ===== -->
 <div class="modal" id="sub-modal">
-    <div class="page-header" style="padding-bottom:42px">
-        <div class="header-top" style="position:relative;z-index:2">
-            <div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div>
-            <button onclick="closeSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">✕ Fermer</button>
-        </div>
-    </div>
+    <div class="page-header" style="padding-bottom:42px"><div class="header-top" style="position:relative;z-index:2"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><button onclick="closeSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">✕ Fermer</button></div></div>
     <div class="body">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4em;color:var(--dark);margin-bottom:4px">💎 Nos offres</div>
-        <div style="font-size:0.82em;color:var(--grey);margin-bottom:20px;line-height:1.5">L'app est gratuite pendant la phase de lancement.<br>Le Premium arrive bientôt avec des avantages exclusifs.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:var(--dark);margin-bottom:4px">💎 Nos offres</div>
+        <div style="font-size:0.78em;color:var(--grey);margin-bottom:16px;line-height:1.5">Choisis l'offre adaptée à ta saison sportive.</div>
 
-        <!-- GRATUIT -->
-        <div class="sub-option active" id="sub-free" style="border:1.5px solid #E2E8F0;margin-bottom:12px">
+        <!-- FREE -->
+        <div class="sub-option active" id="sub-free" onclick="setPlan('free')" style="border:1.5px solid #E2E8F0">
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">🆓 Gratuit</div>
-                <div class="sub-desc">Accès complet pendant le lancement</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
-                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Matching athletes</span>
-                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Messagerie</span>
-                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Événements</span>
-                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Entraînement</span>
-                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Notifications</span>
-                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Voir qui t'a sauvegardé</span>
-                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Boost visibilité</span>
-                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Stats de profil</span>
+                <div class="sub-name">🆓 Découverte</div>
+                <div class="sub-desc">Parcourir les profils · Voir les événements</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+                    <span style="font-size:0.7em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">✓ Accès lectures</span>
+                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Messagerie</span>
                 </div>
             </div>
-            <div class="sub-price">0€<span class="sub-price-period">/mois</span></div>
+            <div class="sub-price">0€<span class="sub-price-period">gratuit</span></div>
         </div>
 
-        <!-- PREMIUM -->
-        <div class="sub-option" id="sub-premium" style="border:2px solid #0A1628;position:relative;overflow:hidden;margin-bottom:20px">
-            <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></div>
+        <!-- EVENT -->
+        <div class="sub-option" id="sub-event" onclick="setPlan('event')" style="border:1.5px solid #FBBF24">
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">⚡ Premium <span style="background:#FFFBEB;color:#92400E;font-size:0.68em;padding:2px 8px;border-radius:6px;margin-left:4px;font-weight:700">BIENTÔT</span></div>
-                <div class="sub-desc">Tous les avantages + fonctions exclusives</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
-                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Tout le plan Gratuit</span>
-                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">👀 Voir qui t'a sauvegardé</span>
-                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">🚀 Boost visibilité 7j</span>
-                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">📊 Stats de profil</span>
+                <div class="sub-name">⚡ Pass Événement <span style="background:#FFFBEB;color:#92400E;font-size:0.7em;padding:2px 7px;border-radius:6px;margin-left:4px">POPULAIRE</span></div>
+                <div class="sub-desc">Tout débloquer pour 1 événement de ton choix</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Messagerie</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Logements</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Duos &amp; relais</span>
+                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Multi-events</span>
                 </div>
-                <div style="margin-top:10px;padding:8px 10px;background:#F8FAFC;border-radius:8px;font-size:0.75em;color:#64748B">
-                    💡 Laisse ton email pour être notifié au lancement du Premium.
-                </div>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <input id="premium-waitlist-email" type="email" placeholder="ton@email.com" style="flex:1;padding:9px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.82em;font-family:Barlow,sans-serif;outline:none">
-                    <button onclick="joinPremiumWaitlist()" style="padding:9px 14px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85em;cursor:pointer;white-space:nowrap">M'alerter →</button>
-                </div>
-                <div id="waitlist-confirm" style="display:none;font-size:0.78em;color:#15803D;font-weight:700;margin-top:6px">✅ Tu seras notifié au lancement !</div>
             </div>
-            <div class="sub-price" style="color:#0A1628">5€<span class="sub-price-period">/mois</span></div>
+            <div class="sub-price">2,99€<span class="sub-price-period">/événement</span></div>
         </div>
 
-        <!-- APERCU 1 — Qui t'a sauvegardé -->
-        <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px 18px;margin-bottom:10px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:10px">👀 Qui a sauvegardé ton profil ?</div>
-            <div style="display:flex;margin-bottom:10px">
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px)">AB</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">CD</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">EF</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.75em;color:rgba(255,255,255,0.7);margin-left:-8px">+?</div>
-            </div>
-            <div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin-bottom:10px">
-                <span id="saved-by-count" style="color:white;font-weight:700">? personnes</span> ont sauvegardé ton profil.
-            </div>
-            <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-size:0.75em;color:rgba(255,255,255,0.8)">
-                🔒 Débloque le Premium pour voir qui c'est
-            </div>
-        </div>
-
-        <!-- APERCU 2 — Stats -->
-        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:10px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:12px">📊 Stats de ton profil cette semaine</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
-                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)">
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628">47</div>
-                    <div style="font-size:0.65em;color:#64748B;margin-top:2px">VUES</div>
-                </div>
-                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)">
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#059669">8</div>
-                    <div style="font-size:0.65em;color:#64748B;margin-top:2px">CONTACTS</div>
-                </div>
-                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)">
-                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#1E3A8A">12</div>
-                    <div style="font-size:0.65em;color:#64748B;margin-top:2px">SAUVEGARDES</div>
+        <!-- TRAINING -->
+        <div class="sub-option" id="sub-training" onclick="setPlan('training')" style="border:1.5px solid #E2E8F0">
+            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
+            <div class="sub-info">
+                <div class="sub-name">🤝 Pass Entraînement</div>
+                <div class="sub-desc">Partenaires d'entraînement illimités</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Messagerie training</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Tous sports</span>
+                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Logements</span>
                 </div>
             </div>
-            <div style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">
-                🔒 Débloque le Premium pour voir tes vraies stats
-            </div>
+            <div class="sub-price">1,99€<span class="sub-price-period">/mois</span></div>
         </div>
 
-        <!-- APERCU 3 — Boost -->
-        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:16px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:6px">🚀 Boost visibilité — 7 jours</div>
-            <div style="font-size:0.8em;color:#64748B;margin-bottom:10px;line-height:1.5">Ton profil apparaît <strong>en premier</strong> dans les résultats pendant 7 jours. Idéal avant un event !</div>
-            <div style="display:flex;align-items:center;gap:10px;background:white;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;opacity:0.5">
-                <div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.7em;color:white">🚀 BOOSTÉ</div>
-                <div style="font-size:0.8em;color:#0A1628;font-weight:600">Ton profil · visible par tous</div>
+        <!-- FRANCE -->
+        <div class="sub-option" id="sub-france" onclick="setPlan('france')" style="border:1.5px solid #3B82F6">
+            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
+            <div class="sub-info">
+                <div class="sub-name">🇫🇷 Saison France <span style="background:#DBEAFE;color:#1D4ED8;font-size:0.7em;padding:2px 7px;border-radius:6px;margin-left:4px">BEST VALUE</span></div>
+                <div class="sub-desc">Tous les événements France, tous les sports</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Événements illimités</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Logements</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Entraînement</span>
+                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ International</span>
+                </div>
             </div>
-            <div style="margin-top:8px;background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">
-                🔒 Débloque le Premium pour activer le boost
-            </div>
+            <div class="sub-price">4,99€<span class="sub-price-period">/mois</span></div>
         </div>
 
-        <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer">OK, compris !</button>
+        <!-- FULL -->
+        <div class="sub-option" id="sub-full" onclick="setPlan('full')" style="border:1.5px solid #8B5CF6">
+            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
+            <div class="sub-info">
+                <div class="sub-name">🌍 Saison Internationale</div>
+                <div class="sub-desc">France + Europe + Entraînement · Tout inclus</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ France + Europe</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Worlds</span>
+                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Tout inclus</span>
+                </div>
+            </div>
+            <div class="sub-price">7,99€<span class="sub-price-period">/mois</span></div>
+        </div>
+        <div style="margin-top:20px;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95em;color:var(--dark);margin-bottom:10px;letter-spacing:0.5px">👁 Ce que voit cet utilisateur</div>
+            <div id="plan-preview"></div>
+        </div>
+        <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer;margin-top:14px">✅ Appliquer ce plan</button>
     </div>
 </div>
 
@@ -1518,38 +1495,26 @@
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:white;margin-bottom:2px">🏠 Logement</div>
             <div style="font-size:0.75em;color:rgba(255,255,255,0.6)">Colocations athletes + hôtels près de ton event</div>
         </div>
-        <!-- Filtre par event -->
         <div style="margin-top:12px;position:relative;z-index:2">
             <div id="lodging-event-pills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
-                <div class="epill active" data-event-id="all" data-city="" data-lat="" data-lng="">🏆 Tous</div>
+                <div class="epill active" data-event-id="all" data-city="" data-lat="" data-lng="" data-event-name="">🏆 Tous</div>
             </div>
         </div>
     </div>
     <div class="body" style="padding-top:8px">
-
-        <!-- TABS -->
         <div style="display:flex;gap:6px;margin-bottom:14px;background:#F1F5F9;border-radius:12px;padding:4px">
-            <button class="lodging-tab active" data-tab="seeking" onclick="switchLodgingTab(this,'seeking')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:#0A1628;color:white;transition:all 0.15s">🔍 Cherchent</button>
-            <button class="lodging-tab" data-tab="offering" onclick="switchLodgingTab(this,'offering')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B;transition:all 0.15s">🏠 Proposent</button>
-            <button class="lodging-tab" data-tab="hotels" onclick="switchLodgingTab(this,'hotels')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B;transition:all 0.15s">🏨 Hôtels</button>
+            <button class="lodging-tab active" data-tab="seeking" onclick="switchLodgingTab(this,'seeking')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:#0A1628;color:white">🔍 Cherchent</button>
+            <button class="lodging-tab" data-tab="offering" onclick="switchLodgingTab(this,'offering')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B">🏠 Proposent</button>
+            <button class="lodging-tab" data-tab="hotels" onclick="switchLodgingTab(this,'hotels')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B">🏨 Hôtels</button>
         </div>
-
-        <!-- TAB 1 : Athlètes qui cherchent un logement -->
         <div id="lodging-tab-seeking">
-            <div style="font-size:0.78em;color:#64748B;margin-bottom:10px">Athlètes inscrit à cet event qui cherchent un logement</div>
-            <div id="lodging-seekers-list" style="display:flex;flex-direction:column;gap:10px">
-                <div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Sélectionne un événement pour voir les athlètes</div>
-            </div>
+            <div style="font-size:0.78em;color:#64748B;margin-bottom:10px">Athlètes inscrits à cet event qui cherchent un logement</div>
+            <div id="lodging-seekers-list"><div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Sélectionne un événement</div></div>
         </div>
-
-        <!-- TAB 2 : Athlètes qui proposent -->
         <div id="lodging-tab-offering" style="display:none">
-            <!-- Formulaire proposer -->
             <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px;margin-bottom:14px">
                 <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:12px">+ Proposer mon logement</div>
-                <select id="lodging-offer-event" style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;margin-bottom:8px;font-family:Barlow,sans-serif;background:rgba(255,255,255,0.95)">
-                    <option value="">Événement concerné...</option>
-                </select>
+                <select id="lodging-offer-event" style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;margin-bottom:8px;font-family:Barlow,sans-serif;background:rgba(255,255,255,0.95)"><option value="">Événement concerné...</option></select>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
                     <input id="lodging-offer-places" type="number" min="1" max="10" placeholder="Nb places" style="padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;font-family:Barlow,sans-serif">
                     <input id="lodging-offer-price" type="number" placeholder="Prix/nuit €" style="padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;font-family:Barlow,sans-serif">
@@ -1557,21 +1522,12 @@
                 <input id="lodging-offer-desc" type="text" placeholder="Description (ex: appart T3, 10min à pied...)" style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;font-family:Barlow,sans-serif;margin-bottom:8px;box-sizing:border-box">
                 <button onclick="submitLodgingOffer()" style="width:100%;padding:10px;background:#FBBF24;color:#0A1628;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;cursor:pointer">Publier mon annonce →</button>
             </div>
-            <!-- Liste des propositions -->
-            <div id="lodging-offers-list" style="display:flex;flex-direction:column;gap:10px">
-                <div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Aucune proposition pour le moment</div>
-            </div>
+            <div id="lodging-offers-list"><div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Aucune proposition pour le moment</div></div>
         </div>
-
-        <!-- TAB 3 : Hôtels Booking/Airbnb -->
         <div id="lodging-tab-hotels" style="display:none">
-            <div id="lodging-radius-label" style="font-size:0.75em;color:#64748B;margin-bottom:10px;text-align:center">Sélectionne un événement pour voir les hôtels à proximité</div>
-            <!-- Liens dynamiques Booking + Airbnb -->
-            <div id="lodging-hotels-links" style="display:flex;flex-direction:column;gap:10px">
-                <div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>
-            </div>
+            <div id="lodging-radius-label" style="font-size:0.75em;color:#64748B;margin-bottom:10px;text-align:center">Sélectionne un événement pour voir les hôtels</div>
+            <div id="lodging-hotels-links"><div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div></div>
         </div>
-
     </div>
 </div>
 
@@ -1690,9 +1646,7 @@ function goTo(page) {
     if(page === 'events') {
         if(typeof loadEvents === 'function') loadEvents();
     }
-    if(page === 'lodging') {
-        if(typeof loadLodgingScreen === 'function') loadLodgingScreen();
-    }
+    if(page === 'lodging') { if(typeof loadLodgingScreen==='function') loadLodgingScreen(); }
     if(page === 'training') {
         if(typeof loadTraining === 'function') loadTraining();
     }
@@ -1930,6 +1884,7 @@ function openRealChat(userId) {
     window._chatFromProfile = false;
     if(!userId) { console.error('openRealChat: userId manquant'); return; }
     if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour contacter'); return; }
+    if(currentPlan === 'free') { openSubSwitcher(); return; }
     console.log('openRealChat:', userId);
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
@@ -2188,6 +2143,14 @@ function _incrementConvBadge(convId, lastMsg) {
 
 // updateMsgBadge défini plus bas
 
+function closeChat() {
+    document.getElementById('chat-view').classList.remove('open');
+    if (_realtimeSubscription) { sb.removeChannel(_realtimeSubscription); _realtimeSubscription = null; }
+    if(window._chatFromProfile) {
+        window._chatFromProfile = false;
+        document.getElementById('profile-modal').classList.add('open');
+    }
+}
 
 function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
 
@@ -3222,8 +3185,36 @@ var PLAN_PREVIEWS = {
 
 function setPlan(plan) {
     currentPlan = plan;
+    // Update sub-option active state
+    ['free','training','event','france','full'].forEach(function(p){
+        var el = document.getElementById('sub-' + p);
+        if(el) el.classList.toggle('active', p === plan);
+    });
+    // Plan preview features list
+    var preview = document.getElementById('plan-preview');
+    if(preview) {
+        preview.innerHTML = PLAN_PREVIEWS[plan].map(function(f){
+            return '<div class="plan-preview-item">' + f + '</div>';
+        }).join('');
+    }
+    // Plan labels & dots throughout app
+    document.querySelectorAll('[id^="pt-"]').forEach(function(el){ el.textContent = PLANS[plan].label; });
+    document.querySelectorAll('[id^="pd-"]').forEach(function(el){
+        el.className = 'plan-dot' + (PLANS[plan].paid ? '' : ' free');
+    });
     var ppl = document.getElementById('profile-plan-label');
-    if(ppl) ppl.textContent = (plan === 'premium') ? '⚡ Premium' : 'Gratuit';
+    if(ppl) ppl.textContent = PLANS[plan].name;
+    // Access banner
+    var banners = {
+        free:     '<div class="access-banner lock"><div class="access-icon">🔒</div><div>Plan gratuit — <strong>Passe au Pass Événement</strong> pour contacter</div></div>',
+        training: '<div class="access-banner info"><div class="access-icon">🤝</div><div>Pass Entraînement actif</div></div>',
+        event:    '<div class="access-banner warn"><div class="access-icon">⚡</div><div>Pass Événement actif — Messagerie ouverte</div></div>',
+        france:   '<div class="access-banner ok"><div class="access-icon">🇫🇷</div><div>Saison France — Tous les événements débloqués</div></div>',
+        full:     '<div class="access-banner ok"><div class="access-icon">🌍</div><div>Saison Internationale — Tout inclus</div></div>'
+    };
+    var banner = document.getElementById('access-banner');
+    if(banner) banner.innerHTML = banners[plan] || '';
+    // Bouton contacter toujours actif - pas de blocage par plan
     document.querySelectorAll('.btn-contact, [id^="contact-btn-"]').forEach(function(btn){
         btn.style.background = 'var(--red)';
         btn.style.cursor = 'pointer';
@@ -3231,36 +3222,21 @@ function setPlan(plan) {
         btn.disabled = false;
         btn.removeAttribute('data-locked');
     });
-}
-function openSubSwitcher() {
-    document.getElementById('sub-modal').classList.add('open');
-    document.getElementById('sub-modal').scrollTop = 0;
-    // Pré-remplir email
-    var emailInput = document.getElementById('premium-waitlist-email');
-    if(emailInput && currentUser && currentUser.email) emailInput.value = currentUser.email;
-    // Vrai compteur saved-by
-    if(currentUser) {
-        sb.from('saved_profiles').select('user_id', { count: 'exact', head: true })
-        .eq('saved_user_id', currentUser.id)
-        .then(function(res) {
-            var n = res.count || 0;
-            var el = document.getElementById('saved-by-count');
-            if(el) el.textContent = n + ' personne' + (n > 1 ? 's' : '');
-        });
+    // Lodging access
+    var lodgingCol = document.getElementById('lodging-col');
+    if(lodgingCol) {
+        var canLodge = (plan === 'event' || plan === 'france' || plan === 'full');
+        lodgingCol.style.filter = canLodge ? '' : 'blur(3px)';
+        lodgingCol.style.pointerEvents = canLodge ? '' : 'none';
+        lodgingCol.style.opacity = canLodge ? '' : '0.5';
     }
 }
-function closeSubSwitcher() { document.getElementById('sub-modal').classList.remove('open'); }
-
-async function joinPremiumWaitlist() {
-    var email = (document.getElementById('premium-waitlist-email')||{}).value || '';
-    if(!email || !email.includes('@')) { showStatusToast('⚠️ Entre un email valide'); return; }
-    try {
-        await sb.from('feedback').insert({ type: 'waitlist_premium', message: 'Waitlist Premium 5€/mois', email: email, section: 'premium_waitlist' });
-    } catch(e) {}
-    var confirm = document.getElementById('waitlist-confirm');
-    if(confirm) confirm.style.display = '';
-    showStatusToast('🎉 Tu seras notifié au lancement !');
+function openSubSwitcher() {
+    setPlan(currentPlan);
+    document.getElementById('sub-modal').classList.add('open');
+    document.getElementById('sub-modal').scrollTop = 0;
 }
+function closeSubSwitcher() { document.getElementById('sub-modal').classList.remove('open'); }
 
 // ===================== DYNAMIC ATHLETE PROFILE =====================
 var ATHLETE_DATA = {
@@ -3498,303 +3474,223 @@ function selRegion(el, region) {
     renderTraining(_trainingData);
 }
 
-// ===================== LODGING SCREEN =====================
-
-// Coordonnées GPS des villes principales
+// ===================== LODGING =====================
 var CITY_COORDS = {
-    'toulouse':   { lat: 43.6047, lng: 1.4442 },
-    'paris':      { lat: 48.8566, lng: 2.3522 },
-    'lyon':       { lat: 45.7640, lng: 4.8357 },
-    'bordeaux':   { lat: 44.8378, lng: -0.5792 },
-    'marseille':  { lat: 43.2965, lng: 5.3698 },
-    'nice':       { lat: 43.7102, lng: 7.2620 },
-    'lille':      { lat: 50.6292, lng: 3.0573 },
-    'nantes':     { lat: 47.2184, lng: -1.5536 },
-    'strasbourg': { lat: 48.5734, lng: 7.7521 },
-    'montpellier':{ lat: 43.6108, lng: 3.8767 },
-    'rennes':     { lat: 48.1173, lng: -1.6778 },
-    'grenoble':   { lat: 45.1885, lng: 5.7245 },
-    'angers':     { lat: 47.4784, lng: -0.5632 },
-    'dijon':      { lat: 47.3220, lng: 5.0415 },
-    'chamonix':   { lat: 45.9237, lng: 6.8694 }
+    'toulouse':{'lat':43.6047,'lng':1.4442},'paris':{'lat':48.8566,'lng':2.3522},
+    'lyon':{'lat':45.7640,'lng':4.8357},'bordeaux':{'lat':44.8378,'lng':-0.5792},
+    'marseille':{'lat':43.2965,'lng':5.3698},'nice':{'lat':43.7102,'lng':7.2620},
+    'lille':{'lat':50.6292,'lng':3.0573},'nantes':{'lat':47.2184,'lng':-1.5536},
+    'montpellier':{'lat':43.6108,'lng':3.8767},'rennes':{'lat':48.1173,'lng':-1.6778},
+    'grenoble':{'lat':45.1885,'lng':5.7245},'strasbourg':{'lat':48.5734,'lng':7.7521},
+    'chamonix':{'lat':45.9237,'lng':6.8694},'angers':{'lat':47.4784,'lng':-0.5632}
 };
-
-var _lodgingActiveEventId = 'all';
-var _lodgingActiveCity = '';
-var _lodgingActiveLat = null;
-var _lodgingActiveLng = null;
-var _lodgingActiveEventName = '';
+var HOTEL_TEMPLATES = [
+    {type:'hotel', name:'Hôtel Centre-Ville',   icon:'🏨',stars:4,dist:'~1km',  amenities:['📶 Wifi','🍳 Petit-déj','🅿️ Parking'],      platform:'booking'},
+    {type:'hotel', name:'Hôtel Économique',      icon:'🏩',stars:3,dist:'~2km',  amenities:['📶 Wifi','🍳 Petit-déj'],                    platform:'booking'},
+    {type:'hotel', name:'Hôtel Sport & Fitness', icon:'🏋️',stars:4,dist:'~1.5km',amenities:['💪 Fitness','📶 Wifi','🏊 Piscine'],         platform:'expedia'},
+    {type:'hotel', name:'Suite & Spa',           icon:'🏰',stars:5,dist:'~2km',  amenities:['🛁 Spa','🍽️ Restaurant','🅿️ Parking VIP'],  platform:'expedia'},
+    {type:'airbnb',name:'Appartement Entier',    icon:'🏠',stars:0,dist:'~0.8km',amenities:['🍳 Cuisine','📶 Wifi','👥 Jusqu\'à 4 pers'],  platform:'airbnb'},
+    {type:'airbnb',name:'Appartement Partagé',   icon:'🛋️',stars:0,dist:'~1.2km',amenities:['🍳 Cuisine','📶 Wifi','🤝 Idéal coloc'],      platform:'airbnb'}
+];
+var _lodgingActiveEventId='all', _lodgingActiveCity='', _lodgingActiveLat=null, _lodgingActiveLng=null, _lodgingActiveEventName='';
 
 async function loadLodgingScreen() {
     if(!currentUser) return;
-    // Sync avatar
     var av = document.getElementById('lodging-av');
     if(av && window.myProfile) {
-        if(window.myProfile.avatar_url) {
-            av.innerHTML = '<img src="'+window.myProfile.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
-        } else {
-            av.textContent = window.myProfile.initials || '?';
-        }
+        if(window.myProfile.avatar_url) { av.innerHTML='<img src="'+window.myProfile.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; }
+        else { av.textContent = window.myProfile.initials||'?'; }
     }
-    // Charger les events pour les pills
-    var { data: events } = await sb.from('events').select('id,name,city,event_date,sport').order('event_date');
-    buildLodgingEventPills(events || []);
-    // Charger le select du formulaire "proposer"
+    var {data:events} = await sb.from('events').select('id,name,city,event_date,sport').order('event_date');
+    buildLodgingPills(events||[]);
     var sel = document.getElementById('lodging-offer-event');
-    if(sel && events) {
-        sel.innerHTML = '<option value="">Événement concerné...</option>'
-            + events.map(function(ev){
-                return '<option value="'+ev.id+'">'+ev.name+' · '+(ev.city||'')+'</option>';
-            }).join('');
-    }
-    // Charger les données initiales (tous events)
+    if(sel && events) sel.innerHTML='<option value="">Événement concerné...</option>'+events.map(function(ev){ return '<option value="'+ev.id+'">'+ev.name+' · '+(ev.city||'')+'</option>'; }).join('');
     loadLodgingSeekers('all');
     loadLodgingOffers('all');
 }
 
-function buildLodgingEventPills(events) {
-    var container = document.getElementById('lodging-event-pills');
-    if(!container) return;
-    var MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
-    var pillsHtml = '<div class="epill active" data-event-id="all" data-city="" data-lat="" data-lng="">🏆 Tous</div>';
+function buildLodgingPills(events) {
+    var c = document.getElementById('lodging-event-pills');
+    if(!c) return;
+    var MOIS=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+    var html='<div class="epill active" data-event-id="all" data-city="" data-lat="" data-lng="" data-event-name="">🏆 Tous</div>';
     events.forEach(function(ev) {
-        var d = new Date(ev.event_date);
-        var mois = MOIS[d.getMonth()];
-        var cityNorm = (ev.city||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
-        var coords = CITY_COORDS[cityNorm] || {};
-        pillsHtml += '<div class="epill"'
-            +' data-event-id="'+ev.id+'"'
-            +' data-city="'+cityNorm+'"'
-            +' data-event-name="'+(ev.name||ev.city||'')+'"'
-            +' data-lat="'+(coords.lat||'')+'"'
-            +' data-lng="'+(coords.lng||'')+'"'
-            +' onclick="selectLodgingEvent(this)">'
-            +'📍 '+(ev.name||ev.city||'Event')+' '+mois
-            +'</div>';
+        var cn=(ev.city||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+        var coords=CITY_COORDS[cn]||{};
+        var d=new Date(ev.event_date);
+        html+='<div class="epill" data-event-id="'+ev.id+'" data-city="'+cn+'" data-lat="'+(coords.lat||'')+'" data-lng="'+(coords.lng||'')+'" data-event-name="'+(ev.name||'')+'" onclick="selectLodgingEvent(this)">📍 '+(ev.name||ev.city||'Event')+' '+MOIS[d.getMonth()]+'</div>';
     });
-    container.innerHTML = pillsHtml;
-    // Pill "Tous" a son propre handler
-    container.querySelector('[data-event-id="all"]').addEventListener('click', function() {
-        container.querySelectorAll('.epill').forEach(function(p){ p.classList.remove('active'); });
+    c.innerHTML=html;
+    c.querySelector('[data-event-id="all"]').addEventListener('click',function(){
+        c.querySelectorAll('.epill').forEach(function(p){p.classList.remove('active');});
         this.classList.add('active');
-        _lodgingActiveEventId = 'all';
-        _lodgingActiveCity = '';
-        _lodgingActiveLat = null;
-        _lodgingActiveLng = null;
-        _lodgingActiveEventName = '';
-        loadLodgingSeekers('all');
-        loadLodgingOffers('all');
-        document.getElementById('lodging-hotels-links').innerHTML = '<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';
-        document.getElementById('lodging-radius-label').textContent = 'Sélectionne un événement pour voir les hôtels à proximité';
+        _lodgingActiveEventId='all'; _lodgingActiveCity=''; _lodgingActiveLat=null; _lodgingActiveLng=null; _lodgingActiveEventName='';
+        loadLodgingSeekers('all'); loadLodgingOffers('all');
+        document.getElementById('lodging-hotels-links').innerHTML='<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';
+        document.getElementById('lodging-radius-label').textContent='Sélectionne un événement pour voir les hôtels';
     });
 }
 
 function selectLodgingEvent(pill) {
-    document.querySelectorAll('#lodging-event-pills .epill').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('#lodging-event-pills .epill').forEach(function(p){p.classList.remove('active');});
     pill.classList.add('active');
-    _lodgingActiveEventId = pill.getAttribute('data-event-id');
-    _lodgingActiveCity    = pill.getAttribute('data-city');
-    _lodgingActiveLat     = parseFloat(pill.getAttribute('data-lat')) || null;
-    _lodgingActiveLng     = parseFloat(pill.getAttribute('data-lng')) || null;
-    _lodgingActiveEventName = pill.getAttribute('data-event-name') || _lodgingActiveCity;
+    _lodgingActiveEventId=pill.getAttribute('data-event-id');
+    _lodgingActiveCity=pill.getAttribute('data-city');
+    _lodgingActiveLat=parseFloat(pill.getAttribute('data-lat'))||null;
+    _lodgingActiveLng=parseFloat(pill.getAttribute('data-lng'))||null;
+    _lodgingActiveEventName=pill.getAttribute('data-event-name')||'';
     loadLodgingSeekers(_lodgingActiveEventId);
     loadLodgingOffers(_lodgingActiveEventId);
-    loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
+    // Charger hôtels si tab hôtels actif
+    var activeTab=document.querySelector('.lodging-tab.active');
+    if(activeTab && activeTab.getAttribute('data-tab')==='hotels') loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
 }
 
-// Calcul distance Haversine (km)
-function haversine(lat1, lng1, lat2, lng2) {
-    var R = 6371;
-    var dLat = (lat2-lat1) * Math.PI/180;
-    var dLng = (lng2-lng1) * Math.PI/180;
-    var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-// Charger les athlètes qui cherchent un logement
 async function loadLodgingSeekers(eventId) {
-    var list = document.getElementById('lodging-seekers-list');
+    var list=document.getElementById('lodging-seekers-list');
     if(!list) return;
-    list.innerHTML = '<div style="text-align:center;padding:16px;color:#94A3B8;font-size:0.85em">Chargement...</div>';
-
-    // Profils avec needs=Logement
-    var { data: profiles } = await sb.from('profiles').select('id,prenom,pseudo,ville,sports,needs,avatar_url,avatar_initials,best_time').neq('id', currentUser.id);
-    var seekers = (profiles||[]).filter(function(p) {
-        try { var n = typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]); return n.some(function(x){ return x.includes('Logement'); }); } catch(e){ return false; }
+    list.innerHTML='<div style="text-align:center;padding:16px;color:#94A3B8;font-size:0.85em">Chargement...</div>';
+    var {data:profiles}=await sb.from('profiles').select('id,prenom,pseudo,ville,sports,needs,avatar_url,avatar_initials,best_time').neq('id',currentUser.id);
+    var seekers=(profiles||[]).filter(function(p){
+        try{var n=typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]);return n.some(function(x){return x.includes('Logement');});}catch(e){return false;}
     });
-
-    // Si event sélectionné, filtrer par inscrits à cet event
-    if(eventId !== 'all') {
-        var { data: regs } = await sb.from('event_registrations').select('user_id').eq('event_id', eventId);
-        var regIds = new Set((regs||[]).map(function(r){ return r.user_id; }));
-        seekers = seekers.filter(function(p){ return regIds.has(p.id); });
+    if(eventId!=='all'){
+        var {data:regs}=await sb.from('event_registrations').select('user_id').eq('event_id',eventId);
+        var regIds=new Set((regs||[]).map(function(r){return r.user_id;}));
+        seekers=seekers.filter(function(p){return regIds.has(p.id);});
     }
-
-    if(!seekers.length) {
-        list.innerHTML = '<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">'+(eventId==='all'?'Aucun athlète ne cherche de logement actuellement':'Aucun athlète inscrit à cet event ne cherche de logement')+'</div>';
-        return;
-    }
-
-    list.innerHTML = seekers.map(function(p) {
-        var sports=[]; try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
-        var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-        var avatarHtml = p.avatar_url
-            ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
-            : initials;
-        return '<div style="background:white;border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px">'
-            +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'
-            +'<div style="flex:1;min-width:0">'
-            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
+    if(!seekers.length){list.innerHTML='<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">'+(eventId==='all'?'Aucun athlète ne cherche de logement actuellement':'Aucun athlète inscrit à cet event ne cherche de logement')+'</div>';return;}
+    list.innerHTML=seekers.map(function(p){
+        var sports=[];try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
+        var initials=p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
+        var av=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
+        return '<div style="background:white;border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px">'
+            +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
+            +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
             +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div>'
-            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+p.best_time+'</div>':'')
-            +'</div>'
-            +'<button data-uid="'+p.id+'" class="lodging-contact-btn" style="padding:8px 12px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.8em;cursor:pointer;flex-shrink:0">💬 Contacter</button>'
+            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+p.best_time+'</div>':'')+'</div>'
+            +'<button data-uid="'+p.id+'" class="lodge-contact-btn" style="padding:8px 12px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.8em;cursor:pointer;flex-shrink:0">💬 Contacter</button>'
             +'</div>';
     }).join('');
-
-    list.querySelectorAll('.lodging-contact-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(){ openRealChat(btn.getAttribute('data-uid')); });
-    });
+    list.querySelectorAll('.lodge-contact-btn').forEach(function(btn){btn.addEventListener('click',function(){openRealChat(btn.getAttribute('data-uid'));});});
 }
 
-// Charger les propositions de logement d'athlètes
 async function loadLodgingOffers(eventId) {
-    var list = document.getElementById('lodging-offers-list');
+    var list=document.getElementById('lodging-offers-list');
     if(!list) return;
-
-    var query = sb.from('lodgings').select('*,profiles(prenom,pseudo,avatar_url,avatar_initials)');
-    if(eventId !== 'all') query = query.eq('event_id', eventId);
-    var { data: offers } = await query.order('created_at', { ascending: false });
-
-    if(!offers || !offers.length) {
-        list.innerHTML = '<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Aucune proposition de logement pour le moment.<br><span style="font-size:0.9em">Sois le premier à proposer ! 👆</span></div>';
-        return;
-    }
-
-    list.innerHTML = offers.map(function(o) {
-        var p = o.profiles || {};
-        var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-        var avatarHtml = p.avatar_url
-            ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
-            : initials;
-        var isOwn = o.user_id === currentUser.id;
-        return '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden">'
+    var query=sb.from('lodgings').select('*,profiles(prenom,pseudo,avatar_url,avatar_initials)');
+    if(eventId!=='all') query=query.eq('event_id',eventId);
+    var {data:offers}=await query.order('created_at',{ascending:false});
+    if(!offers||!offers.length){list.innerHTML='<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Aucune proposition pour le moment.<br><span style="font-size:0.9em">Sois le premier à proposer 👆</span></div>';return;}
+    list.innerHTML=offers.map(function(o){
+        var p=o.profiles||{};
+        var initials=p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
+        var av=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
+        var isOwn=o.user_id===currentUser.id;
+        return '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;margin-bottom:10px">'
             +'<div style="background:linear-gradient(135deg,#065F46,#059669);padding:10px 14px;display:flex;align-items:center;gap:10px">'
-            +'<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;overflow:hidden;flex-shrink:0">'+avatarHtml+'</div>'
+            +'<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;overflow:hidden;flex-shrink:0">'+av+'</div>'
             +'<div style="flex:1"><div style="font-weight:700;color:white;font-size:0.88em">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
             +'<div style="font-size:0.7em;color:rgba(255,255,255,0.7)">Propose son logement</div></div>'
             +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:1.1em">'+(o.price_per_night||'?')+'€<span style="font-size:0.55em;font-weight:400">/nuit</span></div>'
-            +'</div>'
-            +'<div style="padding:12px 14px">'
+            +'</div><div style="padding:12px 14px">'
             +'<div style="font-size:0.82em;color:#0A1628;margin-bottom:6px">'+(o.description||'Logement disponible')+'</div>'
             +'<div style="display:flex;align-items:center;justify-content:space-between">'
             +'<span style="font-size:0.75em;color:#64748B">👥 '+(o.places||1)+' place'+(o.places>1?'s':'')+' disponible'+(o.places>1?'s':'')+'</span>'
-            +(isOwn
-                ? '<button data-lid="'+o.id+'" class="lodging-del-btn" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑 Retirer</button>'
-                : '<button data-uid="'+o.user_id+'" class="lodging-contact-btn" style="padding:6px 12px;background:#0A1628;color:white;border:none;border-radius:7px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer">💬 Contacter</button>')
+            +(isOwn?'<button data-lid="'+o.id+'" class="lodge-del-btn" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑 Retirer</button>'
+                   :'<button data-uid="'+o.user_id+'" class="lodge-contact-btn" style="padding:6px 12px;background:#0A1628;color:white;border:none;border-radius:7px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer">💬 Contacter</button>')
             +'</div></div></div>';
     }).join('');
-
-    list.querySelectorAll('.lodging-contact-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(){ openRealChat(btn.getAttribute('data-uid')); });
-    });
-    list.querySelectorAll('.lodging-del-btn').forEach(function(btn) {
-        btn.addEventListener('click', async function(){
-            await sb.from('lodgings').delete().eq('id', btn.getAttribute('data-lid'));
+    list.querySelectorAll('.lodge-contact-btn').forEach(function(btn){btn.addEventListener('click',function(){openRealChat(btn.getAttribute('data-uid'));});});
+    list.querySelectorAll('.lodge-del-btn').forEach(function(btn){
+        btn.addEventListener('click',async function(){
+            await sb.from('lodgings').delete().eq('id',btn.getAttribute('data-lid'));
             loadLodgingOffers(_lodgingActiveEventId);
             showStatusToast('✅ Annonce retirée');
         });
     });
 }
 
-// Base d'hôtels par ville avec liens affiliés
-var HOTELS_BY_CITY = {
-    'toulouse': [
-        { name: 'Novotel Toulouse Centre', dist: '1.2km', stars: 4, amenities: ['🏊 Piscine','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-toulouse-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Compans-Caffarelli--Toulouse/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' },
-        { name: 'Ibis Toulouse Purpan', dist: '2.1km', stars: 3, amenities: ['🍳 Petit-déj','💪 Sport','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-toulouse-purpan.fr.html', airbnb: 'https://www.airbnb.fr/s/Toulouse--France/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' },
-        { name: 'Mercure Toulouse Centre', dist: '0.8km', stars: 4, amenities: ['🍽️ Restaurant','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/mercure-toulouse-wilson.fr.html', airbnb: 'https://www.airbnb.fr/s/Toulouse--France/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' },
-        { name: 'Appart Airbnb Compans', dist: '0.8km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🌿 Terrasse'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Compans-Caffarelli--Toulouse/homes', expedia: null },
-        { name: 'Hampton by Hilton Toulouse', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi','🏋️ Fitness'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/hampton-by-hilton-toulouse.fr.html', airbnb: 'https://www.airbnb.fr/s/Toulouse--France/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' }
-    ],
-    'paris': [
-        { name: 'Ibis Paris Champs-Élysées', dist: '1.4km', stars: 3, amenities: ['🗼 Vue Paris','📶 Wifi','🍳 Petit-déj'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/ibis-paris-la-defense-les-files.fr.html', airbnb: 'https://www.airbnb.fr/s/Paris--France/homes', expedia: 'https://www.expedia.fr/Paris-Hotels.d179900.Travel-Guide-Hotels' },
-        { name: 'Mercure Paris Opéra', dist: '2.3km', stars: 4, amenities: ['🏊 Spa','🅿️ Parking','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/mercure-paris-opera-garnier.fr.html', airbnb: 'https://www.airbnb.fr/s/Paris--France/homes', expedia: 'https://www.expedia.fr/Paris-Hotels.d179900.Travel-Guide-Hotels' },
-        { name: 'Novotel Paris Centre', dist: '1.8km', stars: 4, amenities: ['🏊 Piscine','🍽️ Restaurant','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-paris-tour-eiffel.fr.html', airbnb: 'https://www.airbnb.fr/s/Paris--France/homes', expedia: 'https://www.expedia.fr/Paris-Hotels.d179900.Travel-Guide-Hotels' },
-        { name: 'Appart Airbnb Grand Palais', dist: '0.5km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🛁 Baignoire'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Champs-Elysees--Paris/homes', expedia: null }
-    ],
-    'lyon': [
-        { name: 'Novotel Lyon Confluence', dist: '0.9km', stars: 4, amenities: ['🍳 Petit-déj','📶 Wifi','💪 Salle sport'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-lyon-confluence.fr.html', airbnb: 'https://www.airbnb.fr/s/Lyon--France/homes', expedia: 'https://www.expedia.fr/Lyon-Hotels.d178291.Travel-Guide-Hotels' },
-        { name: 'Ibis Lyon Centre Perrache', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi','🅿️ Parking'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-lyon-perrache.fr.html', airbnb: 'https://www.airbnb.fr/s/Lyon--France/homes', expedia: 'https://www.expedia.fr/Lyon-Hotels.d178291.Travel-Guide-Hotels' },
-        { name: 'Appart Airbnb Confluence', dist: '1.0km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🌆 Vue fleuve'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Confluence--Lyon/homes', expedia: null },
-        { name: 'Radisson Blu Lyon', dist: '2.0km', stars: 4, amenities: ['🏊 Piscine','🍽️ Restaurant','🅿️ Parking'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/radisson-blu-lyon.fr.html', airbnb: 'https://www.airbnb.fr/s/Lyon--France/homes', expedia: 'https://www.expedia.fr/Lyon-Hotels.d178291.Travel-Guide-Hotels' }
-    ],
-    'bordeaux': [
-        { name: 'Novotel Bordeaux Centre', dist: '1.1km', stars: 4, amenities: ['🏊 Piscine','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-bordeaux-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Bordeaux--France/homes', expedia: 'https://www.expedia.fr/Bordeaux-Hotels.d178221.Travel-Guide-Hotels' },
-        { name: 'Ibis Bordeaux Centre', dist: '1.8km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-bordeaux-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Bordeaux--France/homes', expedia: 'https://www.expedia.fr/Bordeaux-Hotels.d178221.Travel-Guide-Hotels' },
-        { name: 'Appart Airbnb Chartrons', dist: '2.0km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🍷 Cave à vin'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Les-Chartrons--Bordeaux/homes', expedia: null }
-    ],
-    'marseille': [
-        { name: 'Sofitel Marseille Vieux-Port', dist: '0.7km', stars: 5, amenities: ['🌊 Vue mer','🏊 Piscine','🍽️ Restaurant'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/sofitel-marseille-vieux-port.fr.html', airbnb: 'https://www.airbnb.fr/s/Marseille--France/homes', expedia: 'https://www.expedia.fr/Marseille-Hotels.d178281.Travel-Guide-Hotels' },
-        { name: 'Ibis Marseille Centre', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi','🅿️ Parking'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-marseille-centre-prefecture.fr.html', airbnb: 'https://www.airbnb.fr/s/Marseille--France/homes', expedia: 'https://www.expedia.fr/Marseille-Hotels.d178281.Travel-Guide-Hotels' }
-    ],
-    'nice': [
-        { name: 'Hôtel Beau Rivage Nice', dist: '1.1km', stars: 4, amenities: ['🌊 Vue mer','📶 Wifi','🏊 Piscine'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/beau-rivage-nice.fr.html', airbnb: 'https://www.airbnb.fr/s/Nice--France/homes', expedia: 'https://www.expedia.fr/Nice-Hotels.d178294.Travel-Guide-Hotels' },
-        { name: 'Ibis Nice Centre', dist: '2.0km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-nice-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Nice--France/homes', expedia: 'https://www.expedia.fr/Nice-Hotels.d178294.Travel-Guide-Hotels' }
-    ],
-    'lille': [
-        { name: 'Novotel Lille Centre', dist: '1.0km', stars: 4, amenities: ['🏊 Piscine','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-lille-centre-gares.fr.html', airbnb: 'https://www.airbnb.fr/s/Lille--France/homes', expedia: 'https://www.expedia.fr/Lille-Hotels.d178271.Travel-Guide-Hotels' },
-        { name: 'Ibis Lille Centre', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-lille-centre-grand-palais.fr.html', airbnb: 'https://www.airbnb.fr/s/Lille--France/homes', expedia: 'https://www.expedia.fr/Lille-Hotels.d178271.Travel-Guide-Hotels' }
-    ],
-    'chamonix': [
-        { name: 'Hôtel Mont-Blanc Chamonix', dist: '0.5km', stars: 4, amenities: ['🏔️ Vue Mont-Blanc','🍳 Petit-déj','🛁 Spa'], icon: '🏔️', booking: 'https://www.booking.com/hotel/fr/mont-blanc-chamonix.fr.html', airbnb: 'https://www.airbnb.fr/s/Chamonix-Mont-Blanc/homes', expedia: 'https://www.expedia.fr/Chamonix-Hotels.d178231.Travel-Guide-Hotels' },
-        { name: 'Appart Airbnb Chamonix', dist: '1.2km', stars: 0, amenities: ['🍳 Cuisine','🏔️ Vue','📶 Wifi'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Chamonix-Mont-Blanc/homes', expedia: null }
-    ]
-};
-
-// Charger les cartes hôtels visuelles par ville
 function loadLodgingHotels(city, lat, lng, eventName) {
-// Soumettre une proposition de logement
+    var container=document.getElementById('lodging-hotels-links');
+    var label=document.getElementById('lodging-radius-label');
+    if(!container) return;
+    if(!city){container.innerHTML='<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';return;}
+    var cd=city.charAt(0).toUpperCase()+city.slice(1);
+    if(label) label.textContent='Logements près de '+(eventName||cd)+' · Rayon 5km';
+    var BOOKING_AID='4297313';
+    var bUrl='https://www.booking.com/search.html?ss='+encodeURIComponent(cd)+'&aid='+BOOKING_AID+'&radius=5&radiusunit=km&lang=fr';
+    var aUrl='https://www.airbnb.fr/s/'+encodeURIComponent(cd)+'/homes'+(lat?'?ne_lat='+(lat+0.045)+'&ne_lng='+(lng+0.06)+'&sw_lat='+(lat-0.045)+'&sw_lng='+(lng-0.06):'');
+    var eUrl='https://www.expedia.fr/Hotel-Search?destination='+encodeURIComponent(cd)+'&adults=1';
+    var getBg=function(p){return p==='airbnb'?'#FF5A5F':p==='expedia'?'#FFC72C':'#003580';};
+    var getFg=function(p){return p==='expedia'?'#0A1628':'white';};
+    var getUrl=function(p){return p==='airbnb'?aUrl:p==='expedia'?eUrl:bUrl;};
+    var getLbl=function(p){return p==='airbnb'?'🏠 Airbnb':p==='expedia'?'✈️ Expedia':'🏨 Booking';};
+    var hotels=HOTEL_TEMPLATES.filter(function(h){return h.type==='hotel';});
+    var airbnbs=HOTEL_TEMPLATES.filter(function(h){return h.type==='airbnb';});
+    var html='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:8px">🏨 HÔTELS — '+cd.toUpperCase()+'</div>';
+    html+=hotels.map(function(h){
+        var link=getUrl(h.platform);
+        var stars=h.stars?'⭐'.repeat(h.stars):'';
+        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
+        return '<div onclick="window.open(\''+link+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+            +'<div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
+            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+getLbl(h.platform)+'</span></div>'
+            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
+            +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' de l\'event'+(stars?' · '+stars:'')+'</div>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
+            +'<button onclick="event.stopPropagation();window.open(\''+link+'\',\'_blank\')" style="width:100%;padding:8px;background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+getLbl(h.platform)+' →</button>'
+            +'</div></div>';
+    }).join('');
+    html+='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin:14px 0 8px">🏠 APPARTEMENTS AIRBNB — '+cd.toUpperCase()+'</div>';
+    html+=airbnbs.map(function(h){
+        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#FFF1F0;color:#FF5A5F;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
+        return '<div onclick="window.open(\''+aUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #FF5A5F;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+            +'<div style="background:linear-gradient(135deg,#FF5A5F,#E84B50);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
+            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:white;color:#FF5A5F;font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">🏠 Airbnb</span></div>'
+            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
+            +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' · Airbnb</div>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
+            +'<button onclick="event.stopPropagation();window.open(\''+aUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">🏠 Voir sur Airbnb →</button>'
+            +'</div></div>';
+    }).join('');
+    html+='<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-top:4px">'
+        +'<div style="font-size:0.78em;color:#64748B;margin-bottom:8px;text-align:center">Voir plus pour '+cd+'</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<button onclick="window.open(\''+bUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#003580;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏨 Booking</button>'
+        +'<button onclick="window.open(\''+aUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏠 Airbnb</button>'
+        +'<button onclick="window.open(\''+eUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FFC72C;color:#0A1628;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">✈️ Expedia</button>'
+        +'</div></div>';
+    container.innerHTML=html;
+}
+
 async function submitLodgingOffer() {
     if(!currentUser) return;
-    var eventId = document.getElementById('lodging-offer-event').value;
-    var places  = parseInt(document.getElementById('lodging-offer-places').value) || 1;
-    var price   = parseInt(document.getElementById('lodging-offer-price').value) || 0;
-    var desc    = document.getElementById('lodging-offer-desc').value.trim();
-    if(!eventId) { showStatusToast('⚠️ Sélectionne un événement'); return; }
-    if(!desc)    { showStatusToast('⚠️ Ajoute une description'); return; }
-    if(!price)   { showStatusToast('⚠️ Indique un prix par nuit'); return; }
-    var { error } = await sb.from('lodgings').insert({
-        user_id: currentUser.id,
-        event_id: eventId,
-        places: places,
-        price_per_night: price,
-        description: desc
-    });
-    if(error) { showStatusToast('❌ Erreur : '+error.message); return; }
+    var eventId=document.getElementById('lodging-offer-event').value;
+    var places=parseInt(document.getElementById('lodging-offer-places').value)||1;
+    var price=parseInt(document.getElementById('lodging-offer-price').value)||0;
+    var desc=document.getElementById('lodging-offer-desc').value.trim();
+    if(!eventId){showStatusToast('⚠️ Sélectionne un événement');return;}
+    if(!desc){showStatusToast('⚠️ Ajoute une description');return;}
+    if(!price){showStatusToast('⚠️ Indique un prix par nuit');return;}
+    var {error}=await sb.from('lodgings').insert({user_id:currentUser.id,event_id:eventId,places:places,price_per_night:price,description:desc});
+    if(error){showStatusToast('❌ Erreur : '+error.message);return;}
     showStatusToast('✅ Annonce publiée !');
-    document.getElementById('lodging-offer-desc').value = '';
-    document.getElementById('lodging-offer-places').value = '';
-    document.getElementById('lodging-offer-price').value = '';
+    document.getElementById('lodging-offer-desc').value='';
+    document.getElementById('lodging-offer-places').value='';
+    document.getElementById('lodging-offer-price').value='';
     loadLodgingOffers(_lodgingActiveEventId);
 }
 
-// Switcher les tabs logement
 function switchLodgingTab(btn, tab) {
-    document.querySelectorAll('.lodging-tab').forEach(function(b){
-        b.style.background = 'transparent';
-        b.style.color = '#64748B';
-    });
-    btn.style.background = '#0A1628';
-    btn.style.color = 'white';
-    document.getElementById('lodging-tab-seeking').style.display  = tab === 'seeking'  ? '' : 'none';
-    document.getElementById('lodging-tab-offering').style.display = tab === 'offering' ? '' : 'none';
-    document.getElementById('lodging-tab-hotels').style.display   = tab === 'hotels'   ? '' : 'none';
-    // Recharger les données à chaque switch
-    if(tab === 'seeking')  loadLodgingSeekers(_lodgingActiveEventId);
-    if(tab === 'offering') loadLodgingOffers(_lodgingActiveEventId);
-    if(tab === 'hotels' && _lodgingActiveCity) {
-        loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
-    }
+    document.querySelectorAll('.lodging-tab').forEach(function(b){b.style.background='transparent';b.style.color='#64748B';});
+    btn.style.background='#0A1628'; btn.style.color='white';
+    document.getElementById('lodging-tab-seeking').style.display  = tab==='seeking'  ? '' : 'none';
+    document.getElementById('lodging-tab-offering').style.display = tab==='offering' ? '' : 'none';
+    document.getElementById('lodging-tab-hotels').style.display   = tab==='hotels'   ? '' : 'none';
+    if(tab==='seeking')  loadLodgingSeekers(_lodgingActiveEventId);
+    if(tab==='offering') loadLodgingOffers(_lodgingActiveEventId);
+    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
 }
 
 // ===================== DASHBOARD STATS =====================
@@ -4030,6 +3926,24 @@ function showStatusToast(msg) {
     toast._t = setTimeout(function(){ toast.style.display = 'none'; }, 2500);
 }
 
+// Status filter in matching — hide complet cards option
+function toggleCompletFilter() {
+    var btn = document.getElementById('hide-complet-btn');
+    var hide = btn.getAttribute('data-hide') === 'true';
+    if(hide) {
+        btn.setAttribute('data-hide', 'false');
+        btn.style.background = 'var(--bg)';
+        btn.style.color = 'var(--grey)';
+        btn.textContent = '👁 Masquer complets';
+        document.querySelectorAll('.athlete-card.complet').forEach(function(c){ c.style.display = ''; });
+    } else {
+        btn.setAttribute('data-hide', 'true');
+        btn.style.background = '#FEF2F2';
+        btn.style.color = 'var(--red)';
+        btn.textContent = '🔴 Complets masqués';
+        document.querySelectorAll('.athlete-card.complet').forEach(function(c){ c.style.display = 'none'; });
+    }
+}
 
 
 // ===== SPORT FILTER (MATCHING) =====
@@ -4908,6 +4822,10 @@ function showStatusToast(msg) {
         updateAthleteCount();
     }
 
+    function updateSavedCount() {
+        var el = document.getElementById('qa-sub-saved');
+        if(el) el.textContent = savedCount + (savedCount > 1 ? ' profils' : ' profil');
+    }
 
     function updateAthleteCount() {
         var fn = window.sbGetAthletes;
@@ -5951,7 +5869,6 @@ setPlan('free');
         updateMsgBadge();
     });
 
-}); // DOMContentLoaded
 </script>
 
     <!-- ===== ONBOARDING OVERLAY ===== -->

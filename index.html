@@ -639,10 +639,17 @@
                 sports: parseSafe(data.sports), needs: parseSafe(data.needs),
                 niveau: parseSafeObj(data.niveau), events: parseSafe(data.events),
                 initials: data.avatar_initials||'RM', plan: data.plan||'free',
-                best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||''
+                best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||'',
+                avatar_url: data.avatar_url||''
             };
-            // Mettre à jour l'UI
-            document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = data.avatar_initials||'RM'; });
+            // Mettre à jour l'UI — photo ou initiales
+            if(data.avatar_url) {
+                var imgTag = '<img src="'+data.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                document.querySelectorAll('.user-av').forEach(function(el){ el.innerHTML = imgTag; el.style.padding='0'; el.style.overflow='hidden'; });
+                if(typeof applyAvatarEverywhere === 'function') applyAvatarEverywhere(data.avatar_url);
+            } else {
+                document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = data.avatar_initials||'RM'; });
+            }
             if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
             if(typeof setPlan==='function') setPlan(data.plan||'free');
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
@@ -1623,6 +1630,10 @@ function loadRealAthletes() {
             if(!a.prenom && !a.pseudo) return;
             var displayName = a.prenom || a.pseudo || 'Athlete';
             var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+            // Avatar : photo ou initiales
+            var avatarHtml = a.avatar_url
+                ? '<img src="'+a.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+                : initials;
             var sports = [];
             try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
             var needs = [];
@@ -1665,7 +1676,7 @@ function loadRealAthletes() {
                 +' data-user-id="'+aid+'"'
                 +' style="cursor:pointer;border:2px solid #059669">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
-                +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
+                +'<div class="ac-top" style="background:'+color+'"><div class="ac-av" style="'+(a.avatar_url?'padding:0;overflow:hidden':'')+'">'+avatarHtml+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
                 +'<div class="ac-loc">&#x1F4CD; '+(a.ville||'France')+'</div></div>'
                 +(function(){
@@ -4533,13 +4544,21 @@ function toggleCompletFilter() {
         var homeWelcome = document.getElementById('home-welcome');
         if(homeWelcome) homeWelcome.textContent = 'Bonjour ' + p.prenom + ' 👋';
 
-        // Nom + initiales + localisation
+        // Nom + initiales/photo + localisation
         var profName = document.querySelector('#screen-profile .profile-name');
         if(profName) profName.textContent = p.prenom + (p.pseudo ? ' @' + p.pseudo : '');
         var profLoc = document.querySelector('#screen-profile .profile-loc');
         if(profLoc) profLoc.textContent = '📍 ' + (p.ville || 'France');
         var profAv = document.querySelector('#screen-profile .profile-avatar');
-        if(profAv) profAv.textContent = p.initials;
+        if(profAv) {
+            if(p.avatar_url) {
+                profAv.innerHTML = '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                profAv.style.padding = '0';
+                profAv.style.overflow = 'hidden';
+            } else {
+                profAv.textContent = p.initials || '?';
+            }
+        }
 
         // Stats dynamiques selon sports
         var pstats = document.getElementById('profile-pstats');
@@ -4594,18 +4613,20 @@ function toggleCompletFilter() {
         if(pccItems) {
             var sports = p.sports && p.sports.length ? p.sports : [];
             var sportName = sports[0] ? (SPORT_LABELS[sports[0]] ? SPORT_LABELS[sports[0]].name : sports[0]) : 'sport';
+            var hasPhoto = !!p.avatar_url;
+            var hasSocial = !!(p.instagram || p.strava || p.facebook);
+            var hasPerf = !!(p.best_time || p.nb_courses || p.pace);
             var html = '';
             html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Informations de base</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Sport(s) sélectionné(s) : ' + sports.map(function(s){ return SPORT_LABELS[s] ? SPORT_LABELS[s].icon + ' ' + SPORT_LABELS[s].name : s; }).join(', ') + '</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Événements inscrits</div></div>';
+            html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Sport(s) : ' + sports.map(function(s){ return SPORT_LABELS[s] ? SPORT_LABELS[s].icon + ' ' + SPORT_LABELS[s].name : s; }).join(', ') + '</div></div>';
             if(p.needs && p.needs.length) html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Besoins définis</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check todo">!</div><div style="color:var(--grey)">Perfs ' + sportName + ' <span style="font-size:0.85em">— +5%</span></div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check todo">!</div><div style="color:var(--grey)">Photo de profil <span style="font-size:0.85em">— +10%</span></div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check todo">!</div><div style="color:var(--grey)">Réseaux sociaux <span style="font-size:0.85em">— +5%</span></div></div>';
+            html += '<div class="pcc-item"><div class="pcc-check '+(hasPhoto?'done':'todo')+'">'+(hasPhoto?'✓':'!')+'</div><div style="color:'+(hasPhoto?'inherit':'var(--grey)')+'">Photo de profil'+(hasPhoto?'':' <span style="font-size:0.85em">— +10%</span>')+'</div></div>';
+            html += '<div class="pcc-item"><div class="pcc-check '+(hasPerf?'done':'todo')+'">'+(hasPerf?'✓':'!')+'</div><div style="color:'+(hasPerf?'inherit':'var(--grey)')+'">Perfs '+sportName+(hasPerf?'':' <span style="font-size:0.85em">— +5%</span>')+'</div></div>';
+            html += '<div class="pcc-item"><div class="pcc-check '+(hasSocial?'done':'todo')+'">'+(hasSocial?'✓':'!')+'</div><div style="color:'+(hasSocial?'inherit':'var(--grey)')+'">Réseaux sociaux'+(hasSocial?'':' <span style="font-size:0.85em">— +5%</span>')+'</div></div>';
             pccItems.innerHTML = html;
             // Update % bar
-            var done = (pccItems.querySelectorAll('.pcc-check.done').length);
-            var total = (pccItems.querySelectorAll('.pcc-check').length);
+            var done = (pccItems.querySelectorAll('.pcc-check.done').length + 1); // +1 pour le check "photo de profil" fixe en haut
+            var total = (pccItems.querySelectorAll('.pcc-check').length + 1);
             var pct = Math.round(done/total*100);
             var fill = document.querySelector('.pcc-fill');
             if(fill) fill.style.width = pct + '%';
@@ -4833,10 +4854,89 @@ function toggleCompletFilter() {
                 chip.style.borderColor = on ? '#E2E8F0' : '#0A1628';
             };
         });
-        var initials = ((p.prenom||'T')[0] + (p.pseudo||'J')[0]).toUpperCase();
-        if(el('edit-avatar-preview')) el('edit-avatar-preview').textContent = initials;
+        // Afficher photo ou initiales dans le preview
+        var avatarEl = el('edit-avatar-preview');
+        if(avatarEl) {
+            if(p.avatar_url) {
+                avatarEl.innerHTML = '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+            } else {
+                var initials = ((p.prenom||'?')[0] + (p.pseudo||p.prenom||'?')[1]||'').toUpperCase();
+                avatarEl.textContent = initials || '?';
+            }
+        }
+        // Wirer le file input pour upload immédiat
+        var fileInput = el('avatar-file-input');
+        if(fileInput) {
+            fileInput.onchange = function() {
+                var file = fileInput.files[0];
+                if(file) uploadAvatar(file);
+            };
+        }
         el('edit-profile-modal').style.display = 'block';
         document.body.style.overflow = 'hidden';
+    }
+
+    // Upload avatar vers Supabase Storage
+    async function uploadAvatar(file) {
+        if(!currentUser) return;
+        var statusEl = document.getElementById('avatar-upload-status');
+        var previewEl = document.getElementById('edit-avatar-preview');
+        if(statusEl) statusEl.textContent = '⏳ Upload en cours...';
+
+        // Vérif taille
+        if(file.size > 5 * 1024 * 1024) {
+            if(statusEl) statusEl.textContent = '⚠️ Fichier trop lourd (max 5 Mo)';
+            return;
+        }
+
+        // Chemin : avatars/{userId}/avatar.jpg
+        var ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+        var filePath = currentUser.id + '/avatar.' + ext;
+
+        try {
+            // Upload (upsert = écrase l'ancien)
+            var { error: upErr } = await sb.storage.from('avatars').upload(filePath, file, {
+                upsert: true,
+                contentType: file.type
+            });
+            if(upErr) throw upErr;
+
+            // Récupérer l'URL publique
+            var { data: urlData } = sb.storage.from('avatars').getPublicUrl(filePath);
+            var publicUrl = urlData.publicUrl + '?t=' + Date.now(); // cache-bust
+
+            // Sauvegarder dans profiles
+            await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
+
+            // Mettre à jour window.myProfile
+            if(!window.myProfile) window.myProfile = {};
+            window.myProfile.avatar_url = publicUrl;
+
+            // Preview dans le modal
+            if(previewEl) previewEl.innerHTML = '<img src="'+publicUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+            if(statusEl) statusEl.textContent = '✅ Photo mise à jour !';
+
+            // Mettre à jour partout dans l'UI
+            applyAvatarEverywhere(publicUrl);
+
+        } catch(e) {
+            console.error('uploadAvatar error:', e);
+            if(statusEl) statusEl.textContent = '❌ Erreur upload : ' + (e.message||'réessaie');
+        }
+    }
+
+    // Applique la photo de profil partout dans l'UI
+    function applyAvatarEverywhere(url) {
+        var imgTag = '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        // Avatar profil principal
+        var profAv = document.querySelector('#screen-profile .profile-avatar');
+        if(profAv) { profAv.innerHTML = imgTag; profAv.style.padding = '0'; profAv.style.overflow = 'hidden'; }
+        // Avatar nav / accueil
+        document.querySelectorAll('.user-av').forEach(function(el) {
+            el.innerHTML = imgTag;
+            el.style.padding = '0';
+            el.style.overflow = 'hidden';
+        });
     }
 
     function closeEditProfile() {
@@ -5644,13 +5744,18 @@ setPlan('free');
         </div>
         <div style="overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px">
 
-            <!-- Avatar initiales -->
+            <!-- Avatar upload réel -->
             <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#F8FAFC;border-radius:14px">
-                <div id="edit-avatar-preview" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4em;color:white">TJ</div>
-                <div>
-                    <div style="font-weight:700;font-size:0.9em;color:#0A1628;margin-bottom:2px">Photo de profil</div>
-                    <div style="font-size:0.78em;color:#94A3B8">Bientôt disponible · Initiales générées automatiquement</div>
+                <div style="position:relative;cursor:pointer" onclick="document.getElementById('avatar-file-input').click()">
+                    <div id="edit-avatar-preview" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:white;overflow:hidden;flex-shrink:0"></div>
+                    <div style="position:absolute;bottom:0;right:0;background:#0A1628;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:0.75em;border:2px solid white">📸</div>
                 </div>
+                <div style="flex:1">
+                    <div style="font-weight:700;font-size:0.9em;color:#0A1628;margin-bottom:4px">Photo de profil</div>
+                    <button onclick="document.getElementById('avatar-file-input').click()" style="background:#0A1628;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">📸 Changer la photo</button>
+                    <div id="avatar-upload-status" style="font-size:0.72em;color:#94A3B8;margin-top:4px">JPG, PNG — max 5 Mo</div>
+                </div>
+                <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp" style="display:none">
             </div>
 
             <div>

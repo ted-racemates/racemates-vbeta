@@ -578,6 +578,36 @@
                 // Stopper les subscriptions realtime
                 if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
                 if(window._realtimeSubscription) { try{ sb.removeChannel(window._realtimeSubscription); }catch(e){} window._realtimeSubscription = null; }
+                // Reset complet des données utilisateur
+                currentUser = null;
+                currentProfile = null;
+                window.myProfile = null;
+                window._pendingAuth = null;
+                window._trainingData = [];
+                window._myEventIds = new Set();
+                window._matchingEvents = [];
+                window._matchingUserEvents = {};
+                window._athletesLoadedAt = 0;
+                // Reset UI profil pour éviter que les données de l'ancien user restent affichées
+                var selectors = [
+                    ['#home-welcome', 'textContent', 'Bonjour 👋'],
+                    ['#screen-profile .profile-name', 'textContent', ''],
+                    ['#screen-profile .profile-loc', 'textContent', ''],
+                    ['#screen-profile .profile-avatar', 'textContent', '?'],
+                    ['#stat-val-matches', 'textContent', '-'],
+                    ['#stat-val-messages', 'textContent', '-'],
+                    ['#stat-val-events', 'textContent', '-'],
+                    ['#athletes-list', 'innerHTML', ''],
+                    ['#home-matches-list', 'innerHTML', ''],
+                    ['#training-list', 'innerHTML', ''],
+                    ['#profile-badges-dynamic', 'innerHTML', ''],
+                    ['#profile-pstats', 'innerHTML', '']
+                ];
+                selectors.forEach(function(s) {
+                    var el = document.querySelector(s[0]);
+                    if(el) el[s[1]] = s[2];
+                });
+                document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = '?'; });
                 return;
             }
 
@@ -594,10 +624,13 @@
 
         async function loadMyProfile() {
             if(!currentUser) return;
+            // Capturer l'ID au moment du lancement — si l'utilisateur change entre-temps, on abandonne
+            var expectedUserId = currentUser.id;
             var parseSafe = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):[];}catch(e){return[];} };
             var parseSafeObj = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):{};}catch(e){return{};} };
-            const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-            if (!data) return;
+            const { data } = await sb.from('profiles').select('*').eq('id', expectedUserId).single();
+            // Vérifier que l'utilisateur n'a pas changé pendant la requête
+            if (!data || !currentUser || currentUser.id !== expectedUserId) return;
             currentProfile = data;
             window.myProfile = {
                 prenom: data.prenom, pseudo: data.pseudo, ville: data.ville,
@@ -991,14 +1024,14 @@
     <div style="padding:0 20px">
         <div style="font-size:0.7em;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:8px">Sport</div>
         <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:10px" id="sport-filter-row">
-            <div class="fchip active" onclick="selSport(this,'all')">🏆 Tous</div>
-            <div class="fchip" onclick="selSport(this,'hyrox')">🏋️ Hyrox</div>
-            <div class="fchip" onclick="selSport(this,'athx')">⚡ ATHX</div>
-            <div class="fchip" onclick="selSport(this,'running')">🏃 Running</div>
-            <div class="fchip" onclick="selSport(this,'trail')">🌿 Trail</div>
-            <div class="fchip" onclick="selSport(this,'triathlon')">🏊 Triathlon</div>
-            <div class="fchip" onclick="selSport(this,'spartan')">🧱 Spartan</div>
-            <div class="fchip" onclick="selSport(this,'crossfit')">💪 CrossFit</div>
+            <div class="fchip active" data-filter="all" onclick="selSport(this,'all')">🏆 Tous</div>
+            <div class="fchip" data-filter="hyrox" onclick="selSport(this,'hyrox')">🏋️ Hyrox</div>
+            <div class="fchip" data-filter="athx" onclick="selSport(this,'athx')">⚡ ATHX</div>
+            <div class="fchip" data-filter="running" onclick="selSport(this,'running')">🏃 Running</div>
+            <div class="fchip" data-filter="trail" onclick="selSport(this,'trail')">🌿 Trail</div>
+            <div class="fchip" data-filter="triathlon" onclick="selSport(this,'triathlon')">🏊 Triathlon</div>
+            <div class="fchip" data-filter="spartan" onclick="selSport(this,'spartan')">🧱 Spartan</div>
+            <div class="fchip" data-filter="crossfit" onclick="selSport(this,'crossfit')">💪 CrossFit</div>
         </div>
         <div style="font-size:0.7em;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:8px">Événement</div>
         <div class="event-pills" style="margin-bottom:10px" id="event-pills-container">
@@ -1149,8 +1182,8 @@
 <div class="screen" id="screen-profile">
     <div class="profile-header">
         <div class="header-top" style="position:relative;z-index:2"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><button onclick="openSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.8em;font-weight:600;cursor:pointer;font-family:Barlow,sans-serif;display:flex;align-items:center;gap:5px">⚙️ <span id="profile-plan-label">Gratuit</span></button></div>
-        <div class="profile-avatar">TJ</div>
-        <div class="profile-name">Thomas Jarron</div>
+        <div class="profile-avatar"></div>
+        <div class="profile-name"></div>
         <div class="profile-loc">📍 Lyon, France</div>
     </div>
     <div class="profile-body">
@@ -1557,21 +1590,45 @@ function loadRealAthletes() {
     var fn = window.sbGetAthletes;
     if(typeof fn !== 'function') return;
     document.getElementById('athletes-loading') && document.getElementById('athletes-loading').remove();
-    fn().then(function(athletes) {
-        
-        if(!athletes || athletes.length === 0) { console.warn('Supabase: 0 athlète retourné'); return; }
-        console.log('Supabase: ' + athletes.length + ' athlète(s) chargés');
+
+    // Charger profils + events + inscriptions en parallele
+    Promise.all([
+        fn(),
+        sb.from('events').select('id,name,event_date,city,sport').order('event_date'),
+        sb.from('event_registrations').select('user_id,event_id')
+    ]).then(function(results) {
+        var athletes = results[0] || [];
+        var events   = (results[1].data) || [];
+        var regs     = (results[2].data) || [];
+
+        if(!athletes || athletes.length === 0) { console.warn('Supabase: 0 athlete retourne'); return; }
+        console.log('loadRealAthletes:', athletes.length, 'athletes,', events.length, 'events,', regs.length, 'inscriptions');
+
+        // Map userId => Set d eventIds
+        var userEvents = {};
+        regs.forEach(function(r) {
+            if(!userEvents[r.user_id]) userEvents[r.user_id] = new Set();
+            userEvents[r.user_id].add(r.event_id);
+        });
+
+        // Stocker globalement pour le filtre
+        window._matchingEvents = events;
+        window._matchingUserEvents = userEvents;
+
+        // Generer les pills d evenements dynamiquement
+        buildEventPills(events, userEvents, athletes);
+
         var fragment = '';
         athletes.forEach(function(a) {
             if(!a.prenom && !a.pseudo) return;
-            var displayName = a.prenom || a.pseudo || 'Athlète';
+            var displayName = a.prenom || a.pseudo || 'Athlete';
             var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
             var sports = [];
             try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
             var needs = [];
             try { needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs||[]); } catch(e){}
             var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
-            var allSportKeys = sports.map(function(s){ return s.toLowerCase().replace(/[^a-z]/g,''); }).join(' ');
+            var allSportKeys = sports.map(function(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); }).join(' ');
             var needTags = needs.map(function(n){
                 if(n.includes('Logement')) return 'logement';
                 if(n.includes('Duo')) return 'duo';
@@ -1580,15 +1637,17 @@ function loadRealAthletes() {
                 return '';
             }).join(' ');
             var dataTags = (allSportKeys+' '+needTags+' dispo').trim();
+
+            // IDs des events auxquels cet athlete est inscrit (pipe-separes)
+            var myEventIds = userEvents[a.id] ? Array.from(userEvents[a.id]).join('|') : '';
+
             var sportBadges = sports.slice(0,4).map(function(s){return '<span class="badge badge-dark">'+s+'</span>';}).join('');
             var needBadges = needs.slice(0,2).map(function(n){
                 var icons={'Logement':'🏠','Partenaire Duo':'🏅','Relais':'⚡','Entra':'🤝'};
                 var key=Object.keys(icons).find(function(k){return n.includes(k);});
                 return '<span class="badge badge-blue">'+(key?icons[key]+' ':'')+n+'</span>';
             }).join('');
-            var colors=['linear-gradient(150deg,#0A1628,#1E3A8A)','linear-gradient(150deg,#065F46,#059669)','linear-gradient(150deg,#7C3AED,#4F46E5)','linear-gradient(150deg,#92400E,#D97706)'];
-            var color='linear-gradient(150deg,#0A1628,#1E3A8A)'; // couleur uniforme comme les démos
-            // Calcul compatibilité basique
+            var color='linear-gradient(150deg,#0A1628,#1E3A8A)';
             var myProfile = window.myProfile || {};
             var mySports = myProfile.sports || [];
             var myNeeds = myProfile.needs || [];
@@ -1598,30 +1657,83 @@ function loadRealAthletes() {
             if(myProfile.ville && a.ville && myProfile.ville.toLowerCase()===a.ville.toLowerCase()) compatScore += 5;
             compatScore = Math.min(compatScore, 99);
             var aid = a.id;
-            fragment += '<div class="athlete-card real-athlete-card" data-sport="'+sportKey+'" data-tags="'+dataTags+'" data-status="dispo" data-user-id="'+aid+'" onclick="openRealProfile(\''+aid+'\')" style="cursor:pointer;border:2px solid #059669">'
+            fragment += '<div class="athlete-card real-athlete-card"'
+                +' data-sport="'+sportKey+'"'
+                +' data-tags="'+dataTags+'"'
+                +' data-event-ids="'+myEventIds+'"'
+                +' data-status="dispo"'
+                +' data-user-id="'+aid+'"'
+                +' style="cursor:pointer;border:2px solid #059669">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av">'+initials+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
-                +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
-                +( function(){
-                var niv = {};
-                try{ niv = typeof a.niveau === 'string' ? JSON.parse(a.niveau) : (a.niveau||{}); }catch(e){}
-                var nivVal = sports[0] ? (niv[sports[0]] || Object.values(niv)[0] || '') : '';
-                var bestTime = a.best_time || '';
-                var lbl = bestTime ? '⏱ Best' : (nivVal ? '🏆 Niveau' : '✅ RaceMates');
-                var val = bestTime || nivVal || (sports[0]||'');
-                return '<div class="ac-chrono"><div class="ac-chrono-lbl">'+lbl+'</div><div class="ac-chrono-val" style="font-size:0.85em">'+val+'</div></div></div>';
-            })()
+                +'<div class="ac-loc">&#x1F4CD; '+(a.ville||'France')+'</div></div>'
+                +(function(){
+                    var niv={};
+                    try{niv=typeof a.niveau==='string'?JSON.parse(a.niveau):(a.niveau||{});}catch(e){}
+                    var nivVal=sports[0]?(niv[sports[0]]||Object.values(niv)[0]||''):'';
+                    var bestTime=a.best_time||'';
+                    var lbl=bestTime?'&#x23F1; Best':(nivVal?'&#x1F3C6; Niveau':'&#x2705; RaceMates');
+                    var val=bestTime||nivVal||(sports[0]||'');
+                    return '<div class="ac-chrono"><div class="ac-chrono-lbl">'+lbl+'</div><div class="ac-chrono-val" style="font-size:0.85em">'+val+'</div></div></div>';
+                })()
                 +'<div class="ac-body"><div class="ac-badges">'+sportBadges+needBadges+'<span class="match-pct">'+compatScore+'%</span></div>'
                 +'<div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:'+compatScore+'%"></div></div><div class="compat-pct">'+compatScore+'%</div></div>'
                 +(a.bio?'<div class="ac-bio">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>':'')
                 +'<div class="ac-actions">'
-                +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(\''+aid+'\')">💬 Contacter</button>'
-                +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this,&quot;'+aid+'&quot;)">🔖</button>'
+                +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(\''+aid+'\')">&#x1F4AC; Contacter</button>'
+                +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this,&quot;'+aid+'&quot;)">&#x1F516;</button>'
                 +'</div></div></div>';
         });
         if(fragment){ list.insertAdjacentHTML('afterbegin',fragment); window._athletesLoadedAt = Date.now(); if(typeof filterAthletes==='function') filterAthletes(); }
     }).catch(function(err){ console.error('loadRealAthletes erreur:', err); });
+}
+
+// Genere les pills d evenements depuis Supabase
+function buildEventPills(events, userEvents, athletes) {
+    var container = document.getElementById('event-pills-container');
+    if(!container) return;
+
+    var athleteIds = new Set(athletes.map(function(a){ return a.id; }));
+
+    // Garder les events prochain (6 mois) et/ou avec des inscrits parmi les athletes affiches
+    var now = Date.now();
+    var sixMonths = 6 * 30 * 24 * 60 * 60 * 1000;
+    var evMap = {};
+    events.forEach(function(ev) {
+        var d = new Date(ev.event_date).getTime();
+        var isUpcoming = d > now && d < now + sixMonths;
+        var hasInscrits = Object.keys(userEvents).some(function(uid) {
+            return athleteIds.has(uid) && userEvents[uid].has(ev.id);
+        });
+        if(isUpcoming || hasInscrits) evMap[ev.id] = ev;
+    });
+    var displayEvents = Object.values(evMap).sort(function(a,b){ return new Date(a.event_date) - new Date(b.event_date); });
+
+    var SPORT_ICONS = { hyrox:'&#x1F3CB;', athx:'&#x26A1;', running:'&#x1F3C3;', trail:'&#x1F33F;', triathlon:'&#x1F3CA;', spartan:'&#x1F9F1;', crossfit:'&#x1F4AA;', musculation:'&#x1F3CB;&#x200D;&#x2642;&#xFE0F;' };
+    var sportNorm = function(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); };
+    var MOIS = ['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aou','Sep','Oct','Nov','Dec'];
+
+    var pillsHtml = '<div class="epill active" onclick="selPill(this,false)" data-event-id="all" data-sport="all">&#x1F3C6; Tous</div>';
+    displayEvents.slice(0, 12).forEach(function(ev) {
+        var sp = sportNorm(ev.sport||'');
+        var icon = SPORT_ICONS[sp] || '&#x1F4CD;';
+        var d = new Date(ev.event_date);
+        var mois = MOIS[d.getMonth()];
+        var label = (ev.name || ev.city || 'Evenement') + ' ' + mois;
+        var nbInscrits = Object.keys(userEvents).filter(function(uid){
+            return athleteIds.has(uid) && userEvents[uid] && userEvents[uid].has(ev.id);
+        }).length;
+        var badge = nbInscrits > 0 ? ' <span style="background:#059669;color:white;border-radius:10px;padding:0 5px;font-size:0.75em">'+nbInscrits+'</span>' : '';
+        var showLodging = (ev.city || nbInscrits > 0) ? 'true' : 'false';
+        pillsHtml += '<div class="epill"'
+            +' data-event-id="'+ev.id+'"'
+            +' data-sport="'+sp+'"'
+            +' onclick="selPill(this,'+showLodging+')">'+icon+' '+label+badge+'</div>';
+    });
+
+    container.innerHTML = pillsHtml;
+    console.log('buildEventPills:', displayEvents.length, 'evenements affiches');
 }
 
 function openRealProfile(userId) {
@@ -2148,11 +2260,24 @@ async function adminLoadEvents() {
     list.innerHTML = '<div style="text-align:center;padding:16px;color:#64748B;font-size:0.85em">Chargement...</div>';
     const { data: events } = await sb.from('events').select('*').order('event_date');
     if(!events || events.length === 0) { list.innerHTML = '<div style="color:#64748B;font-size:0.85em;text-align:center;padding:16px">Aucun événement.</div>'; return; }
+    var SPORT_ICONS = { hyrox:'🏋️', athx:'⚡', running:'🏃', trail:'🌿', triathlon:'🏊', spartan:'🧱', crossfit:'💪', musculation:'🏋️' };
     list.innerHTML = events.map(function(ev) {
         var date = ev.event_date ? new Date(ev.event_date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '';
-        return '<div style="background:#F8F9FC;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
-            +'<div><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+ev.name+'</div>'
-            +'<div style="font-size:0.75em;color:#64748B">'+ev.sport+' · '+ev.city+' · '+date+'</div></div>'
+        var sp = (ev.sport||'').toLowerCase();
+        var icon = SPORT_ICONS[sp] || '❓';
+        var missing = !ev.sport;
+        var cardStyle = missing
+            ? 'background:#FEF3C7;border:1.5px solid #F59E0B;'
+            : 'background:#F8F9FC;border:1px solid transparent;';
+        var missingTag = missing
+            ? '<span style="background:#F59E0B;color:white;font-size:0.65em;font-weight:700;padding:2px 6px;border-radius:6px;margin-left:6px;vertical-align:middle">⚠️ SPORT MANQUANT — cliquer ✏️</span>'
+            : '';
+        var sportLabel = ev.sport || '<span style="color:#F59E0B;font-weight:700">non défini</span>';
+        return '<div style="'+cardStyle+'border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+icon+' '+ev.name+missingTag+'</div>'
+            +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Sport : '+sportLabel+' · '+ev.city+' · '+date+'</div>'
+            +'</div>'
             +'<div style="display:flex;gap:6px;flex-shrink:0">'
             +'<button data-ev-id="'+ev.id+'" class="admin-edit-btn" style="padding:6px 10px;background:#EFF4FF;color:#1E3A8A;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">✏️</button>'
             +'<button data-ev-id="'+ev.id+'" class="admin-del-btn" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑</button>'
@@ -2641,17 +2766,24 @@ function filterAthletes() {
     var container = document.getElementById('fchip-container');
     var activeChips = Array.from(container.querySelectorAll('.fchip.active'))
         .map(function(c){ return c.textContent.trim().toLowerCase(); });
-    var activePill = document.querySelector('.epill.active');
-    var pillText = activePill ? activePill.textContent.toLowerCase() : 'tous';
+    var activePill = document.querySelector('#event-pills-container .epill.active');
+    var activeEventId = activePill ? (activePill.getAttribute('data-event-id') || 'all') : 'all';
+    var activePillSport = activePill ? (activePill.getAttribute('data-sport') || 'all') : 'all';
+
+    // Filtre sport (chips du haut, hors event-pills)
+    var activeSportChip = document.querySelector('#sport-filter-row .fchip.active');
+    var activeSportFilter = activeSportChip ? (activeSportChip.getAttribute('data-filter') || activeSportChip.textContent.trim().toLowerCase().replace(/[^a-z]/g,'')) : 'all';
 
     var cards = document.querySelectorAll('.athlete-card');
     var visibleCount = 0;
 
     cards.forEach(function(card) {
         var tags = (card.getAttribute('data-tags') || '').toLowerCase();
-        var showByChip = false;
-        var showByPill = true;
+        var cardSport = (card.getAttribute('data-sport') || '').toLowerCase().replace(/[^a-z]/g,'');
+        var cardEventIds = (card.getAttribute('data-event-ids') || '');
 
+        // 1. Filtre besoin (fchips)
+        var showByChip = false;
         if(activeChips.length === 0 || activeChips.some(function(t){ return t.includes('tous'); })) {
             showByChip = true;
         } else {
@@ -2660,29 +2792,50 @@ function filterAthletes() {
                 if(ct.includes('duo') && tags.includes('duo')) showByChip = true;
                 if(ct.includes('relais') && tags.includes('relais')) showByChip = true;
                 if(ct.includes('entra') && tags.includes('training')) showByChip = true;
-                if(ct.includes('confirmé') && tags.includes('confirmé')) showByChip = true;
+                if(ct.includes('confirm') && tags.includes('confirm')) showByChip = true;
             });
         }
 
-        // Filtre par sport (epill) - vérifier dans data-tags ET data-sport
-        var activePillSport = activePill ? (activePill.getAttribute('data-sport')||'').toLowerCase().replace(/[^a-z]/g,'') : 'all';
-        if(activePillSport && activePillSport !== 'all' && !pillText.includes('tous')) {
-            var cardTags = (card.getAttribute('data-tags')||'').toLowerCase();
-            var cardSport = (card.getAttribute('data-sport')||'').toLowerCase().replace(/[^a-z]/g,'');
-            showByPill = cardTags.includes(activePillSport) || cardSport === activePillSport;
+        // 2. Filtre sport (row du haut)
+        var showBySport = true;
+        if(activeSportFilter && activeSportFilter !== 'all' && !activeSportFilter.includes('tous')) {
+            showBySport = tags.includes(activeSportFilter) || cardSport === activeSportFilter;
         }
-        // Filtre par événement (ne remplace pas le filtre sport)
-        if(pillText.includes('toulouse')) showByPill = showByPill && tags.includes('toulouse');
-        else if(pillText.includes('grand palais')) showByPill = showByPill && tags.includes('grandpalais');
-        else if(pillText.includes('lyon')) showByPill = showByPill && tags.includes('lyon');
 
-        var visible = showByChip && showByPill;
+        // 3. Filtre evenement (epills) — filtre sur data-event-ids reel
+        var showByEvent = true;
+        if(activeEventId && activeEventId !== 'all') {
+            // Verifier si l athlete est inscrit a cet event
+            showByEvent = cardEventIds.split('|').indexOf(activeEventId) !== -1;
+            // Optionnel : si la pill a un sport, filtrer aussi par sport
+            if(!showByEvent && activePillSport && activePillSport !== 'all') {
+                showByEvent = tags.includes(activePillSport) || cardSport === activePillSport;
+            }
+        }
+
+        var visible = showByChip && showBySport && showByEvent;
         card.style.display = visible ? '' : 'none';
         if(visible) visibleCount++;
     });
 
     var countEl = document.querySelector('.col-title span');
     if(countEl) countEl.textContent = '(' + visibleCount + ')';
+
+    // Message si 0 resultats sur filtre event
+    var list = document.getElementById('athletes-list');
+    var emptyMsg = document.getElementById('athletes-empty-event');
+    if(visibleCount === 0 && activeEventId !== 'all' && list) {
+        if(!emptyMsg) {
+            emptyMsg = document.createElement('div');
+            emptyMsg.id = 'athletes-empty-event';
+            emptyMsg.style.cssText = 'color:var(--grey);font-size:0.85em;text-align:center;padding:24px;';
+            emptyMsg.textContent = 'Aucun athlete inscrit a cet evenement pour le moment.';
+            list.appendChild(emptyMsg);
+        }
+        emptyMsg.style.display = '';
+    } else if(emptyMsg) {
+        emptyMsg.style.display = 'none';
+    }
 }
 
 // ===================== MESSAGES FILTER =====================
@@ -5332,10 +5485,10 @@ setPlan('free');
     </div>
     <div class="success-body">
         <div class="success-card">
-            <div class="sc-avatar-wrap"><div class="sc-avatar" id="sc-avatar">TJ</div><div class="sc-verified">✓</div></div>
-            <div class="sc-name" id="sc-name">Thomas Jarron</div>
-            <div class="sc-details" id="sc-details">📍 Lyon · Confirmé</div>
-            <div class="sc-badges" id="sc-badges"><span class="sc-badge">🏠 Logement</span><span class="sc-badge">🏅 Duo</span><span class="sc-badge">📍 Toulouse</span></div>
+            <div class="sc-avatar-wrap"><div class="sc-avatar" id="sc-avatar"></div><div class="sc-verified">✓</div></div>
+            <div class="sc-name" id="sc-name"></div>
+            <div class="sc-details" id="sc-details">📍 France</div>
+            <div class="sc-badges" id="sc-badges"></div>
         </div>
         <div class="matches-card">
             <div class="mc-label">🔥 Mates disponibles pour toi</div>

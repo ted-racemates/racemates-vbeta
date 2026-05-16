@@ -926,7 +926,7 @@
         <div class="section-title" style="margin-bottom:10px">🚀 Que cherches-tu aujourd'hui ?</div>
         <div class="quick-grid">
             <div class="qa-card primary" onclick="goTo('sport-select')"><div class="qa-icon">🏃</div><div class="qa-label">Trouver un athlète</div><div class="qa-sub" id="qa-sub-athletes">42 disponibles</div></div>
-            <div class="qa-card green" onclick="goTo('matching')"><div class="qa-icon">🏨</div><div class="qa-label">Trouver un logement</div><div class="qa-sub">Partage & économies</div></div>
+            <div class="qa-card green" onclick="goTo('lodging')"><div class="qa-icon">🏨</div><div class="qa-label">Trouver un logement</div><div class="qa-sub">Partage & économies</div></div>
             <div class="qa-card" style="background:linear-gradient(135deg,#0A1628,#065F46);color:white;border:none" onclick="goTo('training')"><div class="qa-icon">🤝</div><div class="qa-label" style="color:white">Partenaire entraîn.</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-training">...</div></div>
             <div class="qa-card" onclick="goTo('events')"><div class="qa-icon">📅</div><div class="qa-label">Mes événements</div><div class="qa-sub" id="qa-sub-events">0 inscrit</div></div>
             <div class="qa-card" onclick="openSaved()"><div class="qa-icon">🔖</div><div class="qa-label">Profils sauvegardés</div><div class="qa-sub" id="qa-sub-saved">0 profil</div></div>
@@ -1034,7 +1034,7 @@
         <div class="header-nav">
             <div class="hnav-group">
                 <button class="hnav-btn active" id="hnav-trouver" onclick="hnavActivate(this);goTo('sport-select')">Trouver</button>
-                <button class="hnav-btn" id="hnav-logement" onclick="hnavActivate(this);goTo('matching')">Logement</button>
+                <button class="hnav-btn" id="hnav-logement" onclick="hnavActivate(this);goTo('lodging')">Logement</button>
                 <button class="hnav-btn" id="hnav-matchs" onclick="hnavActivate(this);goTo('sport-select')">Mes matchs</button>
             </div>
             <button class="filter-btn-yellow" onclick="openBS()">🎚 FILTRES</button>
@@ -1522,6 +1522,11 @@
         </div>
         <div id="lodging-tab-hotels" style="display:none">
             <div id="lodging-radius-label" style="font-size:0.75em;color:#64748B;margin-bottom:10px;text-align:center">Sélectionne un événement pour voir les hôtels</div>
+            <div style="display:flex;gap:6px;margin-bottom:14px;background:#F1F5F9;border-radius:12px;padding:4px">
+                <button class="hotel-platform-tab" data-platform="booking" onclick="switchHotelPlatform(this,'booking')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:#003580;color:white">🏨 Booking</button>
+                <button class="hotel-platform-tab" data-platform="airbnb" onclick="switchHotelPlatform(this,'airbnb')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:transparent;color:#64748B">🏠 Airbnb</button>
+                <button class="hotel-platform-tab" data-platform="expedia" onclick="switchHotelPlatform(this,'expedia')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:transparent;color:#64748B">✈️ Expedia</button>
+            </div>
             <div id="lodging-hotels-links"><div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div></div>
         </div>
     </div>
@@ -3518,25 +3523,55 @@ async function loadLodgingSeekers(eventId) {
     var list=document.getElementById('lodging-seekers-list');
     if(!list) return;
     list.innerHTML='<div style="text-align:center;padding:16px;color:#94A3B8;font-size:0.85em">Chargement...</div>';
-    var {data:profiles}=await sb.from('profiles').select('id,prenom,pseudo,ville,sports,needs,avatar_url,avatar_initials,best_time').neq('id',currentUser.id);
+
+    // Charger les events pour afficher le nom sur les cards
+    var eventsMap = {};
+    var {data:evData} = await sb.from('events').select('id,name,city');
+    (evData||[]).forEach(function(ev){ eventsMap[ev.id] = ev; });
+
+    // Profils avec needs=Logement ET lodging_event_id renseigné
+    var query = sb.from('profiles').select('id,prenom,pseudo,ville,sports,needs,avatar_url,avatar_initials,best_time,lodging_event_id').neq('id',currentUser.id);
+    var {data:profiles} = await query;
+
     var seekers=(profiles||[]).filter(function(p){
-        try{var n=typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]);return n.some(function(x){return x.includes('Logement');});}catch(e){return false;}
+        try{
+            var n=typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]);
+            return n.some(function(x){return x.includes('Logement');});
+        }catch(e){return false;}
     });
-    if(eventId!=='all'){
-        var {data:regs}=await sb.from('event_registrations').select('user_id').eq('event_id',eventId);
-        var regIds=new Set((regs||[]).map(function(r){return r.user_id;}));
-        seekers=seekers.filter(function(p){return regIds.has(p.id);});
+
+    // Filtrer par event si sélectionné
+    if(eventId !== 'all') {
+        seekers = seekers.filter(function(p){ return p.lodging_event_id === eventId; });
     }
-    if(!seekers.length){list.innerHTML='<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">'+(eventId==='all'?'Aucun athlète ne cherche de logement actuellement':'Aucun athlète inscrit à cet event ne cherche de logement')+'</div>';return;}
+
+    if(!seekers.length){
+        list.innerHTML='<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">'
+            +(eventId==='all'
+                ? 'Aucun athlète ne cherche de logement actuellement'
+                : 'Aucun athlète ne cherche de logement pour cet événement')
+            +'</div>';
+        return;
+    }
+
     list.innerHTML=seekers.map(function(p){
         var sports=[];try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
         var initials=p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
         var av=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
+        // Badge event logement
+        var evBadge = '';
+        if(p.lodging_event_id && eventsMap[p.lodging_event_id]) {
+            var ev = eventsMap[p.lodging_event_id];
+            evBadge = '<div style="display:inline-block;background:#EFF4FF;color:#1E3A8A;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px;margin-top:4px">📍 '+ev.name+(ev.city?' · '+ev.city:'')+'</div>';
+        }
         return '<div style="background:white;border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px">'
             +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
-            +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
             +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div>'
-            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+p.best_time+'</div>':'')+'</div>'
+            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+p.best_time+'</div>':'')
+            +evBadge
+            +'</div>'
             +'<button data-uid="'+p.id+'" class="lodge-contact-btn" style="padding:8px 12px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.8em;cursor:pointer;flex-shrink:0">💬 Contacter</button>'
             +'</div>';
     }).join('');
@@ -3579,6 +3614,19 @@ async function loadLodgingOffers(eventId) {
     });
 }
 
+var _activeLodgingPlatform = 'booking';
+
+function switchHotelPlatform(btn, platform) {
+    _activeLodgingPlatform = platform;
+    document.querySelectorAll('.hotel-platform-tab').forEach(function(b){
+        b.style.background = 'transparent'; b.style.color = '#64748B';
+    });
+    var BG = {booking:'#003580', airbnb:'#FF5A5F', expedia:'#FFC72C'};
+    var FG = {booking:'white', airbnb:'white', expedia:'#0A1628'};
+    btn.style.background = BG[platform]; btn.style.color = FG[platform];
+    loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
+}
+
 function loadLodgingHotels(city, lat, lng, eventName) {
     var container=document.getElementById('lodging-hotels-links');
     var label=document.getElementById('lodging-radius-label');
@@ -3590,45 +3638,41 @@ function loadLodgingHotels(city, lat, lng, eventName) {
     var bUrl='https://www.booking.com/search.html?ss='+encodeURIComponent(cd)+'&aid='+BOOKING_AID+'&radius=5&radiusunit=km&lang=fr';
     var aUrl='https://www.airbnb.fr/s/'+encodeURIComponent(cd)+'/homes'+(lat?'?ne_lat='+(lat+0.045)+'&ne_lng='+(lng+0.06)+'&sw_lat='+(lat-0.045)+'&sw_lng='+(lng-0.06):'');
     var eUrl='https://www.expedia.fr/Hotel-Search?destination='+encodeURIComponent(cd)+'&adults=1';
-    var getBg=function(p){return p==='airbnb'?'#FF5A5F':p==='expedia'?'#FFC72C':'#003580';};
-    var getFg=function(p){return p==='expedia'?'#0A1628':'white';};
-    var getUrl=function(p){return p==='airbnb'?aUrl:p==='expedia'?eUrl:bUrl;};
-    var getLbl=function(p){return p==='airbnb'?'🏠 Airbnb':p==='expedia'?'✈️ Expedia':'🏨 Booking';};
-    var hotels=HOTEL_TEMPLATES.filter(function(h){return h.type==='hotel';});
-    var airbnbs=HOTEL_TEMPLATES.filter(function(h){return h.type==='airbnb';});
-    var html='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:8px">🏨 HÔTELS — '+cd.toUpperCase()+'</div>';
-    html+=hotels.map(function(h){
-        var link=getUrl(h.platform);
-        var stars=h.stars?'⭐'.repeat(h.stars):'';
-        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
-        return '<div onclick="window.open(\''+link+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-            +'<div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
-            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+getLbl(h.platform)+'</span></div>'
-            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
+    var platform = _activeLodgingPlatform || 'booking';
+    var platformUrl = platform==='airbnb' ? aUrl : platform==='expedia' ? eUrl : bUrl;
+    var platformBg  = platform==='airbnb' ? '#FF5A5F' : platform==='expedia' ? '#FFC72C' : '#003580';
+    var platformFg  = platform==='expedia' ? '#0A1628' : 'white';
+    var platformLbl = platform==='airbnb' ? '🏠 Voir sur Airbnb' : platform==='expedia' ? '✈️ Voir sur Expedia' : '🏨 Voir sur Booking';
+    var platformCardBg = platform==='airbnb' ? 'linear-gradient(135deg,#FF5A5F,#E84B50)' : 'linear-gradient(135deg,#0A1628,#1E3A8A)';
+    var badgeLbl = platform==='airbnb' ? '🏠 Airbnb' : platform==='expedia' ? '✈️ Expedia' : '🏨 Booking';
+
+    var cards = platform==='airbnb'
+        ? HOTEL_TEMPLATES.filter(function(h){ return h.type==='airbnb'; })
+        : HOTEL_TEMPLATES.filter(function(h){ return h.type==='hotel'; });
+
+    var sectionTitle = platform==='airbnb' ? '🏠 APPARTEMENTS AIRBNB' : platform==='expedia' ? '✈️ HÔTELS EXPEDIA' : '🏨 HÔTELS BOOKING';
+    var html = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:8px">'+sectionTitle+' — '+cd.toUpperCase()+'</div>';
+    html += cards.map(function(h){
+        var stars = h.stars ? '⭐'.repeat(h.stars) : '';
+        var amBg = platform==='airbnb' ? '#FFF1F0' : '#F1F5F9';
+        var amFg = platform==='airbnb' ? '#FF5A5F' : '#64748B';
+        var am = h.amenities.map(function(a){ return '<span style="font-size:0.68em;background:'+amBg+';color:'+amFg+';padding:2px 7px;border-radius:6px">'+a+'</span>'; }).join('');
+        return '<div onclick="window.open(\''+platformUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+            +'<div style="background:'+platformCardBg+';height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
+            +'<span style="font-size:1.8em">'+h.icon+'</span>'
+            +'<span style="background:'+platformBg+';color:'+platformFg+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+badgeLbl+'</span>'
+            +'</div>'
+            +'<div style="padding:10px 12px">'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
             +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' de l\'event'+(stars?' · '+stars:'')+'</div>'
             +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
-            +'<button onclick="event.stopPropagation();window.open(\''+link+'\',\'_blank\')" style="width:100%;padding:8px;background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+getLbl(h.platform)+' →</button>'
+            +'<button onclick="event.stopPropagation();window.open(\''+platformUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:'+platformBg+';color:'+platformFg+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+platformLbl+' →</button>'
             +'</div></div>';
     }).join('');
-    html+='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin:14px 0 8px">🏠 APPARTEMENTS AIRBNB — '+cd.toUpperCase()+'</div>';
-    html+=airbnbs.map(function(h){
-        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#FFF1F0;color:#FF5A5F;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
-        return '<div onclick="window.open(\''+aUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #FF5A5F;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-            +'<div style="background:linear-gradient(135deg,#FF5A5F,#E84B50);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
-            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:white;color:#FF5A5F;font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">🏠 Airbnb</span></div>'
-            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
-            +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' · Airbnb</div>'
-            +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
-            +'<button onclick="event.stopPropagation();window.open(\''+aUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">🏠 Voir sur Airbnb →</button>'
-            +'</div></div>';
-    }).join('');
-    html+='<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-top:4px">'
-        +'<div style="font-size:0.78em;color:#64748B;margin-bottom:8px;text-align:center">Voir plus pour '+cd+'</div>'
-        +'<div style="display:flex;gap:8px">'
-        +'<button onclick="window.open(\''+bUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#003580;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏨 Booking</button>'
-        +'<button onclick="window.open(\''+aUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏠 Airbnb</button>'
-        +'<button onclick="window.open(\''+eUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FFC72C;color:#0A1628;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">✈️ Expedia</button>'
-        +'</div></div>';
+    html += '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;margin-top:4px;text-align:center">'
+        +'<div style="font-size:0.75em;color:#64748B;margin-bottom:8px">Voir toutes les options pour '+cd+'</div>'
+        +'<button onclick="window.open(\''+platformUrl+'\',\'_blank\')" style="width:100%;padding:9px;background:'+platformBg+';color:'+platformFg+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.82em;cursor:pointer">'+platformLbl+' — Voir tous →</button>'
+        +'</div>';
     container.innerHTML=html;
 }
 
@@ -4095,6 +4139,13 @@ function toggleCompletFilter() {
         document.querySelectorAll('.need-card.on .need-name').forEach(function(n){ needs.push(n.textContent.trim()); });
         if(!needs.length) needs = window._obNeeds || [];
 
+        // Lire l'event logement si Logement coché
+        var lodging_event_id = null;
+        if(needs.includes('Logement')) {
+            var lsel = document.getElementById('ob-lodging-event-id');
+            if(lsel && lsel.value) lodging_event_id = lsel.value;
+        }
+
         // Lire niveau depuis les level-cards cochées par sport
         var niveau = {};
         document.querySelectorAll('#level-sports-container [data-sport-id]').forEach(function(block) {
@@ -4111,8 +4162,8 @@ function toggleCompletFilter() {
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
 
         // Sauvegarder dans myProfile
-        window.myProfile = { prenom, pseudo, ville, email, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, plan:'free', best_time, nb_courses, pace };
-        window._pendingAuth = { email, pwd, prenom, pseudo, ville, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, best_time, nb_courses, pace };
+        window.myProfile = { prenom, pseudo, ville, email, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, plan:'free', best_time, nb_courses, pace, lodging_event_id };
+        window._pendingAuth = { email, pwd, prenom, pseudo, ville, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, best_time, nb_courses, pace, lodging_event_id };
 
         // Mettre à jour les avatars UI
         document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = initials; });
@@ -5313,15 +5364,45 @@ function toggleCompletFilter() {
             chip.style.color = active ? 'white' : '#64748B';
             chip.style.borderColor = active ? '#0A1628' : '#E2E8F0';
         });
-        // Listener toggle needs
+        // Listener toggle needs + gestion select logement
         document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
             chip.onclick = function() {
                 var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
                 chip.style.background = on ? '#F8F9FC' : '#0A1628';
                 chip.style.color = on ? '#64748B' : 'white';
                 chip.style.borderColor = on ? '#E2E8F0' : '#0A1628';
+                // Afficher/cacher le select event si c'est le chip Logement
+                if(chip.getAttribute('data-need') === 'Logement') {
+                    var wrap = document.getElementById('edit-lodging-event-wrap');
+                    if(wrap) wrap.style.display = on ? 'none' : '';
+                }
             };
         });
+        // Charger les events dans le select logement
+        var editLodgingSel = el('edit-lodging-event-id');
+        if(editLodgingSel && editLodgingSel.options.length <= 1) {
+            sb.from('events').select('id,name,city,event_date').order('event_date').then(function(res) {
+                var MOIS=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+                (res.data||[]).forEach(function(ev) {
+                    var d = new Date(ev.event_date);
+                    var opt = document.createElement('option');
+                    opt.value = ev.id;
+                    opt.textContent = ev.name + ' · ' + (ev.city||'') + ' · ' + MOIS[d.getMonth()];
+                    editLodgingSel.appendChild(opt);
+                });
+                // Pré-sélectionner l'event logement actuel
+                if(p.lodging_event_id) editLodgingSel.value = p.lodging_event_id;
+            });
+        } else if(editLodgingSel && p.lodging_event_id) {
+            editLodgingSel.value = p.lodging_event_id;
+        }
+        // Afficher le select si Logement déjà coché
+        var lodgingChip = document.querySelector('.edit-need-chip[data-need="Logement"]');
+        var lodgingWrap = el('edit-lodging-event-wrap');
+        if(lodgingChip && lodgingWrap) {
+            var isLodgingOn = lodgingChip.style.background === 'rgb(10, 22, 40)' || lodgingChip.style.background === '#0A1628';
+            lodgingWrap.style.display = isLodgingOn ? '' : 'none';
+        }
         // Afficher photo ou initiales dans le preview
         var avatarEl = el('edit-avatar-preview');
         if(avatarEl) {
@@ -5438,9 +5519,15 @@ function toggleCompletFilter() {
             var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
             if(on) newNeeds.push(chip.getAttribute('data-need'));
         });
+        // Lire l'event logement si Logement coché
+        var lodgingEventId = null;
+        if(newNeeds.includes('Logement')) {
+            var lsel = document.getElementById('edit-lodging-event-id');
+            if(lsel && lsel.value) lodgingEventId = lsel.value;
+        }
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
         if(!window.myProfile) window.myProfile = {};
-        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds, sports: newSports });
+        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds, sports: newSports, lodging_event_id: lodgingEventId });
         // Update UI
         document.querySelectorAll('.user-av').forEach(av => av.textContent = initials);
         var profName = document.querySelector('#screen-profile .profile-name');
@@ -5456,7 +5543,7 @@ function toggleCompletFilter() {
         // Sync Supabase puis recharger le profil
         var updateFn = window.sbUpdateProfile || sbUpdateProfile;
         try {
-            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds), sports: JSON.stringify(newSports) })
+            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds), sports: JSON.stringify(newSports), lodging_event_id: lodgingEventId })
                 .then(function() {
                     showStatusToast('✅ Profil mis à jour !');
                     if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
@@ -5788,6 +5875,30 @@ setPlan('free');
     }
     function toggleEventCard(el){el.classList.toggle('on');}
     function toggleNeed(el){el.classList.toggle('on');}
+
+    // Affiche/cache le select d'event logement dans l'onboarding
+    function toggleLodgingEventSelect(card) {
+        var isOn = card.classList.contains('on');
+        var wrap = document.getElementById('lodging-event-select-wrap');
+        if(!wrap) return;
+        wrap.style.display = isOn ? '' : 'none';
+        // Charger les events si pas encore fait
+        if(isOn) {
+            var sel = document.getElementById('ob-lodging-event-id');
+            if(sel && sel.options.length <= 1) {
+                sb.from('events').select('id,name,city,event_date').order('event_date').then(function(res) {
+                    var MOIS=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+                    (res.data||[]).forEach(function(ev) {
+                        var d = new Date(ev.event_date);
+                        var opt = document.createElement('option');
+                        opt.value = ev.id;
+                        opt.textContent = ev.name + ' · ' + (ev.city||'') + ' · ' + MOIS[d.getMonth()];
+                        sel.appendChild(opt);
+                    });
+                });
+            }
+        }
+    }
     function selLevel(el){
         document.querySelectorAll('.level-card').forEach(function(c){c.classList.remove('on');});
         el.classList.add('on');
@@ -6017,10 +6128,16 @@ setPlan('free');
             <div class="step-sub">Plusieurs choix possibles — on te matchera en conséquence.</div>
             <label class="field-label">Je cherche</label>
             <div class="need-grid">
-                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🏠</span><div class="need-name">Logement</div><div class="need-desc">Partager un hébergement</div></div>
+                <div class="need-card" onclick="toggleNeed(this);toggleLodgingEventSelect(this)"><span class="need-icon">🏠</span><div class="need-name">Logement</div><div class="need-desc">Partager un hébergement</div></div>
                 <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🏅</span><div class="need-name">Partenaire Duo</div><div class="need-desc">Courir à deux</div></div>
                 <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">⚡</span><div class="need-name">Équipe Relais</div><div class="need-desc">4 membres min.</div></div>
                 <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🤝</span><div class="need-name">Entraînement</div><div class="need-desc">Sessions régulières</div></div>
+            </div>
+            <div id="lodging-event-select-wrap" style="display:none;margin-top:12px">
+                <label class="field-label">🏠 Pour quel événement cherches-tu un logement ?</label>
+                <select id="ob-lodging-event-id" class="ob-input" style="margin-bottom:0">
+                    <option value="">Choisir un événement...</option>
+                </select>
             </div>
             <label class="field-label">Je préfère me matcher avec</label>
             <div class="chip-grid" style="margin-bottom:16px">
@@ -6284,6 +6401,13 @@ setPlan('free');
                     <div class="edit-need-chip" data-need="Partenaire Duo" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏅 Partenaire Duo</div>
                     <div class="edit-need-chip" data-need="Équipe Relais" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">⚡ Équipe Relais</div>
                     <div class="edit-need-chip" data-need="Logement" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏠 Logement</div>
+                </div>
+                <!-- Select event logement -->
+                <div id="edit-lodging-event-wrap" style="display:none;margin-top:10px">
+                    <label style="font-size:0.75em;color:#64748B;font-weight:600">Pour quel événement ?</label>
+                    <select id="edit-lodging-event-id" style="width:100%;margin-top:5px;padding:10px 12px;border:1.5px solid #1E3A8A;border-radius:10px;font-size:0.85em;font-family:Barlow,sans-serif;outline:none;background:#EFF4FF">
+                        <option value="">Choisir un événement...</option>
+                    </select>
                 </div>
             </div>
 

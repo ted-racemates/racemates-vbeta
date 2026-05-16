@@ -1859,7 +1859,6 @@ function openRealChat(userId) {
     window._chatFromProfile = false;
     if(!userId) { console.error('openRealChat: userId manquant'); return; }
     if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour contacter'); return; }
-    if(currentPlan === 'free') { openSubSwitcher(); return; }
     console.log('openRealChat:', userId);
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;

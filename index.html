@@ -640,7 +640,8 @@
                 niveau: parseSafeObj(data.niveau), events: parseSafe(data.events),
                 initials: data.avatar_initials||'RM', plan: data.plan||'free',
                 best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||'',
-                avatar_url: data.avatar_url||''
+                avatar_url: data.avatar_url||'',
+                status_map: data.status_map || {}
             };
             // Mettre à jour l'UI — photo ou initiales
             if(data.avatar_url) {
@@ -4648,37 +4649,79 @@ function toggleCompletFilter() {
             socialDyn.innerHTML = socialHtml;
         }
 
-        // Recherches actives dynamiques (events + needs)
+        // Recherches actives dynamiques — depuis event_registrations + needs
         var rechercheContent = document.getElementById('profile-recherches-content');
-        if(rechercheContent) {
-            var events = p.events && p.events.length ? p.events : [];
+        if(rechercheContent && currentUser) {
             var needs = p.needs && p.needs.length ? p.needs : [];
             var needIcons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
-            if(!events.length && !needs.length) {
-                rechercheContent.innerHTML = '<div style="color:var(--grey);font-size:0.85em">Aucune recherche active.</div>';
-            } else if(events.length) {
-                rechercheContent.innerHTML = events.map(function(ev) {
-                    var evName = typeof ev === 'string' ? ev : (ev.name || ev);
-                    var needRows = needs.map(function(n) {
-                        var icon = Object.keys(needIcons).find(function(k){return n.includes(k);})||'';
-                        return '<div class="stc-need-row"><div class="stc-need-label">'+(needIcons[icon]||'')+' '+n+'</div>'
-                            +'<div class="stc-status-btn">'
-                            +'<button class="ssb dispo">🟢 Dispo</button>'
-                            +'<button class="ssb">🔴 Complet</button>'
-                            +'</div></div>';
-                    }).join('');
-                    return '<div class="stc-event"><div class="stc-event-name">📍 '+evName+'</div><div class="stc-needs">'+needRows+'</div></div>';
-                }).join('');
+            var statusMap = {};
+            try { statusMap = typeof p.status_map === 'string' ? JSON.parse(p.status_map) : (p.status_map || {}); } catch(e){}
+
+            if(!needs.length) {
+                rechercheContent.innerHTML = '<div style="color:var(--grey);font-size:0.85em">Aucune recherche active. Modifie ton profil pour ajouter tes besoins.</div>';
             } else {
-                var needRows = needs.map(function(n) {
-                    var icon = Object.keys(needIcons).find(function(k){return n.includes(k);})||'';
-                    return '<div class="stc-need-row"><div class="stc-need-label">'+(needIcons[icon]||'')+' '+n+'</div>'
-                        +'<div class="stc-status-btn">'
-                        +'<button class="ssb dispo">🟢 Dispo</button>'
-                        +'<button class="ssb">🔴 Complet</button>'
-                        +'</div></div>';
-                }).join('');
-                rechercheContent.innerHTML = '<div class="stc-needs">'+needRows+'</div>';
+                // Charger les events auxquels l utilisateur est inscrit
+                sb.from('event_registrations').select('event_id, events(id, name, city, event_date)')
+                .eq('user_id', currentUser.id)
+                .then(function(res) {
+                    var myRegs = (res.data || []).map(function(r){ return r.events; }).filter(Boolean);
+                    var html = '';
+
+                    if(myRegs.length) {
+                        // Afficher par event inscrit
+                        html = myRegs.map(function(ev) {
+                            var needRows = needs.map(function(n) {
+                                var icon = Object.keys(needIcons).find(function(k){return n.includes(k);})||'';
+                                var key = ev.id + '_' + n.replace(/\s/g,'');
+                                var status = statusMap[key] || 'dispo';
+                                return '<div class="stc-need-row">'
+                                    +'<div class="stc-need-label">'+(needIcons[icon]||'')+' '+n+'</div>'
+                                    +'<div class="stc-status-btn">'
+                                    +'<button class="ssb '+(status==='dispo'?'dispo':'')+'" data-key="'+key+'" data-status="dispo">🟢 Dispo</button>'
+                                    +'<button class="ssb '+(status==='complet'?'complet':'')+'" data-key="'+key+'" data-status="complet">🔴 Complet</button>'
+                                    +'</div></div>';
+                            }).join('');
+                            return '<div class="stc-event" style="margin-bottom:10px">'
+                                +'<div class="stc-event-name">📍 '+(ev.name||ev.city||'Événement')+'</div>'
+                                +'<div class="stc-needs">'+needRows+'</div>'
+                                +'</div>';
+                        }).join('');
+                    } else {
+                        // Pas encore inscrit à un event — afficher les needs sans event
+                        var needRows = needs.map(function(n) {
+                            var icon = Object.keys(needIcons).find(function(k){return n.includes(k);})||'';
+                            var key = 'general_' + n.replace(/\s/g,'');
+                            var status = statusMap[key] || 'dispo';
+                            return '<div class="stc-need-row">'
+                                +'<div class="stc-need-label">'+(needIcons[icon]||'')+' '+n+'</div>'
+                                +'<div class="stc-status-btn">'
+                                +'<button class="ssb '+(status==='dispo'?'dispo':'')+'" data-key="'+key+'" data-status="dispo">🟢 Dispo</button>'
+                                +'<button class="ssb '+(status==='complet'?'complet':'')+'" data-key="'+key+'" data-status="complet">🔴 Complet</button>'
+                                +'</div></div>';
+                        }).join('');
+                        html = '<div class="stc-needs">'+needRows+'</div>';
+                    }
+
+                    rechercheContent.innerHTML = html;
+
+                    // Wirer les boutons Dispo / Complet
+                    rechercheContent.querySelectorAll('.ssb').forEach(function(btn) {
+                        btn.addEventListener('click', function() {
+                            var key = btn.getAttribute('data-key');
+                            var status = btn.getAttribute('data-status');
+                            var row = btn.closest('.stc-need-row') || btn.closest('.stc-status-btn').parentElement;
+                            // Reset les deux boutons de la rangée
+                            btn.closest('.stc-status-btn').querySelectorAll('.ssb').forEach(function(b){ b.className = 'ssb'; });
+                            btn.classList.add(status);
+                            // Sauvegarder dans status_map
+                            statusMap[key] = status;
+                            if(!window.myProfile) window.myProfile = {};
+                            window.myProfile.status_map = statusMap;
+                            sb.from('profiles').update({ status_map: statusMap }).eq('id', currentUser.id)
+                            .then(function(){ showStatusToast(status === 'dispo' ? '🟢 Visible dans le matching' : '🔴 Retiré du matching'); });
+                        });
+                    });
+                });
             }
         }
 

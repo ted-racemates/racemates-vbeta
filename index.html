@@ -1353,91 +1353,113 @@
 
 <!-- ===== SUBSCRIPTION SWITCHER ===== -->
 <div class="modal" id="sub-modal">
-    <div class="page-header" style="padding-bottom:42px"><div class="header-top" style="position:relative;z-index:2"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><button onclick="closeSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">✕ Fermer</button></div></div>
+    <div class="page-header" style="padding-bottom:42px">
+        <div class="header-top" style="position:relative;z-index:2">
+            <div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div>
+            <button onclick="closeSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">✕ Fermer</button>
+        </div>
+    </div>
     <div class="body">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:var(--dark);margin-bottom:4px">💎 Nos offres</div>
-        <div style="font-size:0.78em;color:var(--grey);margin-bottom:16px;line-height:1.5">Choisis l'offre adaptée à ta saison sportive.</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4em;color:var(--dark);margin-bottom:4px">💎 Nos offres</div>
+        <div style="font-size:0.82em;color:var(--grey);margin-bottom:20px;line-height:1.5">L'app est gratuite pendant la phase de lancement.<br>Le Premium arrive bientôt avec des avantages exclusifs.</div>
 
-        <!-- FREE -->
-        <div class="sub-option active" id="sub-free" onclick="setPlan('free')" style="border:1.5px solid #E2E8F0">
+        <!-- GRATUIT -->
+        <div class="sub-option active" id="sub-free" style="border:1.5px solid #E2E8F0;margin-bottom:12px">
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">🆓 Découverte</div>
-                <div class="sub-desc">Parcourir les profils · Voir les événements</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">✓ Accès lectures</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Messagerie</span>
+                <div class="sub-name">🆓 Gratuit</div>
+                <div class="sub-desc">Accès complet pendant le lancement</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Matching athletes</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Messagerie</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Événements</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Entraînement</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Notifications</span>
+                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Voir qui t'a sauvegardé</span>
+                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Boost visibilité</span>
+                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Stats de profil</span>
                 </div>
             </div>
-            <div class="sub-price">0€<span class="sub-price-period">gratuit</span></div>
+            <div class="sub-price">0€<span class="sub-price-period">/mois</span></div>
         </div>
 
-        <!-- EVENT -->
-        <div class="sub-option" id="sub-event" onclick="setPlan('event')" style="border:1.5px solid #FBBF24">
+        <!-- PREMIUM -->
+        <div class="sub-option" id="sub-premium" style="border:2px solid #0A1628;position:relative;overflow:hidden;margin-bottom:20px">
+            <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></div>
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">⚡ Pass Événement <span style="background:#FFFBEB;color:#92400E;font-size:0.7em;padding:2px 7px;border-radius:6px;margin-left:4px">POPULAIRE</span></div>
-                <div class="sub-desc">Tout débloquer pour 1 événement de ton choix</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Messagerie</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Logements</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Duos &amp; relais</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Multi-events</span>
+                <div class="sub-name">⚡ Premium <span style="background:#FFFBEB;color:#92400E;font-size:0.68em;padding:2px 8px;border-radius:6px;margin-left:4px;font-weight:700">BIENTÔT</span></div>
+                <div class="sub-desc">Tous les avantages + fonctions exclusives</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Tout le plan Gratuit</span>
+                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">👀 Voir qui t'a sauvegardé</span>
+                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">🚀 Boost visibilité 7j</span>
+                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">📊 Stats de profil</span>
                 </div>
+                <div style="margin-top:10px;padding:8px 10px;background:#F8FAFC;border-radius:8px;font-size:0.75em;color:#64748B">
+                    💡 Laisse ton email pour être notifié au lancement du Premium.
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <input id="premium-waitlist-email" type="email" placeholder="ton@email.com" style="flex:1;padding:9px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.82em;font-family:Barlow,sans-serif;outline:none">
+                    <button onclick="joinPremiumWaitlist()" style="padding:9px 14px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85em;cursor:pointer;white-space:nowrap">M'alerter →</button>
+                </div>
+                <div id="waitlist-confirm" style="display:none;font-size:0.78em;color:#15803D;font-weight:700;margin-top:6px">✅ Tu seras notifié au lancement !</div>
             </div>
-            <div class="sub-price">2,99€<span class="sub-price-period">/événement</span></div>
+            <div class="sub-price" style="color:#0A1628">5€<span class="sub-price-period">/mois</span></div>
         </div>
 
-        <!-- TRAINING -->
-        <div class="sub-option" id="sub-training" onclick="setPlan('training')" style="border:1.5px solid #E2E8F0">
-            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
-            <div class="sub-info">
-                <div class="sub-name">🤝 Pass Entraînement</div>
-                <div class="sub-desc">Partenaires d'entraînement illimités</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Messagerie training</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Tous sports</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Logements</span>
-                </div>
+        <!-- APERÇU 1 — Qui t'a sauvegardé -->
+        <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px 18px;margin-bottom:10px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:10px">👀 Qui a sauvegardé ton profil ?</div>
+            <div style="display:flex;margin-bottom:10px" id="saved-by-preview">
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px)">AB</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">CD</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">EF</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.75em;color:rgba(255,255,255,0.7);margin-left:-8px">+?</div>
             </div>
-            <div class="sub-price">1,99€<span class="sub-price-period">/mois</span></div>
+            <div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin-bottom:10px">
+                <span id="saved-by-count" style="color:white;font-weight:700">? personnes</span> ont sauvegardé ton profil cette semaine.
+            </div>
+            <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-size:0.75em;color:rgba(255,255,255,0.8)">
+                🔒 Débloque le Premium pour voir qui c'est
+            </div>
         </div>
 
-        <!-- FRANCE -->
-        <div class="sub-option" id="sub-france" onclick="setPlan('france')" style="border:1.5px solid #3B82F6">
-            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
-            <div class="sub-info">
-                <div class="sub-name">🇫🇷 Saison France <span style="background:#DBEAFE;color:#1D4ED8;font-size:0.7em;padding:2px 7px;border-radius:6px;margin-left:4px">BEST VALUE</span></div>
-                <div class="sub-desc">Tous les événements France, tous les sports</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Événements illimités</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Logements</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Entraînement</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ International</span>
+        <!-- APERÇU 2 — Stats de profil -->
+        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:10px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:12px">📊 Stats de ton profil cette semaine</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628">47</div>
+                    <div style="font-size:0.65em;color:#64748B;margin-top:2px">VUES</div>
+                </div>
+                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#059669">8</div>
+                    <div style="font-size:0.65em;color:#64748B;margin-top:2px">CONTACTS</div>
+                </div>
+                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)">
+                    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#1E3A8A">12</div>
+                    <div style="font-size:0.65em;color:#64748B;margin-top:2px">SAUVEGARDES</div>
                 </div>
             </div>
-            <div class="sub-price">4,99€<span class="sub-price-period">/mois</span></div>
+            <div style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E;display:flex;align-items:center;gap:6px">
+                🔒 Débloque le Premium pour voir tes vraies stats
+            </div>
         </div>
 
-        <!-- FULL -->
-        <div class="sub-option" id="sub-full" onclick="setPlan('full')" style="border:1.5px solid #8B5CF6">
-            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
-            <div class="sub-info">
-                <div class="sub-name">🌍 Saison Internationale</div>
-                <div class="sub-desc">France + Europe + Entraînement · Tout inclus</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ France + Europe</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Worlds</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Tout inclus</span>
-                </div>
+        <!-- APERÇU 3 — Boost visibilité -->
+        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:16px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:6px">🚀 Boost visibilité — 7 jours</div>
+            <div style="font-size:0.8em;color:#64748B;margin-bottom:10px;line-height:1.5">Ton profil apparaît <strong>en premier</strong> dans les résultats de matching pendant 7 jours. Idéal avant un event !</div>
+            <div style="display:flex;align-items:center;gap:10px;background:white;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;opacity:0.5">
+                <div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.7em;color:white">🚀 BOOSTÉ</div>
+                <div style="font-size:0.8em;color:#0A1628;font-weight:600">Ton profil · visible par tous</div>
             </div>
-            <div class="sub-price">7,99€<span class="sub-price-period">/mois</span></div>
-        </div>
-        <div style="margin-top:20px;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95em;color:var(--dark);margin-bottom:10px;letter-spacing:0.5px">👁 Ce que voit cet utilisateur</div>
-            <div id="plan-preview"></div>
-        </div>
-        <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer;margin-top:14px">✅ Appliquer ce plan</button>
+            <div style="margin-top:8px;background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E;display:flex;align-items:center;gap:6px">
+                🔒 Débloque le Premium pour activer le boost
+            </div>
+
+        <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer">OK, compris !</button>
     </div>
 </div>
 
@@ -3137,36 +3159,13 @@ var PLAN_PREVIEWS = {
 
 function setPlan(plan) {
     currentPlan = plan;
-    // Update sub-option active state
-    ['free','training','event','france','full'].forEach(function(p){
-        var el = document.getElementById('sub-' + p);
-        if(el) el.classList.toggle('active', p === plan);
-    });
-    // Plan preview features list
-    var preview = document.getElementById('plan-preview');
-    if(preview) {
-        preview.innerHTML = PLAN_PREVIEWS[plan].map(function(f){
-            return '<div class="plan-preview-item">' + f + '</div>';
-        }).join('');
-    }
-    // Plan labels & dots throughout app
-    document.querySelectorAll('[id^="pt-"]').forEach(function(el){ el.textContent = PLANS[plan].label; });
-    document.querySelectorAll('[id^="pd-"]').forEach(function(el){
-        el.className = 'plan-dot' + (PLANS[plan].paid ? '' : ' free');
-    });
+    // Update labels dans l'UI
     var ppl = document.getElementById('profile-plan-label');
-    if(ppl) ppl.textContent = PLANS[plan].name;
-    // Access banner
-    var banners = {
-        free:     '<div class="access-banner lock"><div class="access-icon">🔒</div><div>Plan gratuit — <strong>Passe au Pass Événement</strong> pour contacter</div></div>',
-        training: '<div class="access-banner info"><div class="access-icon">🤝</div><div>Pass Entraînement actif</div></div>',
-        event:    '<div class="access-banner warn"><div class="access-icon">⚡</div><div>Pass Événement actif — Messagerie ouverte</div></div>',
-        france:   '<div class="access-banner ok"><div class="access-icon">🇫🇷</div><div>Saison France — Tous les événements débloqués</div></div>',
-        full:     '<div class="access-banner ok"><div class="access-icon">🌍</div><div>Saison Internationale — Tout inclus</div></div>'
-    };
+    if(ppl) ppl.textContent = (plan === 'premium') ? '⚡ Premium' : 'Gratuit';
+    // Cacher/montrer le banner accès
     var banner = document.getElementById('access-banner');
-    if(banner) banner.innerHTML = banners[plan] || '';
-    // Bouton contacter toujours actif - pas de blocage par plan
+    if(banner) banner.innerHTML = '';
+    // Boutons contacter toujours actifs (tout gratuit pendant lancement)
     document.querySelectorAll('.btn-contact, [id^="contact-btn-"]').forEach(function(btn){
         btn.style.background = 'var(--red)';
         btn.style.cursor = 'pointer';
@@ -3174,21 +3173,47 @@ function setPlan(plan) {
         btn.disabled = false;
         btn.removeAttribute('data-locked');
     });
-    // Lodging access
-    var lodgingCol = document.getElementById('lodging-col');
-    if(lodgingCol) {
-        var canLodge = (plan === 'event' || plan === 'france' || plan === 'full');
-        lodgingCol.style.filter = canLodge ? '' : 'blur(3px)';
-        lodgingCol.style.pointerEvents = canLodge ? '' : 'none';
-        lodgingCol.style.opacity = canLodge ? '' : '0.5';
-    }
 }
 function openSubSwitcher() {
-    setPlan(currentPlan);
     document.getElementById('sub-modal').classList.add('open');
     document.getElementById('sub-modal').scrollTop = 0;
+    // Pré-remplir l'email waitlist avec l'email connecté
+    var emailInput = document.getElementById('premium-waitlist-email');
+    if(emailInput && currentUser && currentUser.email) emailInput.value = currentUser.email;
+    // Charger le vrai nb de personnes qui ont sauvegardé
+    if(currentUser) {
+        sb.from('saved_profiles').select('user_id', { count: 'exact', head: true })
+        .eq('saved_user_id', currentUser.id)
+        .then(function(res) {
+            var n = res.count || 0;
+            var countEl = document.getElementById('saved-by-count');
+            if(countEl) countEl.textContent = n + ' personne' + (n > 1 ? 's' : '');
+        });
+    }
 }
 function closeSubSwitcher() { document.getElementById('sub-modal').classList.remove('open'); }
+
+async function joinPremiumWaitlist() {
+    var email = (document.getElementById('premium-waitlist-email')||{}).value || '';
+    if(!email || !email.includes('@')) { showStatusToast('⚠️ Entre un email valide'); return; }
+    var btn = document.querySelector('#sub-modal button[onclick="joinPremiumWaitlist()"]');
+    if(btn) btn.disabled = true;
+    try {
+        await sb.from('feedback').insert({
+            type: 'waitlist_premium',
+            message: 'Waitlist Premium 5€/mois',
+            email: email,
+            section: 'premium_waitlist'
+        });
+        var confirm = document.getElementById('waitlist-confirm');
+        if(confirm) confirm.style.display = '';
+        showStatusToast('🎉 Tu seras notifié au lancement !');
+    } catch(e) {
+        showStatusToast('✅ Inscription notée !');
+        var confirm = document.getElementById('waitlist-confirm');
+        if(confirm) confirm.style.display = '';
+    }
+}
 
 // ===================== DYNAMIC ATHLETE PROFILE =====================
 var ATHLETE_DATA = {

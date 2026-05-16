@@ -1526,6 +1526,12 @@
         </div>
         <div id="lodging-tab-hotels" style="display:none">
             <div id="lodging-radius-label" style="font-size:0.75em;color:#64748B;margin-bottom:10px;text-align:center">Sélectionne un événement pour voir les hôtels</div>
+            <!-- Sous-onglets plateforme -->
+            <div style="display:flex;gap:6px;margin-bottom:14px;background:#F1F5F9;border-radius:12px;padding:4px">
+                <button class="hotel-platform-tab active" data-platform="booking" onclick="switchHotelPlatform(this,'booking')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:#003580;color:white">🏨 Booking</button>
+                <button class="hotel-platform-tab" data-platform="airbnb" onclick="switchHotelPlatform(this,'airbnb')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:transparent;color:#64748B">🏠 Airbnb</button>
+                <button class="hotel-platform-tab" data-platform="expedia" onclick="switchHotelPlatform(this,'expedia')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:transparent;color:#64748B">✈️ Expedia</button>
+            </div>
             <div id="lodging-hotels-links"><div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div></div>
         </div>
     </div>
@@ -3539,11 +3545,9 @@ function selectLodgingEvent(pill) {
     _lodgingActiveLat=parseFloat(pill.getAttribute('data-lat'))||null;
     _lodgingActiveLng=parseFloat(pill.getAttribute('data-lng'))||null;
     _lodgingActiveEventName=pill.getAttribute('data-event-name')||'';
-    loadLodgingSeekers(_lodgingActiveEventId);
-    loadLodgingOffers(_lodgingActiveEventId);
-    // Charger hôtels si tab hôtels actif
-    var activeTab=document.querySelector('.lodging-tab.active');
-    if(activeTab && activeTab.getAttribute('data-tab')==='hotels') loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
+    // Switcher sur Hotels et charger — switchLodgingTab charge tout
+    var hotelsBtn = document.querySelector('.lodging-tab[data-tab="hotels"]');
+    if(hotelsBtn) switchLodgingTab(hotelsBtn, 'hotels');
 }
 
 async function loadLodgingSeekers(eventId) {
@@ -3611,6 +3615,21 @@ async function loadLodgingOffers(eventId) {
     });
 }
 
+var _activeLodgingPlatform = 'booking';
+
+function switchHotelPlatform(btn, platform) {
+    _activeLodgingPlatform = platform;
+    document.querySelectorAll('.hotel-platform-tab').forEach(function(b){
+        b.style.background = 'transparent';
+        b.style.color = '#64748B';
+    });
+    var COLORS = { booking: '#003580', airbnb: '#FF5A5F', expedia: '#FFC72C' };
+    var FG = { booking: 'white', airbnb: 'white', expedia: '#0A1628' };
+    btn.style.background = COLORS[platform];
+    btn.style.color = FG[platform];
+    loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
+}
+
 function loadLodgingHotels(city, lat, lng, eventName) {
     var container=document.getElementById('lodging-hotels-links');
     var label=document.getElementById('lodging-radius-label');
@@ -3618,54 +3637,65 @@ function loadLodgingHotels(city, lat, lng, eventName) {
     if(!city){container.innerHTML='<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';return;}
     var cd=city.charAt(0).toUpperCase()+city.slice(1);
     if(label) label.textContent='Logements près de '+(eventName||cd)+' · Rayon 5km';
+
     var BOOKING_AID='4297313';
     var bUrl='https://www.booking.com/search.html?ss='+encodeURIComponent(cd)+'&aid='+BOOKING_AID+'&radius=5&radiusunit=km&lang=fr';
     var aUrl='https://www.airbnb.fr/s/'+encodeURIComponent(cd)+'/homes'+(lat?'?ne_lat='+(lat+0.045)+'&ne_lng='+(lng+0.06)+'&sw_lat='+(lat-0.045)+'&sw_lng='+(lng-0.06):'');
     var eUrl='https://www.expedia.fr/Hotel-Search?destination='+encodeURIComponent(cd)+'&adults=1';
-    var getBg=function(p){return p==='airbnb'?'#FF5A5F':p==='expedia'?'#FFC72C':'#003580';};
-    var getFg=function(p){return p==='expedia'?'#0A1628':'white';};
-    var getUrl=function(p){return p==='airbnb'?aUrl:p==='expedia'?eUrl:bUrl;};
-    var getLbl=function(p){return p==='airbnb'?'🏠 Airbnb':p==='expedia'?'✈️ Expedia':'🏨 Booking';};
-    var hotels=HOTEL_TEMPLATES.filter(function(h){return h.type==='hotel';});
-    var airbnbs=HOTEL_TEMPLATES.filter(function(h){return h.type==='airbnb';});
-    var html='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:8px">🏨 HÔTELS — '+cd.toUpperCase()+'</div>';
-    html+=hotels.map(function(h){
-        var link=getUrl(h.platform);
-        var stars=h.stars?'⭐'.repeat(h.stars):'';
-        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
-        return '<div onclick="window.open(\''+link+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-            +'<div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
-            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+getLbl(h.platform)+'</span></div>'
-            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
+
+    var platform = _activeLodgingPlatform || 'booking';
+
+    // Cartes selon la plateforme active
+    var cards;
+    if(platform === 'airbnb') {
+        cards = HOTEL_TEMPLATES.filter(function(h){ return h.type==='airbnb'; });
+    } else {
+        cards = HOTEL_TEMPLATES.filter(function(h){ return h.type==='hotel' && h.platform===platform; });
+        if(!cards.length) cards = HOTEL_TEMPLATES.filter(function(h){ return h.type==='hotel'; });
+    }
+
+    var platformUrl = platform==='airbnb' ? aUrl : platform==='expedia' ? eUrl : bUrl;
+    var platformBg  = platform==='airbnb' ? '#FF5A5F' : platform==='expedia' ? '#FFC72C' : '#003580';
+    var platformFg  = platform==='expedia' ? '#0A1628' : 'white';
+    var platformLbl = platform==='airbnb' ? '🏠 Voir sur Airbnb' : platform==='expedia' ? '✈️ Voir sur Expedia' : '🏨 Voir sur Booking';
+    var platformCardBg = platform==='airbnb' ? 'linear-gradient(135deg,#FF5A5F,#E84B50)' : 'linear-gradient(135deg,#0A1628,#1E3A8A)';
+    var badgeBg = platform==='airbnb' ? 'white' : platformBg;
+    var badgeFg = platform==='airbnb' ? '#FF5A5F' : platformFg;
+    var badgeLbl = platform==='airbnb' ? '🏠 Airbnb' : platform==='expedia' ? '✈️ Expedia' : '🏨 Booking';
+
+    var html = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">'
+        + (platform==='airbnb' ? '🏠 APPARTEMENTS AIRBNB' : platform==='expedia' ? '✈️ HÔTELS EXPEDIA' : '🏨 HÔTELS BOOKING')
+        + ' — '+cd.toUpperCase()+'</div>';
+
+    html += cards.map(function(h) {
+        var stars = h.stars ? '⭐'.repeat(h.stars) : '';
+        var amBg = platform==='airbnb' ? '#FFF1F0' : '#F1F5F9';
+        var amFg = platform==='airbnb' ? '#FF5A5F' : '#64748B';
+        var am = h.amenities.map(function(a){ return '<span style="font-size:0.68em;background:'+amBg+';color:'+amFg+';padding:2px 7px;border-radius:6px">'+a+'</span>'; }).join('');
+        return '<div onclick="window.open(\''+platformUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+            +'<div style="background:'+platformCardBg+';height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
+            +'<span style="font-size:1.8em">'+h.icon+'</span>'
+            +'<span style="background:'+badgeBg+';color:'+badgeFg+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+badgeLbl+'</span>'
+            +'</div>'
+            +'<div style="padding:10px 12px">'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
             +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' de l\'event'+(stars?' · '+stars:'')+'</div>'
             +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
-            +'<button onclick="event.stopPropagation();window.open(\''+link+'\',\'_blank\')" style="width:100%;padding:8px;background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+getLbl(h.platform)+' →</button>'
+            +'<button onclick="event.stopPropagation();window.open(\''+platformUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:'+platformBg+';color:'+platformFg+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+platformLbl+' →</button>'
             +'</div></div>';
     }).join('');
-    html+='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin:14px 0 8px">🏠 APPARTEMENTS AIRBNB — '+cd.toUpperCase()+'</div>';
-    html+=airbnbs.map(function(h){
-        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#FFF1F0;color:#FF5A5F;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
-        return '<div onclick="window.open(\''+aUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #FF5A5F;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-            +'<div style="background:linear-gradient(135deg,#FF5A5F,#E84B50);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
-            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:white;color:#FF5A5F;font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">🏠 Airbnb</span></div>'
-            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
-            +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' · Airbnb</div>'
-            +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
-            +'<button onclick="event.stopPropagation();window.open(\''+aUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">🏠 Voir sur Airbnb →</button>'
-            +'</div></div>';
-    }).join('');
-    html+='<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-top:4px">'
-        +'<div style="font-size:0.78em;color:#64748B;margin-bottom:8px;text-align:center">Voir plus pour '+cd+'</div>'
-        +'<div style="display:flex;gap:8px">'
-        +'<button onclick="window.open(\''+bUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#003580;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏨 Booking</button>'
-        +'<button onclick="window.open(\''+aUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏠 Airbnb</button>'
-        +'<button onclick="window.open(\''+eUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FFC72C;color:#0A1628;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">✈️ Expedia</button>'
-        +'</div></div>';
-    container.innerHTML=html;
+
+    // Bouton voir plus
+    html += '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;margin-top:4px;text-align:center">'
+        +'<div style="font-size:0.75em;color:#64748B;margin-bottom:8px">Voir toutes les options pour '+cd+'</div>'
+        +'<button onclick="window.open(\''+platformUrl+'\',\'_blank\')" style="width:100%;padding:9px;background:'+platformBg+';color:'+platformFg+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.82em;cursor:pointer">'+platformLbl+' — Voir tous les logements →</button>'
+        +'</div>';
+
+    container.innerHTML = html;
 }
 
 async function submitLodgingOffer() {
-    if(!currentUser) return;
+    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour publier'); return; }
     var eventId=document.getElementById('lodging-offer-event').value;
     var places=parseInt(document.getElementById('lodging-offer-places').value)||1;
     var price=parseInt(document.getElementById('lodging-offer-price').value)||0;
@@ -3673,24 +3703,36 @@ async function submitLodgingOffer() {
     if(!eventId){showStatusToast('⚠️ Sélectionne un événement');return;}
     if(!desc){showStatusToast('⚠️ Ajoute une description');return;}
     if(!price){showStatusToast('⚠️ Indique un prix par nuit');return;}
-    var {error}=await sb.from('lodgings').insert({user_id:currentUser.id,event_id:eventId,places:places,price_per_night:price,description:desc});
-    if(error){showStatusToast('❌ Erreur : '+error.message);return;}
+    console.log('submitLodgingOffer: user='+currentUser.id+' event='+eventId+' places='+places+' price='+price+' desc='+desc);
+    var {data, error}=await sb.from('lodgings').insert({
+        user_id: currentUser.id,
+        event_id: eventId,
+        places: places,
+        price_per_night: price,
+        description: desc
+    }).select();
+    console.log('submitLodgingOffer result:', data, error);
+    if(error){ showStatusToast('❌ '+error.message); console.error('lodgings insert error:', error); return; }
     showStatusToast('✅ Annonce publiée !');
     document.getElementById('lodging-offer-desc').value='';
     document.getElementById('lodging-offer-places').value='';
     document.getElementById('lodging-offer-price').value='';
+    document.getElementById('lodging-offer-event').value='';
     loadLodgingOffers(_lodgingActiveEventId);
 }
 
 function switchLodgingTab(btn, tab) {
     document.querySelectorAll('.lodging-tab').forEach(function(b){b.style.background='transparent';b.style.color='#64748B';});
     btn.style.background='#0A1628'; btn.style.color='white';
+    btn.setAttribute('data-tab-active','true');
+    document.querySelectorAll('.lodging-tab').forEach(function(b){ if(b!==btn) b.removeAttribute('data-tab-active'); });
     document.getElementById('lodging-tab-seeking').style.display  = tab==='seeking'  ? '' : 'none';
     document.getElementById('lodging-tab-offering').style.display = tab==='offering' ? '' : 'none';
     document.getElementById('lodging-tab-hotels').style.display   = tab==='hotels'   ? '' : 'none';
+    // Toujours recharger les données du tab actif
     if(tab==='seeking')  loadLodgingSeekers(_lodgingActiveEventId);
     if(tab==='offering') loadLodgingOffers(_lodgingActiveEventId);
-    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
+    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
 }
 
 // ===================== DASHBOARD STATS =====================

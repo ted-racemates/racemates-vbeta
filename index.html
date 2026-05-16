@@ -50,7 +50,7 @@
 
         /* BELL */
         .bell-btn{position:relative;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1em;cursor:pointer;color:white}
-        .bell-dot{position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid var(--dark)}
+        .bell-dot{position:absolute;top:2px;right:2px;min-width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid var(--dark);font-size:0.55em;font-weight:900;color:white;display:flex;align-items:center;justify-content:center;padding:0 2px}
 
         /* PLAN INDICATOR */
         .plan-indicator{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:4px 10px;cursor:pointer}
@@ -578,6 +578,7 @@
                 // Stopper les subscriptions realtime
                 if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
                 if(window._realtimeSubscription) { try{ sb.removeChannel(window._realtimeSubscription); }catch(e){} window._realtimeSubscription = null; }
+                if(window._notifChannel) { try{ sb.removeChannel(window._notifChannel); }catch(e){} window._notifChannel = null; }
                 // Reset complet des données utilisateur
                 currentUser = null;
                 currentProfile = null;
@@ -673,6 +674,9 @@
             setTimeout(function(){ if(typeof loadDashboardStats==='function') loadDashboardStats(); }, 400);
             // Démarrer realtime (messages + nouveaux profils)
             if(typeof startGlobalMessagesSubscription==='function') startGlobalMessagesSubscription();
+            // Démarrer realtime notifs + badge
+            if(typeof startNotifSubscription==='function') startNotifSubscription();
+            if(typeof updateNotifBadge==='function') setTimeout(updateNotifBadge, 800);
             // Les athlètes se chargent uniquement via goTo('matching')
         }
 
@@ -751,6 +755,14 @@
             if (!currentUser) { openSubSwitcher(); return; }
             await sb.from('saved_profiles')
                 .upsert({ user_id: currentUser.id, saved_user_id: targetUserId });
+            // Notifier la personne sauvegardée
+            var myP = window.myProfile || {};
+            var myName = myP.prenom || myP.pseudo || 'Quelqu\'un';
+            insertNotif(targetUserId, 'saved',
+                myName + ' a sauvegardé ton profil 🔖',
+                'Clique pour voir son profil',
+                { saver_id: currentUser.id }
+            );
         }
 
         async function sbUnsaveProfile(targetUserId) {
@@ -1948,6 +1960,12 @@ function startGlobalMessagesSubscription() {
         } else {
             // Chat fermé → incrémenter le badge et mettre à jour la carte
             _incrementConvBadge(m.conversation_id, m.content);
+            // Notif message — récupérer le prénom de l'expéditeur
+            sb.from('profiles').select('prenom,pseudo').eq('id', m.sender_id).single().then(function(res) {
+                var sender = res.data;
+                var name = sender ? (sender.prenom || sender.pseudo || 'Quelqu\'un') : 'Quelqu\'un';
+                insertNotif(currentUser.id, 'message', name + ' t\'a envoyé un message', m.content ? m.content.substring(0,60) : '', { sender_id: m.sender_id, conv_id: m.conversation_id });
+            });
         }
     });
 
@@ -1988,6 +2006,20 @@ function startGlobalMessagesSubscription() {
         div.onclick = function(){ openRealProfile(a.id); };
         list.insertAdjacentElement('afterbegin', div);
         showStatusToast('🆕 Nouvel athlète : ' + displayName + ' vient de rejoindre !');
+
+        // Notif si sport en commun avec moi
+        var myP = window.myProfile || {};
+        var mySports = [];
+        try { mySports = typeof myP.sports==='string'?JSON.parse(myP.sports):(myP.sports||[]); } catch(e){}
+        var mySportsNorm = mySports.map(function(s){ return s.toLowerCase().replace(/[^a-z]/g,''); });
+        var commonSport = sports.find(function(s){ return mySportsNorm.includes(s.toLowerCase().replace(/[^a-z]/g,'')); });
+        if(commonSport) {
+            insertNotif(currentUser.id, 'new_profile',
+                'Nouveau profil compatible 👤',
+                displayName + ' pratique aussi ' + commonSport + ' · ' + (a.ville||'France'),
+                { profile_id: a.id }
+            );
+        }
     });
 
     _globalChannel.subscribe();
@@ -2335,6 +2367,21 @@ async function adminSaveEvent() {
     } else {
         await sb.from('events').insert(payload);
         showStatusToast('✅ Événement ajouté');
+        // Notifier tous les users dont le sport correspond
+        var sportNorm = (payload.sport||'').toLowerCase().replace(/[^a-z]/g,'');
+        sb.from('profiles').select('id,sports').neq('id', currentUser.id).then(function(res) {
+            (res.data||[]).forEach(function(p) {
+                var sports = []; try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}
+                var match = sports.some(function(s){ return s.toLowerCase().replace(/[^a-z]/g,'') === sportNorm; });
+                if(match) {
+                    insertNotif(p.id, 'new_event',
+                        '📅 Nouvel événement ' + payload.name,
+                        '📍 ' + (payload.city||'') + (payload.event_date ? ' · ' + new Date(payload.event_date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : ''),
+                        { event_name: payload.name, city: payload.city }
+                    );
+                }
+            });
+        });
     }
     adminResetForm();
     adminLoadEvents();
@@ -2453,8 +2500,130 @@ function unsaveProfil(el, userId) {
 function closeSaved() { document.getElementById('saved-modal').classList.remove('open'); }
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); document.getElementById('profile-modal').scrollTop = 0; }
 function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
-function openNotifs() { document.getElementById('notif-panel').classList.add('open'); }
+function openNotifs() {
+    document.getElementById('notif-panel').classList.add('open');
+    loadNotifications();
+}
 function closeNotifs() { document.getElementById('notif-panel').classList.remove('open'); }
+
+// ===================== NOTIFICATIONS SYSTEM =====================
+
+// Insérer une notif en base pour un user cible
+async function insertNotif(targetUserId, type, title, body, data) {
+    if(!targetUserId || targetUserId === currentUser.id) return; // pas de notif à soi-même
+    try {
+        await sb.from('notifications').insert({
+            user_id: targetUserId,
+            type: type,
+            title: title,
+            body: body || '',
+            data: data || {}
+        });
+    } catch(e) { console.warn('insertNotif error:', e.message); }
+}
+
+// Charger et afficher les notifications
+async function loadNotifications() {
+    if(!currentUser) return;
+    var list = document.getElementById('notif-list');
+    var empty = document.getElementById('notif-empty');
+    if(!list) return;
+
+    var { data: notifs, error } = await sb.from('notifications')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+    if(error || !notifs || notifs.length === 0) {
+        if(empty) empty.style.display = '';
+        return;
+    }
+    if(empty) empty.style.display = 'none';
+
+    var ICONS = { message:'💬', new_profile:'👤', new_event:'📅', saved:'🔖' };
+    var now = Date.now();
+    var fmt = function(ts) {
+        var d = new Date(ts), diff = Math.floor((now - d.getTime())/1000);
+        if(diff < 60) return 'À l\'instant';
+        if(diff < 3600) return Math.floor(diff/60) + ' min';
+        if(diff < 86400) return Math.floor(diff/3600) + 'h';
+        return Math.floor(diff/86400) + 'j';
+    };
+
+    list.innerHTML = notifs.map(function(n) {
+        var icon = ICONS[n.type] || '🔔';
+        return '<div class="nd-item'+(n.read?'':' unread')+'" data-notif-id="'+n.id+'" data-notif-type="'+n.type+'" data-notif-data=\''+JSON.stringify(n.data||{})+'\'>'
+            +'<div style="font-size:1.4em;flex-shrink:0">'+icon+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+n.title+'</div>'
+            +(n.body?'<div style="font-size:0.78em;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+n.body+'</div>':'')
+            +'<div style="font-size:0.7em;color:#94A3B8;margin-top:4px">'+fmt(n.created_at)+'</div>'
+            +'</div>'
+            +(n.read?'':'<div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px"></div>')
+            +'</div>';
+    }).join('');
+
+    // Marquer comme lues au clic + navigation
+    list.querySelectorAll('.nd-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            var nid = item.getAttribute('data-notif-id');
+            var ntype = item.getAttribute('data-notif-type');
+            var ndata = {}; try { ndata = JSON.parse(item.getAttribute('data-notif-data')); } catch(e){}
+            // Marquer comme lu
+            item.classList.remove('unread');
+            item.querySelector('[style*="border-radius:50%"]') && item.querySelector('div[style*="background:var(--blue)"]') && (item.querySelector('div[style*="background:var(--blue)"]').style.display='none');
+            sb.from('notifications').update({ read: true }).eq('id', nid).then(function(){ updateNotifBadge(); });
+            // Navigation selon type
+            closeNotifs();
+            if(ntype === 'message') goTo('messages');
+            else if(ntype === 'new_profile') goTo('sport-select');
+            else if(ntype === 'new_event') goTo('events');
+            else if(ntype === 'saved') goTo('profile');
+        });
+    });
+
+    // Marquer toutes comme lues après 3s
+    setTimeout(function() {
+        sb.from('notifications').update({ read: true })
+            .eq('user_id', currentUser.id).eq('read', false).then(function(){ updateNotifBadge(); });
+    }, 3000);
+}
+
+// Mettre à jour le badge cloche
+async function updateNotifBadge() {
+    if(!currentUser) return;
+    var { count } = await sb.from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id)
+        .eq('read', false);
+    var dots = document.querySelectorAll('.bell-dot');
+    dots.forEach(function(dot) {
+        dot.style.display = (count && count > 0) ? '' : 'none';
+        dot.textContent = count > 0 ? (count > 9 ? '9+' : count) : '';
+    });
+}
+
+// Démarrer le realtime notifs
+function startNotifSubscription() {
+    if(!currentUser || window._notifChannel) return;
+    window._notifChannel = sb.channel('notifs-'+currentUser.id)
+        .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: 'user_id=eq.'+currentUser.id
+        }, function(payload) {
+            console.log('🔔 Nouvelle notif:', payload.new);
+            updateNotifBadge();
+            // Toast rapide
+            var ICONS = { message:'💬', new_profile:'👤', new_event:'📅', saved:'🔖' };
+            var icon = ICONS[payload.new.type] || '🔔';
+            showStatusToast(icon + ' ' + payload.new.title);
+        })
+        .subscribe();
+}
+
 
 // ===================== EVENTS =====================
 // ===================== EVENTS DYNAMIQUES =====================

@@ -2188,14 +2188,6 @@ function _incrementConvBadge(convId, lastMsg) {
 
 // updateMsgBadge défini plus bas
 
-function closeChat() {
-    document.getElementById('chat-view').classList.remove('open');
-    if (_realtimeSubscription) { sb.removeChannel(_realtimeSubscription); _realtimeSubscription = null; }
-    if(window._chatFromProfile) {
-        window._chatFromProfile = false;
-        document.getElementById('profile-modal').classList.add('open');
-    }
-}
 
 function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
 
@@ -3715,82 +3707,52 @@ async function loadLodgingOffers(eventId) {
     });
 }
 
-// Charger les hôtels Booking/Airbnb/Expedia avec rayon progressif
+// Base d'hôtels par ville avec liens affiliés
+var HOTELS_BY_CITY = {
+    'toulouse': [
+        { name: 'Novotel Toulouse Centre', dist: '1.2km', stars: 4, amenities: ['🏊 Piscine','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-toulouse-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Compans-Caffarelli--Toulouse/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' },
+        { name: 'Ibis Toulouse Purpan', dist: '2.1km', stars: 3, amenities: ['🍳 Petit-déj','💪 Sport','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-toulouse-purpan.fr.html', airbnb: 'https://www.airbnb.fr/s/Toulouse--France/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' },
+        { name: 'Mercure Toulouse Centre', dist: '0.8km', stars: 4, amenities: ['🍽️ Restaurant','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/mercure-toulouse-wilson.fr.html', airbnb: 'https://www.airbnb.fr/s/Toulouse--France/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' },
+        { name: 'Appart Airbnb Compans', dist: '0.8km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🌿 Terrasse'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Compans-Caffarelli--Toulouse/homes', expedia: null },
+        { name: 'Hampton by Hilton Toulouse', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi','🏋️ Fitness'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/hampton-by-hilton-toulouse.fr.html', airbnb: 'https://www.airbnb.fr/s/Toulouse--France/homes', expedia: 'https://www.expedia.fr/Toulouse-Hotels.d178311.Travel-Guide-Hotels' }
+    ],
+    'paris': [
+        { name: 'Ibis Paris Champs-Élysées', dist: '1.4km', stars: 3, amenities: ['🗼 Vue Paris','📶 Wifi','🍳 Petit-déj'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/ibis-paris-la-defense-les-files.fr.html', airbnb: 'https://www.airbnb.fr/s/Paris--France/homes', expedia: 'https://www.expedia.fr/Paris-Hotels.d179900.Travel-Guide-Hotels' },
+        { name: 'Mercure Paris Opéra', dist: '2.3km', stars: 4, amenities: ['🏊 Spa','🅿️ Parking','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/mercure-paris-opera-garnier.fr.html', airbnb: 'https://www.airbnb.fr/s/Paris--France/homes', expedia: 'https://www.expedia.fr/Paris-Hotels.d179900.Travel-Guide-Hotels' },
+        { name: 'Novotel Paris Centre', dist: '1.8km', stars: 4, amenities: ['🏊 Piscine','🍽️ Restaurant','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-paris-tour-eiffel.fr.html', airbnb: 'https://www.airbnb.fr/s/Paris--France/homes', expedia: 'https://www.expedia.fr/Paris-Hotels.d179900.Travel-Guide-Hotels' },
+        { name: 'Appart Airbnb Grand Palais', dist: '0.5km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🛁 Baignoire'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Champs-Elysees--Paris/homes', expedia: null }
+    ],
+    'lyon': [
+        { name: 'Novotel Lyon Confluence', dist: '0.9km', stars: 4, amenities: ['🍳 Petit-déj','📶 Wifi','💪 Salle sport'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-lyon-confluence.fr.html', airbnb: 'https://www.airbnb.fr/s/Lyon--France/homes', expedia: 'https://www.expedia.fr/Lyon-Hotels.d178291.Travel-Guide-Hotels' },
+        { name: 'Ibis Lyon Centre Perrache', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi','🅿️ Parking'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-lyon-perrache.fr.html', airbnb: 'https://www.airbnb.fr/s/Lyon--France/homes', expedia: 'https://www.expedia.fr/Lyon-Hotels.d178291.Travel-Guide-Hotels' },
+        { name: 'Appart Airbnb Confluence', dist: '1.0km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🌆 Vue fleuve'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Confluence--Lyon/homes', expedia: null },
+        { name: 'Radisson Blu Lyon', dist: '2.0km', stars: 4, amenities: ['🏊 Piscine','🍽️ Restaurant','🅿️ Parking'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/radisson-blu-lyon.fr.html', airbnb: 'https://www.airbnb.fr/s/Lyon--France/homes', expedia: 'https://www.expedia.fr/Lyon-Hotels.d178291.Travel-Guide-Hotels' }
+    ],
+    'bordeaux': [
+        { name: 'Novotel Bordeaux Centre', dist: '1.1km', stars: 4, amenities: ['🏊 Piscine','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-bordeaux-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Bordeaux--France/homes', expedia: 'https://www.expedia.fr/Bordeaux-Hotels.d178221.Travel-Guide-Hotels' },
+        { name: 'Ibis Bordeaux Centre', dist: '1.8km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-bordeaux-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Bordeaux--France/homes', expedia: 'https://www.expedia.fr/Bordeaux-Hotels.d178221.Travel-Guide-Hotels' },
+        { name: 'Appart Airbnb Chartrons', dist: '2.0km', stars: 0, amenities: ['🍳 Cuisine','📶 Wifi','🍷 Cave à vin'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Les-Chartrons--Bordeaux/homes', expedia: null }
+    ],
+    'marseille': [
+        { name: 'Sofitel Marseille Vieux-Port', dist: '0.7km', stars: 5, amenities: ['🌊 Vue mer','🏊 Piscine','🍽️ Restaurant'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/sofitel-marseille-vieux-port.fr.html', airbnb: 'https://www.airbnb.fr/s/Marseille--France/homes', expedia: 'https://www.expedia.fr/Marseille-Hotels.d178281.Travel-Guide-Hotels' },
+        { name: 'Ibis Marseille Centre', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi','🅿️ Parking'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-marseille-centre-prefecture.fr.html', airbnb: 'https://www.airbnb.fr/s/Marseille--France/homes', expedia: 'https://www.expedia.fr/Marseille-Hotels.d178281.Travel-Guide-Hotels' }
+    ],
+    'nice': [
+        { name: 'Hôtel Beau Rivage Nice', dist: '1.1km', stars: 4, amenities: ['🌊 Vue mer','📶 Wifi','🏊 Piscine'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/beau-rivage-nice.fr.html', airbnb: 'https://www.airbnb.fr/s/Nice--France/homes', expedia: 'https://www.expedia.fr/Nice-Hotels.d178294.Travel-Guide-Hotels' },
+        { name: 'Ibis Nice Centre', dist: '2.0km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-nice-centre.fr.html', airbnb: 'https://www.airbnb.fr/s/Nice--France/homes', expedia: 'https://www.expedia.fr/Nice-Hotels.d178294.Travel-Guide-Hotels' }
+    ],
+    'lille': [
+        { name: 'Novotel Lille Centre', dist: '1.0km', stars: 4, amenities: ['🏊 Piscine','🅿️ Parking','📶 Wifi'], icon: '🏨', booking: 'https://www.booking.com/hotel/fr/novotel-lille-centre-gares.fr.html', airbnb: 'https://www.airbnb.fr/s/Lille--France/homes', expedia: 'https://www.expedia.fr/Lille-Hotels.d178271.Travel-Guide-Hotels' },
+        { name: 'Ibis Lille Centre', dist: '1.5km', stars: 3, amenities: ['🍳 Petit-déj','📶 Wifi'], icon: '🏩', booking: 'https://www.booking.com/hotel/fr/ibis-lille-centre-grand-palais.fr.html', airbnb: 'https://www.airbnb.fr/s/Lille--France/homes', expedia: 'https://www.expedia.fr/Lille-Hotels.d178271.Travel-Guide-Hotels' }
+    ],
+    'chamonix': [
+        { name: 'Hôtel Mont-Blanc Chamonix', dist: '0.5km', stars: 4, amenities: ['🏔️ Vue Mont-Blanc','🍳 Petit-déj','🛁 Spa'], icon: '🏔️', booking: 'https://www.booking.com/hotel/fr/mont-blanc-chamonix.fr.html', airbnb: 'https://www.airbnb.fr/s/Chamonix-Mont-Blanc/homes', expedia: 'https://www.expedia.fr/Chamonix-Hotels.d178231.Travel-Guide-Hotels' },
+        { name: 'Appart Airbnb Chamonix', dist: '1.2km', stars: 0, amenities: ['🍳 Cuisine','🏔️ Vue','📶 Wifi'], icon: '🏠', booking: null, airbnb: 'https://www.airbnb.fr/s/Chamonix-Mont-Blanc/homes', expedia: null }
+    ]
+};
+
+// Charger les cartes hôtels visuelles par ville
 function loadLodgingHotels(city, lat, lng, eventName) {
-    var container = document.getElementById('lodging-hotels-links');
-    var label = document.getElementById('lodging-radius-label');
-    if(!container) return;
-
-    if(!city) {
-        container.innerHTML = '<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';
-        return;
-    }
-
-    var cityDisplay = city.charAt(0).toUpperCase() + city.slice(1);
-    if(label) label.textContent = 'Logements dans un rayon de 5km autour de ' + cityDisplay;
-
-    // ===== IDs AFFILIÉS — remplacer dès validation =====
-    var BOOKING_AID  = '4297313';        // Ton PID CJ — à remplacer par l\'aid Booking quand validé
-    var EXPEDIA_AID  = 'YOUR_EXPEDIA_AID'; // Remplacer par ton aid Expedia CJ
-
-    // URLs dynamiques
-    var bookingUrl  = 'https://www.booking.com/search.html?ss='+encodeURIComponent(cityDisplay)+'&aid='+BOOKING_AID+'&radius=5&radiusunit=km&lang=fr';
-    var airbnbUrl   = 'https://www.airbnb.fr/s/'+encodeURIComponent(cityDisplay)+'/homes'+(lat?'?ne_lat='+(lat+0.045)+'&ne_lng='+(lng+0.06)+'&sw_lat='+(lat-0.045)+'&sw_lng='+(lng-0.06):'');
-    var expediaUrl  = 'https://www.expedia.fr/Hotel-Search?destination='+encodeURIComponent(cityDisplay)+'&adults=1'+(EXPEDIA_AID!=='YOUR_EXPEDIA_AID'?'&affcid='+EXPEDIA_AID:'');
-    var gmapsUrl    = 'https://www.google.com/maps/search/hôtels+près+de+'+encodeURIComponent(cityDisplay);
-
-    var CARD_STYLE = 'background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform 0.15s;text-decoration:none';
-
-    container.innerHTML =
-        // Booking
-        '<a href="'+bookingUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
-        +'<div style="'+CARD_STYLE+';border:1.5px solid #003580" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-        +'<div style="width:48px;height:48px;border-radius:10px;background:#003580;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">🏨</div>'
-        +'<div style="flex:1">'
-        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Booking.com</div>'
-        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Hôtels &amp; apparts près de '+cityDisplay+' · Rayon 5km</div>'
-        +'<div style="font-size:0.7em;color:#059669;font-weight:700;margin-top:4px">✓ Annulation gratuite · Meilleur prix garanti</div>'
-        +'</div><div style="font-size:1.2em;color:#003580">→</div>'
-        +'</div></a>'
-
-        // Airbnb (sans affiliation)
-        +'<a href="'+airbnbUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
-        +'<div style="'+CARD_STYLE+';border:1.5px solid #FF5A5F" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-        +'<div style="width:48px;height:48px;border-radius:10px;background:#FF5A5F;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">🏠</div>'
-        +'<div style="flex:1">'
-        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Airbnb</div>'
-        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Appartements &amp; maisons près de '+cityDisplay+'</div>'
-        +'<div style="font-size:0.7em;color:#059669;font-weight:700;margin-top:4px">✓ Idéal pour partager à plusieurs athlètes</div>'
-        +'</div><div style="font-size:1.2em;color:#FF5A5F">→</div>'
-        +'</div></a>'
-
-        // Expedia
-        +'<a href="'+expediaUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
-        +'<div style="'+CARD_STYLE+';border:1.5px solid #FFC72C" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-        +'<div style="width:48px;height:48px;border-radius:10px;background:#FFC72C;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">✈️</div>'
-        +'<div style="flex:1">'
-        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Expedia</div>'
-        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Hôtels + vols groupés · '+cityDisplay+'</div>'
-        +'<div style="font-size:0.7em;color:#059669;font-weight:700;margin-top:4px">✓ Pack hôtel + transport disponible</div>'
-        +'</div><div style="font-size:1.2em;color:#FFC72C">→</div>'
-        +'</div></a>'
-
-        // Google Maps
-        +'<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
-        +'<div style="'+CARD_STYLE+';border:1.5px solid #E2E8F0" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-        +'<div style="width:48px;height:48px;border-radius:10px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">📍</div>'
-        +'<div style="flex:1">'
-        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Google Maps</div>'
-        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Voir tous les hôtels autour de '+cityDisplay+'</div>'
-        +'</div><div style="font-size:1.2em;color:#64748B">→</div>'
-        +'</div></a>'
-
-        // Info rayon
-        +'<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;font-size:0.75em;color:#15803D">'
-        +'📏 Résultats dans un rayon de <strong>5km</strong> autour de '+cityDisplay+'. Si peu de résultats, élargis le rayon dans les filtres Booking.'
-        +'</div>';
-}
-
 // Soumettre une proposition de logement
 async function submitLodgingOffer() {
     if(!currentUser) return;
@@ -3827,7 +3789,9 @@ function switchLodgingTab(btn, tab) {
     document.getElementById('lodging-tab-seeking').style.display  = tab === 'seeking'  ? '' : 'none';
     document.getElementById('lodging-tab-offering').style.display = tab === 'offering' ? '' : 'none';
     document.getElementById('lodging-tab-hotels').style.display   = tab === 'hotels'   ? '' : 'none';
-    // Charger hôtels si event sélectionné
+    // Recharger les données à chaque switch
+    if(tab === 'seeking')  loadLodgingSeekers(_lodgingActiveEventId);
+    if(tab === 'offering') loadLodgingOffers(_lodgingActiveEventId);
     if(tab === 'hotels' && _lodgingActiveCity) {
         loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
     }
@@ -4066,24 +4030,6 @@ function showStatusToast(msg) {
     toast._t = setTimeout(function(){ toast.style.display = 'none'; }, 2500);
 }
 
-// Status filter in matching — hide complet cards option
-function toggleCompletFilter() {
-    var btn = document.getElementById('hide-complet-btn');
-    var hide = btn.getAttribute('data-hide') === 'true';
-    if(hide) {
-        btn.setAttribute('data-hide', 'false');
-        btn.style.background = 'var(--bg)';
-        btn.style.color = 'var(--grey)';
-        btn.textContent = '👁 Masquer complets';
-        document.querySelectorAll('.athlete-card.complet').forEach(function(c){ c.style.display = ''; });
-    } else {
-        btn.setAttribute('data-hide', 'true');
-        btn.style.background = '#FEF2F2';
-        btn.style.color = 'var(--red)';
-        btn.textContent = '🔴 Complets masqués';
-        document.querySelectorAll('.athlete-card.complet').forEach(function(c){ c.style.display = 'none'; });
-    }
-}
 
 
 // ===== SPORT FILTER (MATCHING) =====
@@ -4962,10 +4908,6 @@ function toggleCompletFilter() {
         updateAthleteCount();
     }
 
-    function updateSavedCount() {
-        var el = document.getElementById('qa-sub-saved');
-        if(el) el.textContent = savedCount + (savedCount > 1 ? ' profils' : ' profil');
-    }
 
     function updateAthleteCount() {
         var fn = window.sbGetAthletes;
@@ -6009,6 +5951,7 @@ setPlan('free');
         updateMsgBadge();
     });
 
+}); // DOMContentLoaded
 </script>
 
     <!-- ===== ONBOARDING OVERLAY ===== -->

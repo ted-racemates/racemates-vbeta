@@ -1353,93 +1353,89 @@
 
 <!-- ===== SUBSCRIPTION SWITCHER ===== -->
 <div class="modal" id="sub-modal">
-    <div class="page-header" style="padding-bottom:42px"><div class="header-top" style="position:relative;z-index:2"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><button onclick="closeSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">✕ Fermer</button></div></div>
+    <div class="page-header" style="padding-bottom:42px">
+        <div class="header-top" style="position:relative;z-index:2">
+            <div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div>
+            <button onclick="closeSubSwitcher()" style="background:rgba(255,255,255,0.1);border:none;border-radius:8px;padding:6px 12px;color:white;font-size:0.85em;cursor:pointer">✕ Fermer</button>
+        </div>
+    </div>
     <div class="body">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:var(--dark);margin-bottom:4px">💎 Nos offres</div>
-        <div style="font-size:0.78em;color:var(--grey);margin-bottom:16px;line-height:1.5">Choisis l'offre adaptée à ta saison sportive.</div>
-
-        <!-- FREE -->
-        <div class="sub-option active" id="sub-free" onclick="setPlan('free')" style="border:1.5px solid #E2E8F0">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4em;color:var(--dark);margin-bottom:4px">💎 Nos offres</div>
+        <div style="font-size:0.82em;color:var(--grey);margin-bottom:20px;line-height:1.5">L'app est gratuite pendant la phase de lancement.<br>Le Premium arrive bientôt avec des avantages exclusifs.</div>
+        <div class="sub-option active" id="sub-free" style="border:1.5px solid #E2E8F0;margin-bottom:12px">
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">🆓 Découverte</div>
-                <div class="sub-desc">Parcourir les profils · Voir les événements</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">✓ Accès lectures</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Messagerie</span>
+                <div class="sub-name">🆓 Gratuit</div>
+                <div class="sub-desc">Accès complet pendant le lancement</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Matching athletes</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Messagerie</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Événements</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Logement</span>
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Notifications</span>
+                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Voir qui t'a sauvegardé</span>
+                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Boost visibilité</span>
+                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Stats de profil</span>
                 </div>
             </div>
-            <div class="sub-price">0€<span class="sub-price-period">gratuit</span></div>
+            <div class="sub-price">0€<span class="sub-price-period">/mois</span></div>
         </div>
-
-        <!-- EVENT -->
-        <div class="sub-option" id="sub-event" onclick="setPlan('event')" style="border:1.5px solid #FBBF24">
+        <div class="sub-option" id="sub-premium" style="border:2px solid #0A1628;position:relative;overflow:hidden;margin-bottom:20px">
+            <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></div>
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">⚡ Pass Événement <span style="background:#FFFBEB;color:#92400E;font-size:0.7em;padding:2px 7px;border-radius:6px;margin-left:4px">POPULAIRE</span></div>
-                <div class="sub-desc">Tout débloquer pour 1 événement de ton choix</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Messagerie</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Logements</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Duos &amp; relais</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Multi-events</span>
+                <div class="sub-name">⚡ Premium <span style="background:#FFFBEB;color:#92400E;font-size:0.68em;padding:2px 8px;border-radius:6px;margin-left:4px;font-weight:700">BIENTÔT</span></div>
+                <div class="sub-desc">Tous les avantages + fonctions exclusives</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+                    <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Tout le plan Gratuit</span>
+                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">👀 Voir qui t'a sauvegardé</span>
+                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">🚀 Boost visibilité 7j</span>
+                    <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">📊 Stats de profil</span>
                 </div>
-            </div>
-            <div class="sub-price">2,99€<span class="sub-price-period">/événement</span></div>
-        </div>
-
-        <!-- TRAINING -->
-        <div class="sub-option" id="sub-training" onclick="setPlan('training')" style="border:1.5px solid #E2E8F0">
-            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
-            <div class="sub-info">
-                <div class="sub-name">🤝 Pass Entraînement</div>
-                <div class="sub-desc">Partenaires d'entraînement illimités</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Messagerie training</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Tous sports</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ Logements</span>
+                <div style="margin-top:10px;padding:8px 10px;background:#F8FAFC;border-radius:8px;font-size:0.75em;color:#64748B">
+                    💡 Laisse ton email pour être notifié au lancement du Premium.
                 </div>
-            </div>
-            <div class="sub-price">1,99€<span class="sub-price-period">/mois</span></div>
-        </div>
-
-        <!-- FRANCE -->
-        <div class="sub-option" id="sub-france" onclick="setPlan('france')" style="border:1.5px solid #3B82F6">
-            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
-            <div class="sub-info">
-                <div class="sub-name">🇫🇷 Saison France <span style="background:#DBEAFE;color:#1D4ED8;font-size:0.7em;padding:2px 7px;border-radius:6px;margin-left:4px">BEST VALUE</span></div>
-                <div class="sub-desc">Tous les événements France, tous les sports</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Événements illimités</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Logements</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Entraînement</span>
-                    <span style="font-size:0.7em;background:#FEF2F2;color:#EF4444;padding:2px 7px;border-radius:6px">✗ International</span>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <input id="premium-waitlist-email" type="email" placeholder="ton@email.com" style="flex:1;padding:9px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.82em;font-family:Barlow,sans-serif;outline:none">
+                    <button onclick="joinPremiumWaitlist()" style="padding:9px 14px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85em;cursor:pointer;white-space:nowrap">M'alerter →</button>
                 </div>
+                <div id="waitlist-confirm" style="display:none;font-size:0.78em;color:#15803D;font-weight:700;margin-top:6px">✅ Tu seras notifié au lancement !</div>
             </div>
-            <div class="sub-price">4,99€<span class="sub-price-period">/mois</span></div>
+            <div class="sub-price" style="color:#0A1628">5€<span class="sub-price-period">/mois</span></div>
         </div>
-
-        <!-- FULL -->
-        <div class="sub-option" id="sub-full" onclick="setPlan('full')" style="border:1.5px solid #8B5CF6">
-            <div class="sub-radio"><div class="sub-radio-dot"></div></div>
-            <div class="sub-info">
-                <div class="sub-name">🌍 Saison Internationale</div>
-                <div class="sub-desc">France + Europe + Entraînement · Tout inclus</div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px">
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ France + Europe</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Worlds</span>
-                    <span style="font-size:0.7em;background:#F0FDF4;color:#15803D;padding:2px 7px;border-radius:6px">✓ Tout inclus</span>
-                </div>
+        <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px 18px;margin-bottom:10px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:10px">👀 Qui a sauvegardé ton profil ?</div>
+            <div style="display:flex;margin-bottom:10px">
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px)">AB</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">CD</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">EF</div>
+                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.75em;color:rgba(255,255,255,0.7);margin-left:-8px">+?</div>
             </div>
-            <div class="sub-price">7,99€<span class="sub-price-period">/mois</span></div>
+            <div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin-bottom:10px"><span id="saved-by-count" style="color:white;font-weight:700">? personnes</span> ont sauvegardé ton profil.</div>
+            <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-size:0.75em;color:rgba(255,255,255,0.8)">🔒 Débloque le Premium pour voir qui c'est</div>
         </div>
-        <div style="margin-top:20px;background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95em;color:var(--dark);margin-bottom:10px;letter-spacing:0.5px">👁 Ce que voit cet utilisateur</div>
-            <div id="plan-preview"></div>
+        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:10px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:12px">📊 Stats de ton profil cette semaine</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628">47</div><div style="font-size:0.65em;color:#64748B">VUES</div></div>
+                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#059669">8</div><div style="font-size:0.65em;color:#64748B">CONTACTS</div></div>
+                <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#1E3A8A">12</div><div style="font-size:0.65em;color:#64748B">SAUVEGARDES</div></div>
+            </div>
+            <div style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour voir tes vraies stats</div>
         </div>
-        <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer;margin-top:14px">✅ Appliquer ce plan</button>
+        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:16px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:6px">🚀 Boost visibilité — 7 jours</div>
+            <div style="font-size:0.8em;color:#64748B;margin-bottom:10px;line-height:1.5">Ton profil apparaît <strong>en premier</strong> dans les résultats pendant 7 jours.</div>
+            <div style="display:flex;align-items:center;gap:10px;background:white;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;opacity:0.5">
+                <div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.7em;color:white">🚀 BOOSTÉ</div>
+                <div style="font-size:0.8em;color:#0A1628;font-weight:600">Ton profil · visible par tous</div>
+            </div>
+            <div style="margin-top:8px;background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour activer le boost</div>
+        </div>
+        <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer">OK, compris !</button>
     </div>
 </div>
+
 
 <!-- ===== BOTTOM SHEET FILTERS ===== -->
 <div class="bs-overlay" id="bs-overlay" onclick="closeBS()"></div>
@@ -1526,12 +1522,6 @@
         </div>
         <div id="lodging-tab-hotels" style="display:none">
             <div id="lodging-radius-label" style="font-size:0.75em;color:#64748B;margin-bottom:10px;text-align:center">Sélectionne un événement pour voir les hôtels</div>
-            <!-- Sous-onglets plateforme -->
-            <div style="display:flex;gap:6px;margin-bottom:14px;background:#F1F5F9;border-radius:12px;padding:4px">
-                <button class="hotel-platform-tab active" data-platform="booking" onclick="switchHotelPlatform(this,'booking')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:#003580;color:white">🏨 Booking</button>
-                <button class="hotel-platform-tab" data-platform="airbnb" onclick="switchHotelPlatform(this,'airbnb')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:transparent;color:#64748B">🏠 Airbnb</button>
-                <button class="hotel-platform-tab" data-platform="expedia" onclick="switchHotelPlatform(this,'expedia')" style="flex:1;border:none;border-radius:9px;padding:8px 4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer;background:transparent;color:#64748B">✈️ Expedia</button>
-            </div>
             <div id="lodging-hotels-links"><div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div></div>
         </div>
     </div>
@@ -1890,7 +1880,6 @@ function openRealChat(userId) {
     window._chatFromProfile = false;
     if(!userId) { console.error('openRealChat: userId manquant'); return; }
     if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour contacter'); return; }
-    if(currentPlan === 'free') { openSubSwitcher(); return; }
     console.log('openRealChat:', userId);
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
@@ -3191,58 +3180,31 @@ var PLAN_PREVIEWS = {
 
 function setPlan(plan) {
     currentPlan = plan;
-    // Update sub-option active state
-    ['free','training','event','france','full'].forEach(function(p){
-        var el = document.getElementById('sub-' + p);
-        if(el) el.classList.toggle('active', p === plan);
-    });
-    // Plan preview features list
-    var preview = document.getElementById('plan-preview');
-    if(preview) {
-        preview.innerHTML = PLAN_PREVIEWS[plan].map(function(f){
-            return '<div class="plan-preview-item">' + f + '</div>';
-        }).join('');
-    }
-    // Plan labels & dots throughout app
-    document.querySelectorAll('[id^="pt-"]').forEach(function(el){ el.textContent = PLANS[plan].label; });
-    document.querySelectorAll('[id^="pd-"]').forEach(function(el){
-        el.className = 'plan-dot' + (PLANS[plan].paid ? '' : ' free');
-    });
     var ppl = document.getElementById('profile-plan-label');
-    if(ppl) ppl.textContent = PLANS[plan].name;
-    // Access banner
-    var banners = {
-        free:     '<div class="access-banner lock"><div class="access-icon">🔒</div><div>Plan gratuit — <strong>Passe au Pass Événement</strong> pour contacter</div></div>',
-        training: '<div class="access-banner info"><div class="access-icon">🤝</div><div>Pass Entraînement actif</div></div>',
-        event:    '<div class="access-banner warn"><div class="access-icon">⚡</div><div>Pass Événement actif — Messagerie ouverte</div></div>',
-        france:   '<div class="access-banner ok"><div class="access-icon">🇫🇷</div><div>Saison France — Tous les événements débloqués</div></div>',
-        full:     '<div class="access-banner ok"><div class="access-icon">🌍</div><div>Saison Internationale — Tout inclus</div></div>'
-    };
-    var banner = document.getElementById('access-banner');
-    if(banner) banner.innerHTML = banners[plan] || '';
-    // Bouton contacter toujours actif - pas de blocage par plan
-    document.querySelectorAll('.btn-contact, [id^="contact-btn-"]').forEach(function(btn){
-        btn.style.background = 'var(--red)';
-        btn.style.cursor = 'pointer';
-        btn.style.opacity = '1';
-        btn.disabled = false;
-        btn.removeAttribute('data-locked');
+    if(ppl) ppl.textContent = (plan === 'premium') ? '⚡ Premium' : 'Gratuit';
+    document.querySelectorAll('.btn-contact,[id^="contact-btn-"]').forEach(function(btn){
+        btn.style.background='var(--red)'; btn.style.cursor='pointer';
+        btn.style.opacity='1'; btn.disabled=false; btn.removeAttribute('data-locked');
     });
-    // Lodging access
-    var lodgingCol = document.getElementById('lodging-col');
-    if(lodgingCol) {
-        var canLodge = (plan === 'event' || plan === 'france' || plan === 'full');
-        lodgingCol.style.filter = canLodge ? '' : 'blur(3px)';
-        lodgingCol.style.pointerEvents = canLodge ? '' : 'none';
-        lodgingCol.style.opacity = canLodge ? '' : '0.5';
-    }
 }
 function openSubSwitcher() {
-    setPlan(currentPlan);
     document.getElementById('sub-modal').classList.add('open');
     document.getElementById('sub-modal').scrollTop = 0;
+    var em = document.getElementById('premium-waitlist-email');
+    if(em && currentUser && currentUser.email) em.value = currentUser.email;
+    if(currentUser) {
+        sb.from('saved_profiles').select('user_id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id)
+        .then(function(r){ var el=document.getElementById('saved-by-count'); if(el) el.textContent=(r.count||0)+' personne'+(r.count>1?'s':''); });
+    }
 }
 function closeSubSwitcher() { document.getElementById('sub-modal').classList.remove('open'); }
+async function joinPremiumWaitlist() {
+    var email=(document.getElementById('premium-waitlist-email')||{}).value||'';
+    if(!email||!email.includes('@')){ showStatusToast('⚠️ Entre un email valide'); return; }
+    try{ await sb.from('feedback').insert({type:'waitlist_premium',message:'Waitlist Premium 5€/mois',email:email,section:'premium_waitlist'}); }catch(e){}
+    var c=document.getElementById('waitlist-confirm'); if(c) c.style.display='';
+    showStatusToast('🎉 Tu seras notifié au lancement !');
+}
 
 // ===================== DYNAMIC ATHLETE PROFILE =====================
 var ATHLETE_DATA = {
@@ -3545,9 +3507,11 @@ function selectLodgingEvent(pill) {
     _lodgingActiveLat=parseFloat(pill.getAttribute('data-lat'))||null;
     _lodgingActiveLng=parseFloat(pill.getAttribute('data-lng'))||null;
     _lodgingActiveEventName=pill.getAttribute('data-event-name')||'';
-    // Switcher sur Hotels et charger — switchLodgingTab charge tout
-    var hotelsBtn = document.querySelector('.lodging-tab[data-tab="hotels"]');
-    if(hotelsBtn) switchLodgingTab(hotelsBtn, 'hotels');
+    loadLodgingSeekers(_lodgingActiveEventId);
+    loadLodgingOffers(_lodgingActiveEventId);
+    // Charger hôtels si tab hôtels actif
+    var activeTab=document.querySelector('.lodging-tab.active');
+    if(activeTab && activeTab.getAttribute('data-tab')==='hotels') loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
 }
 
 async function loadLodgingSeekers(eventId) {
@@ -3615,21 +3579,6 @@ async function loadLodgingOffers(eventId) {
     });
 }
 
-var _activeLodgingPlatform = 'booking';
-
-function switchHotelPlatform(btn, platform) {
-    _activeLodgingPlatform = platform;
-    document.querySelectorAll('.hotel-platform-tab').forEach(function(b){
-        b.style.background = 'transparent';
-        b.style.color = '#64748B';
-    });
-    var COLORS = { booking: '#003580', airbnb: '#FF5A5F', expedia: '#FFC72C' };
-    var FG = { booking: 'white', airbnb: 'white', expedia: '#0A1628' };
-    btn.style.background = COLORS[platform];
-    btn.style.color = FG[platform];
-    loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
-}
-
 function loadLodgingHotels(city, lat, lng, eventName) {
     var container=document.getElementById('lodging-hotels-links');
     var label=document.getElementById('lodging-radius-label');
@@ -3637,65 +3586,54 @@ function loadLodgingHotels(city, lat, lng, eventName) {
     if(!city){container.innerHTML='<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';return;}
     var cd=city.charAt(0).toUpperCase()+city.slice(1);
     if(label) label.textContent='Logements près de '+(eventName||cd)+' · Rayon 5km';
-
     var BOOKING_AID='4297313';
     var bUrl='https://www.booking.com/search.html?ss='+encodeURIComponent(cd)+'&aid='+BOOKING_AID+'&radius=5&radiusunit=km&lang=fr';
     var aUrl='https://www.airbnb.fr/s/'+encodeURIComponent(cd)+'/homes'+(lat?'?ne_lat='+(lat+0.045)+'&ne_lng='+(lng+0.06)+'&sw_lat='+(lat-0.045)+'&sw_lng='+(lng-0.06):'');
     var eUrl='https://www.expedia.fr/Hotel-Search?destination='+encodeURIComponent(cd)+'&adults=1';
-
-    var platform = _activeLodgingPlatform || 'booking';
-
-    // Cartes selon la plateforme active
-    var cards;
-    if(platform === 'airbnb') {
-        cards = HOTEL_TEMPLATES.filter(function(h){ return h.type==='airbnb'; });
-    } else {
-        cards = HOTEL_TEMPLATES.filter(function(h){ return h.type==='hotel' && h.platform===platform; });
-        if(!cards.length) cards = HOTEL_TEMPLATES.filter(function(h){ return h.type==='hotel'; });
-    }
-
-    var platformUrl = platform==='airbnb' ? aUrl : platform==='expedia' ? eUrl : bUrl;
-    var platformBg  = platform==='airbnb' ? '#FF5A5F' : platform==='expedia' ? '#FFC72C' : '#003580';
-    var platformFg  = platform==='expedia' ? '#0A1628' : 'white';
-    var platformLbl = platform==='airbnb' ? '🏠 Voir sur Airbnb' : platform==='expedia' ? '✈️ Voir sur Expedia' : '🏨 Voir sur Booking';
-    var platformCardBg = platform==='airbnb' ? 'linear-gradient(135deg,#FF5A5F,#E84B50)' : 'linear-gradient(135deg,#0A1628,#1E3A8A)';
-    var badgeBg = platform==='airbnb' ? 'white' : platformBg;
-    var badgeFg = platform==='airbnb' ? '#FF5A5F' : platformFg;
-    var badgeLbl = platform==='airbnb' ? '🏠 Airbnb' : platform==='expedia' ? '✈️ Expedia' : '🏨 Booking';
-
-    var html = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">'
-        + (platform==='airbnb' ? '🏠 APPARTEMENTS AIRBNB' : platform==='expedia' ? '✈️ HÔTELS EXPEDIA' : '🏨 HÔTELS BOOKING')
-        + ' — '+cd.toUpperCase()+'</div>';
-
-    html += cards.map(function(h) {
-        var stars = h.stars ? '⭐'.repeat(h.stars) : '';
-        var amBg = platform==='airbnb' ? '#FFF1F0' : '#F1F5F9';
-        var amFg = platform==='airbnb' ? '#FF5A5F' : '#64748B';
-        var am = h.amenities.map(function(a){ return '<span style="font-size:0.68em;background:'+amBg+';color:'+amFg+';padding:2px 7px;border-radius:6px">'+a+'</span>'; }).join('');
-        return '<div onclick="window.open(\''+platformUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
-            +'<div style="background:'+platformCardBg+';height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
-            +'<span style="font-size:1.8em">'+h.icon+'</span>'
-            +'<span style="background:'+badgeBg+';color:'+badgeFg+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+badgeLbl+'</span>'
-            +'</div>'
-            +'<div style="padding:10px 12px">'
-            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
+    var getBg=function(p){return p==='airbnb'?'#FF5A5F':p==='expedia'?'#FFC72C':'#003580';};
+    var getFg=function(p){return p==='expedia'?'#0A1628':'white';};
+    var getUrl=function(p){return p==='airbnb'?aUrl:p==='expedia'?eUrl:bUrl;};
+    var getLbl=function(p){return p==='airbnb'?'🏠 Airbnb':p==='expedia'?'✈️ Expedia':'🏨 Booking';};
+    var hotels=HOTEL_TEMPLATES.filter(function(h){return h.type==='hotel';});
+    var airbnbs=HOTEL_TEMPLATES.filter(function(h){return h.type==='airbnb';});
+    var html='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:8px">🏨 HÔTELS — '+cd.toUpperCase()+'</div>';
+    html+=hotels.map(function(h){
+        var link=getUrl(h.platform);
+        var stars=h.stars?'⭐'.repeat(h.stars):'';
+        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#F1F5F9;color:#64748B;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
+        return '<div onclick="window.open(\''+link+'\',\'_blank\')" style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+            +'<div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
+            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">'+getLbl(h.platform)+'</span></div>'
+            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
             +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' de l\'event'+(stars?' · '+stars:'')+'</div>'
             +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
-            +'<button onclick="event.stopPropagation();window.open(\''+platformUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:'+platformBg+';color:'+platformFg+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+platformLbl+' →</button>'
+            +'<button onclick="event.stopPropagation();window.open(\''+link+'\',\'_blank\')" style="width:100%;padding:8px;background:'+getBg(h.platform)+';color:'+getFg(h.platform)+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">'+getLbl(h.platform)+' →</button>'
             +'</div></div>';
     }).join('');
-
-    // Bouton voir plus
-    html += '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;margin-top:4px;text-align:center">'
-        +'<div style="font-size:0.75em;color:#64748B;margin-bottom:8px">Voir toutes les options pour '+cd+'</div>'
-        +'<button onclick="window.open(\''+platformUrl+'\',\'_blank\')" style="width:100%;padding:9px;background:'+platformBg+';color:'+platformFg+';border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.82em;cursor:pointer">'+platformLbl+' — Voir tous les logements →</button>'
-        +'</div>';
-
-    container.innerHTML = html;
+    html+='<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin:14px 0 8px">🏠 APPARTEMENTS AIRBNB — '+cd.toUpperCase()+'</div>';
+    html+=airbnbs.map(function(h){
+        var am=h.amenities.map(function(a){return '<span style="font-size:0.68em;background:#FFF1F0;color:#FF5A5F;padding:2px 7px;border-radius:6px">'+a+'</span>';}).join('');
+        return '<div onclick="window.open(\''+aUrl+'\',\'_blank\')" style="background:white;border:1.5px solid #FF5A5F;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform 0.15s;margin-bottom:10px" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+            +'<div style="background:linear-gradient(135deg,#FF5A5F,#E84B50);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px">'
+            +'<span style="font-size:1.8em">'+h.icon+'</span><span style="background:white;color:#FF5A5F;font-size:0.6em;font-weight:700;padding:3px 8px;border-radius:6px">🏠 Airbnb</span></div>'
+            +'<div style="padding:10px 12px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;color:#0A1628;margin-bottom:2px">'+h.name+' · '+cd+'</div>'
+            +'<div style="font-size:0.72em;color:#64748B;margin-bottom:6px">📍 '+h.dist+' · Airbnb</div>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">'+am+'</div>'
+            +'<button onclick="event.stopPropagation();window.open(\''+aUrl+'\',\'_blank\')" style="width:100%;padding:8px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.8em;cursor:pointer">🏠 Voir sur Airbnb →</button>'
+            +'</div></div>';
+    }).join('');
+    html+='<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-top:4px">'
+        +'<div style="font-size:0.78em;color:#64748B;margin-bottom:8px;text-align:center">Voir plus pour '+cd+'</div>'
+        +'<div style="display:flex;gap:8px">'
+        +'<button onclick="window.open(\''+bUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#003580;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏨 Booking</button>'
+        +'<button onclick="window.open(\''+aUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FF5A5F;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">🏠 Airbnb</button>'
+        +'<button onclick="window.open(\''+eUrl+'\',\'_blank\')" style="flex:1;padding:9px;background:#FFC72C;color:#0A1628;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.78em;cursor:pointer">✈️ Expedia</button>'
+        +'</div></div>';
+    container.innerHTML=html;
 }
 
 async function submitLodgingOffer() {
-    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour publier'); return; }
+    if(!currentUser) return;
     var eventId=document.getElementById('lodging-offer-event').value;
     var places=parseInt(document.getElementById('lodging-offer-places').value)||1;
     var price=parseInt(document.getElementById('lodging-offer-price').value)||0;
@@ -3703,36 +3641,24 @@ async function submitLodgingOffer() {
     if(!eventId){showStatusToast('⚠️ Sélectionne un événement');return;}
     if(!desc){showStatusToast('⚠️ Ajoute une description');return;}
     if(!price){showStatusToast('⚠️ Indique un prix par nuit');return;}
-    console.log('submitLodgingOffer: user='+currentUser.id+' event='+eventId+' places='+places+' price='+price+' desc='+desc);
-    var {data, error}=await sb.from('lodgings').insert({
-        user_id: currentUser.id,
-        event_id: eventId,
-        places: places,
-        price_per_night: price,
-        description: desc
-    }).select();
-    console.log('submitLodgingOffer result:', data, error);
-    if(error){ showStatusToast('❌ '+error.message); console.error('lodgings insert error:', error); return; }
+    var {error}=await sb.from('lodgings').insert({user_id:currentUser.id,event_id:eventId,name:desc.substring(0,50),places:places,price_per_night:price,description:desc});
+    if(error){showStatusToast('❌ Erreur : '+error.message);return;}
     showStatusToast('✅ Annonce publiée !');
     document.getElementById('lodging-offer-desc').value='';
     document.getElementById('lodging-offer-places').value='';
     document.getElementById('lodging-offer-price').value='';
-    document.getElementById('lodging-offer-event').value='';
     loadLodgingOffers(_lodgingActiveEventId);
 }
 
 function switchLodgingTab(btn, tab) {
     document.querySelectorAll('.lodging-tab').forEach(function(b){b.style.background='transparent';b.style.color='#64748B';});
     btn.style.background='#0A1628'; btn.style.color='white';
-    btn.setAttribute('data-tab-active','true');
-    document.querySelectorAll('.lodging-tab').forEach(function(b){ if(b!==btn) b.removeAttribute('data-tab-active'); });
     document.getElementById('lodging-tab-seeking').style.display  = tab==='seeking'  ? '' : 'none';
     document.getElementById('lodging-tab-offering').style.display = tab==='offering' ? '' : 'none';
     document.getElementById('lodging-tab-hotels').style.display   = tab==='hotels'   ? '' : 'none';
-    // Toujours recharger les données du tab actif
     if(tab==='seeking')  loadLodgingSeekers(_lodgingActiveEventId);
     if(tab==='offering') loadLodgingOffers(_lodgingActiveEventId);
-    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
+    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
 }
 
 // ===================== DASHBOARD STATS =====================

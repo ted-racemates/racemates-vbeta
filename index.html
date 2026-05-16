@@ -1507,6 +1507,74 @@
 </div>
 
 
+<!-- ===== LODGING ===== -->
+<div class="screen" id="screen-lodging">
+    <div class="page-header" style="padding-bottom:52px">
+        <div class="header-top">
+            <div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div>
+            <div class="user-av" onclick="goTo('profile')" id="lodging-av">?</div>
+        </div>
+        <div style="margin-top:10px;position:relative;z-index:2">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:white;margin-bottom:2px">🏠 Logement</div>
+            <div style="font-size:0.75em;color:rgba(255,255,255,0.6)">Colocations athletes + hôtels près de ton event</div>
+        </div>
+        <!-- Filtre par event -->
+        <div style="margin-top:12px;position:relative;z-index:2">
+            <div id="lodging-event-pills" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+                <div class="epill active" data-event-id="all" data-city="" data-lat="" data-lng="">🏆 Tous</div>
+            </div>
+        </div>
+    </div>
+    <div class="body" style="padding-top:8px">
+
+        <!-- TABS -->
+        <div style="display:flex;gap:6px;margin-bottom:14px;background:#F1F5F9;border-radius:12px;padding:4px">
+            <button class="lodging-tab active" data-tab="seeking" onclick="switchLodgingTab(this,'seeking')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:#0A1628;color:white;transition:all 0.15s">🔍 Cherchent</button>
+            <button class="lodging-tab" data-tab="offering" onclick="switchLodgingTab(this,'offering')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B;transition:all 0.15s">🏠 Proposent</button>
+            <button class="lodging-tab" data-tab="hotels" onclick="switchLodgingTab(this,'hotels')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B;transition:all 0.15s">🏨 Hôtels</button>
+        </div>
+
+        <!-- TAB 1 : Athlètes qui cherchent un logement -->
+        <div id="lodging-tab-seeking">
+            <div style="font-size:0.78em;color:#64748B;margin-bottom:10px">Athlètes inscrit à cet event qui cherchent un logement</div>
+            <div id="lodging-seekers-list" style="display:flex;flex-direction:column;gap:10px">
+                <div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Sélectionne un événement pour voir les athlètes</div>
+            </div>
+        </div>
+
+        <!-- TAB 2 : Athlètes qui proposent -->
+        <div id="lodging-tab-offering" style="display:none">
+            <!-- Formulaire proposer -->
+            <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px;margin-bottom:14px">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:12px">+ Proposer mon logement</div>
+                <select id="lodging-offer-event" style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;margin-bottom:8px;font-family:Barlow,sans-serif;background:rgba(255,255,255,0.95)">
+                    <option value="">Événement concerné...</option>
+                </select>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                    <input id="lodging-offer-places" type="number" min="1" max="10" placeholder="Nb places" style="padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;font-family:Barlow,sans-serif">
+                    <input id="lodging-offer-price" type="number" placeholder="Prix/nuit €" style="padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;font-family:Barlow,sans-serif">
+                </div>
+                <input id="lodging-offer-desc" type="text" placeholder="Description (ex: appart T3, 10min à pied...)" style="width:100%;padding:9px 12px;border-radius:8px;border:none;font-size:0.82em;font-family:Barlow,sans-serif;margin-bottom:8px;box-sizing:border-box">
+                <button onclick="submitLodgingOffer()" style="width:100%;padding:10px;background:#FBBF24;color:#0A1628;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9em;cursor:pointer">Publier mon annonce →</button>
+            </div>
+            <!-- Liste des propositions -->
+            <div id="lodging-offers-list" style="display:flex;flex-direction:column;gap:10px">
+                <div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Aucune proposition pour le moment</div>
+            </div>
+        </div>
+
+        <!-- TAB 3 : Hôtels Booking/Airbnb -->
+        <div id="lodging-tab-hotels" style="display:none">
+            <div id="lodging-radius-label" style="font-size:0.75em;color:#64748B;margin-bottom:10px;text-align:center">Sélectionne un événement pour voir les hôtels à proximité</div>
+            <!-- Liens dynamiques Booking + Airbnb -->
+            <div id="lodging-hotels-links" style="display:flex;flex-direction:column;gap:10px">
+                <div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <!-- ===== TRAINING ===== -->
 <div class="screen" id="screen-training">
     <div class="page-header" style="padding-bottom:48px">
@@ -1576,7 +1644,7 @@
     <button class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-icon">🏠</div><div class="nav-label">Accueil</div></button>
     <button class="nav-item" id="nav-matching" onclick="goTo('sport-select')"><div class="nav-icon">🏃</div><div class="nav-label">Matching</div></button>
     <button class="nav-item" id="nav-messages" onclick="goTo('messages')"><div class="nav-icon">💬</div><div class="nav-label">Messages</div><div class="nav-notif" id="nav-msg-badge" style="display:none">0</div></button>
-    <button class="nav-item" id="nav-training" onclick="goTo('training')"><div class="nav-icon">🤝</div><div class="nav-label">Entraîn.</div></button>
+    <button class="nav-item" id="nav-lodging" onclick="goTo('lodging')"><div class="nav-icon">🏠</div><div class="nav-label">Logement</div></button>
     <button class="nav-item" id="nav-events" onclick="goTo('events')"><div class="nav-icon">📅</div><div class="nav-label">Événements</div></button>
     <button class="nav-item" id="nav-profile" onclick="goTo('profile')"><div class="nav-icon">👤</div><div class="nav-label">Profil</div></button>
 </div>
@@ -1621,6 +1689,9 @@ function goTo(page) {
     }
     if(page === 'events') {
         if(typeof loadEvents === 'function') loadEvents();
+    }
+    if(page === 'lodging') {
+        if(typeof loadLodgingScreen === 'function') loadLodgingScreen();
     }
     if(page === 'training') {
         if(typeof loadTraining === 'function') loadTraining();
@@ -3433,6 +3504,333 @@ function selRegion(el, region) {
     _trainingActiveRegion = region;
     if(typeof activeRegion !== 'undefined') window._syncTrainingRegion = region;
     renderTraining(_trainingData);
+}
+
+// ===================== LODGING SCREEN =====================
+
+// Coordonnées GPS des villes principales
+var CITY_COORDS = {
+    'toulouse':   { lat: 43.6047, lng: 1.4442 },
+    'paris':      { lat: 48.8566, lng: 2.3522 },
+    'lyon':       { lat: 45.7640, lng: 4.8357 },
+    'bordeaux':   { lat: 44.8378, lng: -0.5792 },
+    'marseille':  { lat: 43.2965, lng: 5.3698 },
+    'nice':       { lat: 43.7102, lng: 7.2620 },
+    'lille':      { lat: 50.6292, lng: 3.0573 },
+    'nantes':     { lat: 47.2184, lng: -1.5536 },
+    'strasbourg': { lat: 48.5734, lng: 7.7521 },
+    'montpellier':{ lat: 43.6108, lng: 3.8767 },
+    'rennes':     { lat: 48.1173, lng: -1.6778 },
+    'grenoble':   { lat: 45.1885, lng: 5.7245 },
+    'angers':     { lat: 47.4784, lng: -0.5632 },
+    'dijon':      { lat: 47.3220, lng: 5.0415 },
+    'chamonix':   { lat: 45.9237, lng: 6.8694 }
+};
+
+var _lodgingActiveEventId = 'all';
+var _lodgingActiveCity = '';
+var _lodgingActiveLat = null;
+var _lodgingActiveLng = null;
+var _lodgingActiveEventName = '';
+
+async function loadLodgingScreen() {
+    if(!currentUser) return;
+    // Sync avatar
+    var av = document.getElementById('lodging-av');
+    if(av && window.myProfile) {
+        if(window.myProfile.avatar_url) {
+            av.innerHTML = '<img src="'+window.myProfile.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        } else {
+            av.textContent = window.myProfile.initials || '?';
+        }
+    }
+    // Charger les events pour les pills
+    var { data: events } = await sb.from('events').select('id,name,city,event_date,sport').order('event_date');
+    buildLodgingEventPills(events || []);
+    // Charger le select du formulaire "proposer"
+    var sel = document.getElementById('lodging-offer-event');
+    if(sel && events) {
+        sel.innerHTML = '<option value="">Événement concerné...</option>'
+            + events.map(function(ev){
+                return '<option value="'+ev.id+'">'+ev.name+' · '+(ev.city||'')+'</option>';
+            }).join('');
+    }
+    // Charger les données initiales (tous events)
+    loadLodgingSeekers('all');
+    loadLodgingOffers('all');
+}
+
+function buildLodgingEventPills(events) {
+    var container = document.getElementById('lodging-event-pills');
+    if(!container) return;
+    var MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+    var pillsHtml = '<div class="epill active" data-event-id="all" data-city="" data-lat="" data-lng="">🏆 Tous</div>';
+    events.forEach(function(ev) {
+        var d = new Date(ev.event_date);
+        var mois = MOIS[d.getMonth()];
+        var cityNorm = (ev.city||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+        var coords = CITY_COORDS[cityNorm] || {};
+        pillsHtml += '<div class="epill"'
+            +' data-event-id="'+ev.id+'"'
+            +' data-city="'+cityNorm+'"'
+            +' data-event-name="'+(ev.name||ev.city||'')+'"'
+            +' data-lat="'+(coords.lat||'')+'"'
+            +' data-lng="'+(coords.lng||'')+'"'
+            +' onclick="selectLodgingEvent(this)">'
+            +'📍 '+(ev.name||ev.city||'Event')+' '+mois
+            +'</div>';
+    });
+    container.innerHTML = pillsHtml;
+    // Pill "Tous" a son propre handler
+    container.querySelector('[data-event-id="all"]').addEventListener('click', function() {
+        container.querySelectorAll('.epill').forEach(function(p){ p.classList.remove('active'); });
+        this.classList.add('active');
+        _lodgingActiveEventId = 'all';
+        _lodgingActiveCity = '';
+        _lodgingActiveLat = null;
+        _lodgingActiveLng = null;
+        _lodgingActiveEventName = '';
+        loadLodgingSeekers('all');
+        loadLodgingOffers('all');
+        document.getElementById('lodging-hotels-links').innerHTML = '<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';
+        document.getElementById('lodging-radius-label').textContent = 'Sélectionne un événement pour voir les hôtels à proximité';
+    });
+}
+
+function selectLodgingEvent(pill) {
+    document.querySelectorAll('#lodging-event-pills .epill').forEach(function(p){ p.classList.remove('active'); });
+    pill.classList.add('active');
+    _lodgingActiveEventId = pill.getAttribute('data-event-id');
+    _lodgingActiveCity    = pill.getAttribute('data-city');
+    _lodgingActiveLat     = parseFloat(pill.getAttribute('data-lat')) || null;
+    _lodgingActiveLng     = parseFloat(pill.getAttribute('data-lng')) || null;
+    _lodgingActiveEventName = pill.getAttribute('data-event-name') || _lodgingActiveCity;
+    loadLodgingSeekers(_lodgingActiveEventId);
+    loadLodgingOffers(_lodgingActiveEventId);
+    loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
+}
+
+// Calcul distance Haversine (km)
+function haversine(lat1, lng1, lat2, lng2) {
+    var R = 6371;
+    var dLat = (lat2-lat1) * Math.PI/180;
+    var dLng = (lng2-lng1) * Math.PI/180;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Charger les athlètes qui cherchent un logement
+async function loadLodgingSeekers(eventId) {
+    var list = document.getElementById('lodging-seekers-list');
+    if(!list) return;
+    list.innerHTML = '<div style="text-align:center;padding:16px;color:#94A3B8;font-size:0.85em">Chargement...</div>';
+
+    // Profils avec needs=Logement
+    var { data: profiles } = await sb.from('profiles').select('id,prenom,pseudo,ville,sports,needs,avatar_url,avatar_initials,best_time').neq('id', currentUser.id);
+    var seekers = (profiles||[]).filter(function(p) {
+        try { var n = typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]); return n.some(function(x){ return x.includes('Logement'); }); } catch(e){ return false; }
+    });
+
+    // Si event sélectionné, filtrer par inscrits à cet event
+    if(eventId !== 'all') {
+        var { data: regs } = await sb.from('event_registrations').select('user_id').eq('event_id', eventId);
+        var regIds = new Set((regs||[]).map(function(r){ return r.user_id; }));
+        seekers = seekers.filter(function(p){ return regIds.has(p.id); });
+    }
+
+    if(!seekers.length) {
+        list.innerHTML = '<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">'+(eventId==='all'?'Aucun athlète ne cherche de logement actuellement':'Aucun athlète inscrit à cet event ne cherche de logement')+'</div>';
+        return;
+    }
+
+    list.innerHTML = seekers.map(function(p) {
+        var sports=[]; try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
+        var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
+        var avatarHtml = p.avatar_url
+            ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+            : initials;
+        return '<div style="background:white;border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px">'
+            +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'
+            +'<div style="flex:1;min-width:0">'
+            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
+            +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div>'
+            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+p.best_time+'</div>':'')
+            +'</div>'
+            +'<button data-uid="'+p.id+'" class="lodging-contact-btn" style="padding:8px 12px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.8em;cursor:pointer;flex-shrink:0">💬 Contacter</button>'
+            +'</div>';
+    }).join('');
+
+    list.querySelectorAll('.lodging-contact-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(){ openRealChat(btn.getAttribute('data-uid')); });
+    });
+}
+
+// Charger les propositions de logement d'athlètes
+async function loadLodgingOffers(eventId) {
+    var list = document.getElementById('lodging-offers-list');
+    if(!list) return;
+
+    var query = sb.from('lodgings').select('*,profiles(prenom,pseudo,avatar_url,avatar_initials)');
+    if(eventId !== 'all') query = query.eq('event_id', eventId);
+    var { data: offers } = await query.order('created_at', { ascending: false });
+
+    if(!offers || !offers.length) {
+        list.innerHTML = '<div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Aucune proposition de logement pour le moment.<br><span style="font-size:0.9em">Sois le premier à proposer ! 👆</span></div>';
+        return;
+    }
+
+    list.innerHTML = offers.map(function(o) {
+        var p = o.profiles || {};
+        var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
+        var avatarHtml = p.avatar_url
+            ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+            : initials;
+        var isOwn = o.user_id === currentUser.id;
+        return '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden">'
+            +'<div style="background:linear-gradient(135deg,#065F46,#059669);padding:10px 14px;display:flex;align-items:center;gap:10px">'
+            +'<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;overflow:hidden;flex-shrink:0">'+avatarHtml+'</div>'
+            +'<div style="flex:1"><div style="font-weight:700;color:white;font-size:0.88em">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
+            +'<div style="font-size:0.7em;color:rgba(255,255,255,0.7)">Propose son logement</div></div>'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:1.1em">'+(o.price_per_night||'?')+'€<span style="font-size:0.55em;font-weight:400">/nuit</span></div>'
+            +'</div>'
+            +'<div style="padding:12px 14px">'
+            +'<div style="font-size:0.82em;color:#0A1628;margin-bottom:6px">'+(o.description||'Logement disponible')+'</div>'
+            +'<div style="display:flex;align-items:center;justify-content:space-between">'
+            +'<span style="font-size:0.75em;color:#64748B">👥 '+(o.places||1)+' place'+(o.places>1?'s':'')+' disponible'+(o.places>1?'s':'')+'</span>'
+            +(isOwn
+                ? '<button data-lid="'+o.id+'" class="lodging-del-btn" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑 Retirer</button>'
+                : '<button data-uid="'+o.user_id+'" class="lodging-contact-btn" style="padding:6px 12px;background:#0A1628;color:white;border:none;border-radius:7px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.78em;cursor:pointer">💬 Contacter</button>')
+            +'</div></div></div>';
+    }).join('');
+
+    list.querySelectorAll('.lodging-contact-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(){ openRealChat(btn.getAttribute('data-uid')); });
+    });
+    list.querySelectorAll('.lodging-del-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(){
+            await sb.from('lodgings').delete().eq('id', btn.getAttribute('data-lid'));
+            loadLodgingOffers(_lodgingActiveEventId);
+            showStatusToast('✅ Annonce retirée');
+        });
+    });
+}
+
+// Charger les hôtels Booking/Airbnb/Expedia avec rayon progressif
+function loadLodgingHotels(city, lat, lng, eventName) {
+    var container = document.getElementById('lodging-hotels-links');
+    var label = document.getElementById('lodging-radius-label');
+    if(!container) return;
+
+    if(!city) {
+        container.innerHTML = '<div style="text-align:center;padding:32px;color:#94A3B8;font-size:0.85em">📍 Sélectionne un événement</div>';
+        return;
+    }
+
+    var cityDisplay = city.charAt(0).toUpperCase() + city.slice(1);
+    if(label) label.textContent = 'Logements dans un rayon de 5km autour de ' + cityDisplay;
+
+    // ===== IDs AFFILIÉS — remplacer dès validation =====
+    var BOOKING_AID  = '4297313';        // Ton PID CJ — à remplacer par l\'aid Booking quand validé
+    var EXPEDIA_AID  = 'YOUR_EXPEDIA_AID'; // Remplacer par ton aid Expedia CJ
+
+    // URLs dynamiques
+    var bookingUrl  = 'https://www.booking.com/search.html?ss='+encodeURIComponent(cityDisplay)+'&aid='+BOOKING_AID+'&radius=5&radiusunit=km&lang=fr';
+    var airbnbUrl   = 'https://www.airbnb.fr/s/'+encodeURIComponent(cityDisplay)+'/homes'+(lat?'?ne_lat='+(lat+0.045)+'&ne_lng='+(lng+0.06)+'&sw_lat='+(lat-0.045)+'&sw_lng='+(lng-0.06):'');
+    var expediaUrl  = 'https://www.expedia.fr/Hotel-Search?destination='+encodeURIComponent(cityDisplay)+'&adults=1'+(EXPEDIA_AID!=='YOUR_EXPEDIA_AID'?'&affcid='+EXPEDIA_AID:'');
+    var gmapsUrl    = 'https://www.google.com/maps/search/hôtels+près+de+'+encodeURIComponent(cityDisplay);
+
+    var CARD_STYLE = 'background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform 0.15s;text-decoration:none';
+
+    container.innerHTML =
+        // Booking
+        '<a href="'+bookingUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
+        +'<div style="'+CARD_STYLE+';border:1.5px solid #003580" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+        +'<div style="width:48px;height:48px;border-radius:10px;background:#003580;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">🏨</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Booking.com</div>'
+        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Hôtels &amp; apparts près de '+cityDisplay+' · Rayon 5km</div>'
+        +'<div style="font-size:0.7em;color:#059669;font-weight:700;margin-top:4px">✓ Annulation gratuite · Meilleur prix garanti</div>'
+        +'</div><div style="font-size:1.2em;color:#003580">→</div>'
+        +'</div></a>'
+
+        // Airbnb (sans affiliation)
+        +'<a href="'+airbnbUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
+        +'<div style="'+CARD_STYLE+';border:1.5px solid #FF5A5F" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+        +'<div style="width:48px;height:48px;border-radius:10px;background:#FF5A5F;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">🏠</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Airbnb</div>'
+        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Appartements &amp; maisons près de '+cityDisplay+'</div>'
+        +'<div style="font-size:0.7em;color:#059669;font-weight:700;margin-top:4px">✓ Idéal pour partager à plusieurs athlètes</div>'
+        +'</div><div style="font-size:1.2em;color:#FF5A5F">→</div>'
+        +'</div></a>'
+
+        // Expedia
+        +'<a href="'+expediaUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
+        +'<div style="'+CARD_STYLE+';border:1.5px solid #FFC72C" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+        +'<div style="width:48px;height:48px;border-radius:10px;background:#FFC72C;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">✈️</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Expedia</div>'
+        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Hôtels + vols groupés · '+cityDisplay+'</div>'
+        +'<div style="font-size:0.7em;color:#059669;font-weight:700;margin-top:4px">✓ Pack hôtel + transport disponible</div>'
+        +'</div><div style="font-size:1.2em;color:#FFC72C">→</div>'
+        +'</div></a>'
+
+        // Google Maps
+        +'<a href="'+gmapsUrl+'" target="_blank" rel="noopener" style="text-decoration:none">'
+        +'<div style="'+CARD_STYLE+';border:1.5px solid #E2E8F0" onmouseover="this.style.transform=\'scale(1.01)\'" onmouseout="this.style.transform=\'\'">'
+        +'<div style="width:48px;height:48px;border-radius:10px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:1.6em;flex-shrink:0">📍</div>'
+        +'<div style="flex:1">'
+        +'<div style="font-weight:700;color:#0A1628;font-size:0.9em">Google Maps</div>'
+        +'<div style="font-size:0.75em;color:#64748B;margin-top:2px">Voir tous les hôtels autour de '+cityDisplay+'</div>'
+        +'</div><div style="font-size:1.2em;color:#64748B">→</div>'
+        +'</div></a>'
+
+        // Info rayon
+        +'<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;font-size:0.75em;color:#15803D">'
+        +'📏 Résultats dans un rayon de <strong>5km</strong> autour de '+cityDisplay+'. Si peu de résultats, élargis le rayon dans les filtres Booking.'
+        +'</div>';
+}
+
+// Soumettre une proposition de logement
+async function submitLodgingOffer() {
+    if(!currentUser) return;
+    var eventId = document.getElementById('lodging-offer-event').value;
+    var places  = parseInt(document.getElementById('lodging-offer-places').value) || 1;
+    var price   = parseInt(document.getElementById('lodging-offer-price').value) || 0;
+    var desc    = document.getElementById('lodging-offer-desc').value.trim();
+    if(!eventId) { showStatusToast('⚠️ Sélectionne un événement'); return; }
+    if(!desc)    { showStatusToast('⚠️ Ajoute une description'); return; }
+    if(!price)   { showStatusToast('⚠️ Indique un prix par nuit'); return; }
+    var { error } = await sb.from('lodgings').insert({
+        user_id: currentUser.id,
+        event_id: eventId,
+        places: places,
+        price_per_night: price,
+        description: desc
+    });
+    if(error) { showStatusToast('❌ Erreur : '+error.message); return; }
+    showStatusToast('✅ Annonce publiée !');
+    document.getElementById('lodging-offer-desc').value = '';
+    document.getElementById('lodging-offer-places').value = '';
+    document.getElementById('lodging-offer-price').value = '';
+    loadLodgingOffers(_lodgingActiveEventId);
+}
+
+// Switcher les tabs logement
+function switchLodgingTab(btn, tab) {
+    document.querySelectorAll('.lodging-tab').forEach(function(b){
+        b.style.background = 'transparent';
+        b.style.color = '#64748B';
+    });
+    btn.style.background = '#0A1628';
+    btn.style.color = 'white';
+    document.getElementById('lodging-tab-seeking').style.display  = tab === 'seeking'  ? '' : 'none';
+    document.getElementById('lodging-tab-offering').style.display = tab === 'offering' ? '' : 'none';
+    document.getElementById('lodging-tab-hotels').style.display   = tab === 'hotels'   ? '' : 'none';
+    // Charger hôtels si event sélectionné
+    if(tab === 'hotels' && _lodgingActiveCity) {
+        loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
+    }
 }
 
 // ===================== DASHBOARD STATS =====================

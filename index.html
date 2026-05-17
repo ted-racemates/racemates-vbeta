@@ -570,11 +570,15 @@
         let currentProfile = null;
         let _loadingProfile = false;
 
+        var _authToken = 0; // token incrémenté à chaque SIGNED_IN pour annuler les appels précédents
+
         sb.auth.onAuthStateChange(async (event, session) => {
             console.log('onAuthStateChange:', event, session?.user?.id);
             currentUser = session?.user || null;
 
             if (event === 'SIGNED_OUT') {
+                _authToken++; // annuler tout loadMyProfile en cours
+                _loadingProfile = false;
                 if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
                 if(window._realtimeSubscription) { try{ sb.removeChannel(window._realtimeSubscription); }catch(e){} window._realtimeSubscription = null; }
                 if(window._notifChannel) { try{ sb.removeChannel(window._notifChannel); }catch(e){} window._notifChannel = null; }
@@ -582,7 +586,6 @@
                 window._pendingAuth = null; window._trainingData = [];
                 window._myEventIds = new Set(); window._matchingEvents = [];
                 window._matchingUserEvents = {}; window._athletesLoadedAt = 0;
-                _loadingProfile = false; // IMPORTANT : reset le flag
                 var selectors = [
                     ['#home-welcome','textContent','Bonjour 👋'],
                     ['#screen-profile .profile-name','textContent',''],
@@ -600,37 +603,34 @@
                 return;
             }
 
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-                if(currentUser && !_loadingProfile) {
-                    _loadingProfile = true;
-                    var loadingUserId = currentUser.id;
-                    console.log('loadMyProfile START', loadingUserId);
-                    try { 
-                        await loadMyProfile(); 
-                        console.log('loadMyProfile OK');
-                    }
-                    catch(e) { console.error('loadMyProfile ERROR:', e); }
-                    finally { _loadingProfile = false; }
-                    if(window._pendingProfileData) {
-                        var pd = window._pendingProfileData; window._pendingProfileData = null;
-                        try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
-                    }
-                } else if(currentUser && _loadingProfile) {
-                    console.log('loadMyProfile SKIP - already loading');
+            if(currentUser) {
+                _authToken++; // incrémenter le token — annule les appels précédents
+                var myToken = _authToken;
+                console.log('loadMyProfile START token='+myToken, currentUser.id);
+                try {
+                    await loadMyProfile(myToken);
+                    console.log('loadMyProfile OK token='+myToken);
+                } catch(e) {
+                    console.error('loadMyProfile ERROR:', e);
+                }
+                if(window._pendingProfileData && _authToken === myToken) {
+                    var pd = window._pendingProfileData; window._pendingProfileData = null;
+                    try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
                 }
             }
         });
 
-        async function loadMyProfile() {
+        async function loadMyProfile(token) {
             if(!currentUser) return;
-            // Capturer l'ID au moment du lancement — si l'utilisateur change entre-temps, on abandonne
             var expectedUserId = currentUser.id;
+            var myToken = token || 0;
             var parseSafe = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):[];}catch(e){return[];} };
             var parseSafeObj = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):{};}catch(e){return{};} };
             console.log('loadMyProfile: fetching profile for', expectedUserId);
             const { data, error } = await sb.from('profiles').select('*').eq('id', expectedUserId).single();
             console.log('loadMyProfile: got data=', !!data, 'error=', error?.message);
-            // Vérifier que l'utilisateur n'a pas changé pendant la requête
+            // Vérifier que ce token est toujours le plus récent
+            if(myToken && _authToken !== myToken) { console.log('loadMyProfile CANCELLED token='+myToken); return; }
             if (!data || !currentUser || currentUser.id !== expectedUserId) return;
             currentProfile = data;
             window.myProfile = {
@@ -6455,7 +6455,6 @@ setPlan('free');
                     clearInterval(waitForProfile);
                     if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
                     if(typeof loadDashboardStats==='function') loadDashboardStats();
-                    if(typeof checkStripeReturn==='function') checkStripeReturn();
                 } else if(attempts > 20) { // max 4 secondes
                     clearInterval(waitForProfile);
                     if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();

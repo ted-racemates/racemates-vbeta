@@ -1816,6 +1816,10 @@ function buildEventPills(events, userEvents, athletes) {
 
 function openRealProfile(userId) {
     if(!userId) return;
+    // Tracker la vue (pas sur son propre profil)
+    if(currentUser && currentUser.id !== userId) {
+        sb.from('profile_views').insert({ viewed_id: userId, viewer_id: currentUser.id }).then(function(){});
+    }
     // Charger directement le profil par ID
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
@@ -5238,6 +5242,7 @@ function toggleCompletFilter() {
         // Charger les avis reçus depuis Supabase
         loadMyReviews();
         loadSavedByMe();
+        loadProfileStats();
     }
 
     async function loadMyReviews() {
@@ -5320,6 +5325,68 @@ function toggleCompletFilter() {
         }
     }
 
+
+    async function loadProfileStats() {
+        if(!currentUser) return;
+        var pstats = document.getElementById('profile-pstats');
+        if(!pstats) return;
+        var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+        var p = window.myProfile || {};
+
+        // Stats sportives (toujours visibles)
+        var lbl3 = p.pace ? 'PACE / STAT' : 'PACE';
+        var sportStatsHtml = '<div class="pstat"><div class="pstat-val">'+(p.best_time||'-')+'</div><div class="pstat-lbl">BEST PERF</div></div>'
+            +'<div class="pstat"><div class="pstat-val">'+(p.nb_courses||'-')+'</div><div class="pstat-lbl">COURSES</div></div>'
+            +'<div class="pstat"><div class="pstat-val">'+(p.pace||'-')+'</div><div class="pstat-lbl">'+lbl3+'</div></div>';
+        pstats.innerHTML = sportStatsHtml;
+
+        if(!isPremium) {
+            // Ajouter le bloc stats Premium flouté en dessous
+            var statsBloc = document.getElementById('profile-engagement-stats');
+            if(!statsBloc) {
+                statsBloc = document.createElement('div');
+                statsBloc.id = 'profile-engagement-stats';
+                pstats.parentNode.insertBefore(statsBloc, pstats.nextSibling);
+            }
+            statsBloc.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:12px">'
+                +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
+                +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
+                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#0A1628">--</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">VUES</div></div>'
+                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#059669">--</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">CONTACTS</div></div>'
+                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#1E3A8A">--</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">SAUVEGARDES</div></div>'
+                +'</div>'
+                +'<div style="text-align:center">'
+                +'<div style="font-size:0.75em;color:#64748B;margin-bottom:8px">🔒 Débloque le Premium pour voir tes vraies stats</div>'
+                +'<button onclick="openSubSwitcher()" style="padding:8px 16px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer">⚡ Premium 5€/mois →</button>'
+                +'</div></div>';
+            return;
+        }
+
+        // Premium — charger les vraies stats
+        var weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+        var [viewsRes, convsRes, savedRes] = await Promise.all([
+            sb.from('profile_views').select('id', {count:'exact', head:true}).eq('viewed_id', currentUser.id).gte('created_at', weekAgo),
+            sb.from('conversations').select('id', {count:'exact', head:true}).or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id).gte('created_at', weekAgo),
+            sb.from('saved_profiles').select('id', {count:'exact', head:true}).eq('saved_user_id', currentUser.id).gte('created_at', weekAgo)
+        ]);
+        var views = viewsRes.count || 0;
+        var contacts = convsRes.count || 0;
+        var saves = savedRes.count || 0;
+
+        var statsBloc = document.getElementById('profile-engagement-stats');
+        if(!statsBloc) {
+            statsBloc = document.createElement('div');
+            statsBloc.id = 'profile-engagement-stats';
+            pstats.parentNode.insertBefore(statsBloc, pstats.nextSibling);
+        }
+        statsBloc.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:12px">'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#0A1628">'+views+'</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">VUES</div></div>'
+            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#059669">'+contacts+'</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">CONTACTS</div></div>'
+            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#1E3A8A">'+saves+'</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">SAUVEGARDES</div></div>'
+            +'</div></div>';
+    }
 
     // ===== SAVED PROFILES =====
     function deleteSaved(btn) {

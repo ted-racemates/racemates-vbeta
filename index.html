@@ -662,10 +662,8 @@
                     if(window.myProfile) window.myProfile.plan = 'premium';
                     if(typeof setPlan==='function') setPlan('premium');
                     showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
-                    setTimeout(function(){
-                        goTo('profile');
-                        if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
-                    }, 500);
+                    if(typeof renderBoostButton==='function') renderBoostButton();
+                    if(typeof loadProfileStats==='function') loadProfileStats();
                 });
             }
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
@@ -2988,16 +2986,13 @@ function selPill(el, showLodging) {
     var wasActive = el.classList.contains('active');
     document.querySelectorAll('.epill').forEach(function(p){ p.classList.remove('active'); });
     var layout = document.getElementById('main-layout');
-    var col = document.getElementById('lodging-col');
     if(!wasActive) {
         el.classList.add('active');
-        if(showLodging){ layout.classList.add('with-lodging'); col.classList.add('visible'); }
-        else { layout.classList.remove('with-lodging'); col.classList.remove('visible'); }
+        if(layout) layout.classList.remove('with-lodging');
     } else {
         var allPills = document.querySelectorAll('.epill');
         if(allPills.length) allPills[0].classList.add('active');
-        layout.classList.remove('with-lodging');
-        col.classList.remove('visible');
+        if(layout) layout.classList.remove('with-lodging');
     }
     filterAthletes();
 }

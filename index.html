@@ -678,8 +678,6 @@
             // Démarrer realtime notifs + badge
             if(typeof startNotifSubscription==='function') startNotifSubscription();
             if(typeof updateNotifBadge==='function') setTimeout(updateNotifBadge, 800);
-            // Vérifier retour Stripe
-            if(typeof checkStripeReturn==='function') setTimeout(checkStripeReturn, 1000);
             // Les athlètes se chargent uniquement via goTo('matching')
         }
 
@@ -1110,37 +1108,11 @@
 
             </div>
         </div>
-        <div class="lodging-col" id="lodging-col">
-            <div class="col-header">
-                <div class="col-title">Logements — <span id="lodging-city-label" style="color:var(--blue)">Toulouse</span></div>
-            </div>
-            <div class="lodging-tabs"><div class="ltab active" onclick="switchLodging(this,'booking')">Booking</div><div class="ltab" onclick="switchLodging(this,'airbnb')">Airbnb</div></div>
-            <div class="lodging-list" id="list-booking">
-                <!-- TOULOUSE -->
-                <div class="lodging-card" onclick="window.open('https://www.booking.com/hotel/fr/novotel-toulouse-centre.fr.html','_blank')" style="cursor:pointer" data-city="toulouse" onclick="window.open('https://www.booking.com/search.html?ss=Novotel+Toulouse+Centre&checkin=2026-03-15&checkout=2026-03-17','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏨</div><div class="lodging-body"><div class="lodging-name">Novotel Toulouse Centre</div><div class="lodging-dist">📍 1.2km · 3 chambres</div><div class="lodging-amenities"><span class="amenity">🏊 Piscine</span><span class="amenity">🅿️ Parking</span><span class="amenity">📶 Wifi</span></div><div class="lodging-bottom"><div><div class="lodging-price">89€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 56€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <div class="lodging-card" onclick="window.open('https://www.booking.com/hotel/fr/ibis-toulouse-purpan.fr.html','_blank')" style="cursor:pointer" data-city="toulouse" onclick="window.open('https://www.booking.com/search.html?ss=Ibis+Toulouse+Purpan&checkin=2026-03-15&checkout=2026-03-17','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏩</div><div class="lodging-body"><div class="lodging-name">Ibis Toulouse Purpan</div><div class="lodging-dist">📍 2.1km · 2 places</div><div class="lodging-amenities"><span class="amenity">🍳 Petit-déj</span><span class="amenity">💪 Sport</span></div><div class="lodging-bottom"><div><div class="lodging-price">62€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 45€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <!-- PARIS -->
-                <div class="lodging-card" data-city="paris" style="display:none" onclick="window.open('https://www.booking.com/hotel/fr/ibis-paris-la-defense-les-files.fr.html','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏨</div><div class="lodging-body"><div class="lodging-name">Ibis Paris Champs-Élysées</div><div class="lodging-dist">📍 1.4km · 4 chambres</div><div class="lodging-amenities"><span class="amenity">🗼 Vue Paris</span><span class="amenity">📶 Wifi</span><span class="amenity">🍳 Petit-déj</span></div><div class="lodging-bottom"><div><div class="lodging-price">112€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 78€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <div class="lodging-card" data-city="paris" style="display:none" onclick="window.open('https://www.booking.com/hotel/fr/mercure-paris-opera-garnier.fr.html','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏩</div><div class="lodging-body"><div class="lodging-name">Mercure Paris Opéra</div><div class="lodging-dist">📍 2.3km · 2 places</div><div class="lodging-amenities"><span class="amenity">🏊 Spa</span><span class="amenity">🅿️ Parking</span></div><div class="lodging-bottom"><div><div class="lodging-price">98€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 62€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <!-- LYON -->
-                <div class="lodging-card" data-city="lyon" style="display:none" onclick="window.open('https://www.booking.com/hotel/fr/novotel-lyon-confluence.fr.html','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏨</div><div class="lodging-body"><div class="lodging-name">Novotel Lyon Confluence</div><div class="lodging-dist">📍 0.9km · 3 chambres</div><div class="lodging-amenities"><span class="amenity">🍳 Petit-déj</span><span class="amenity">📶 Wifi</span><span class="amenity">💪 Salle sport</span></div><div class="lodging-bottom"><div><div class="lodging-price">79€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 51€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <!-- NICE -->
-                <div class="lodging-card" data-city="nice" style="display:none" onclick="window.open('https://www.booking.com/hotel/fr/beau-rivage-nice.fr.html','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏨</div><div class="lodging-body"><div class="lodging-name">Hôtel Beau Rivage Nice</div><div class="lodging-dist">📍 1.1km · 2 chambres</div><div class="lodging-amenities"><span class="amenity">🌊 Vue mer</span><span class="amenity">📶 Wifi</span><span class="amenity">🏊 Piscine</span></div><div class="lodging-bottom"><div><div class="lodging-price">135€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 88€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <!-- CHAMONIX -->
-                <div class="lodging-card" data-city="chamonix" style="display:none" onclick="window.open('https://www.booking.com/hotel/fr/mont-blanc-chamonix.fr.html','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏔️</div><div class="lodging-body"><div class="lodging-name">Hôtel Mont-Blanc Chamonix</div><div class="lodging-dist">📍 0.5km · 4 places</div><div class="lodging-amenities"><span class="amenity">🏔️ Vue Mont-Blanc</span><span class="amenity">🍳 Petit-déj</span></div><div class="lodging-bottom"><div><div class="lodging-price">95€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 60€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-            </div>
-            <div class="lodging-list" id="list-airbnb" style="display:none">
-                <div class="lodging-card" onclick="window.open('https://www.airbnb.fr/s/Compans-Caffarelli--Toulouse/homes','_blank')" style="cursor:pointer" data-city="toulouse" onclick="window.open('https://www.airbnb.fr/s/Toulouse--France/homes','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏠</div><div class="lodging-body"><div class="lodging-name">Appart T3 Compans</div><div class="lodging-dist">📍 0.8km · 3 places</div><div class="lodging-amenities"><span class="amenity">🍳 Cuisine</span><span class="amenity">📶 Wifi</span><span class="amenity">🌿 Terrasse</span></div><div class="lodging-bottom"><div><div class="lodging-price">75€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 38€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <div class="lodging-card" data-city="paris" style="display:none" onclick="window.open('https://www.airbnb.fr/s/Le-Marais--Paris--France/homes?checkin=2026-04-17&checkout=2026-04-19','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏠</div><div class="lodging-body"><div class="lodging-name">Studio Marais Paris</div><div class="lodging-dist">📍 1.6km · 2 places</div><div class="lodging-amenities"><span class="amenity">🍳 Cuisine</span><span class="amenity">📶 Wifi</span></div><div class="lodging-bottom"><div><div class="lodging-price">88€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 55€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <div class="lodging-card" data-city="lyon" style="display:none" onclick="window.open('https://www.airbnb.fr/s/Croix-Rousse--Lyon--France/homes','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏠</div><div class="lodging-body"><div class="lodging-name">Loft Croix-Rousse Lyon</div><div class="lodging-dist">📍 1.3km · 3 places</div><div class="lodging-amenities"><span class="amenity">🌆 Vue ville</span><span class="amenity">📶 Wifi</span><span class="amenity">🍳 Cuisine</span></div><div class="lodging-bottom"><div><div class="lodging-price">68€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 42€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <div class="lodging-card" data-city="nice" style="display:none" onclick="window.open('https://www.airbnb.fr/s/Promenade-des-Anglais--Nice--France/homes?checkin=2026-06-22&checkout=2026-06-24','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏠</div><div class="lodging-body"><div class="lodging-name">Appart Promenade des Anglais</div><div class="lodging-dist">📍 0.7km · 4 places</div><div class="lodging-amenities"><span class="amenity">🌊 Bord de mer</span><span class="amenity">🍳 Cuisine</span></div><div class="lodging-bottom"><div><div class="lodging-price">110€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 72€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-                <div class="lodging-card" data-city="chamonix" style="display:none" onclick="window.open('https://www.airbnb.fr/s/Les-Praz--Chamonix-Mont-Blanc--France/homes','_blank')" style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform=''"><div class="lodging-img">🏠</div><div class="lodging-body"><div class="lodging-name">Chalet Les Praz Chamonix</div><div class="lodging-dist">📍 1.2km · 6 places</div><div class="lodging-amenities"><span class="amenity">🏔️ Montagne</span><span class="amenity">🍳 Cuisine</span><span class="amenity">🔥 Cheminée</span></div><div class="lodging-bottom"><div><div class="lodging-price">82€ <span>/nuit</span></div><div class="lodging-economy">🔥 Tu économises 50€</div></div><button class="btn-lodging-view">Voir →</button></div></div></div>
-            </div>
-            <div style="text-align:center;font-size:0.65em;color:var(--grey);margin-top:10px;padding:8px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">🤝 Réservation via nos partenaires · Sans surcoût</div>
-        </div>
     </div>
 </div>
 
+<!-- ===== MESSAGES ===== -->
+                <!-- TOULOUSE -->
 <!-- ===== MESSAGES ===== -->
 <div class="screen" id="screen-messages">
     <div class="page-header"><div class="header-top"><div><div class="logo"><span>RACE</span>MATES</div><div class="logo-sub">Your mate · Our race</div></div><div class="user-av" onclick="goTo('profile')">TJ</div></div></div>
@@ -3244,16 +3216,30 @@ async function checkStripeReturn() {
     if(params.get('premium') !== 'success') return;
     // Nettoyer l'URL immédiatement
     window.history.replaceState({}, '', window.location.pathname);
-    // currentUser est déjà prêt car appelé depuis loadMyProfile
-    if(!currentUser) return;
-    await sb.from('profiles').update({plan:'premium'}).eq('id', currentUser.id);
+    // Cacher l'onboarding immédiatement
+    var ov = document.getElementById('onboarding-overlay');
+    if(ov) ov.style.display = 'none';
+    // Attendre la session Supabase (max 5s)
+    var uid = null;
+    for(var i=0; i<25; i++) {
+        var res = await sb.auth.getSession();
+        if(res.data && res.data.session && res.data.session.user) {
+            uid = res.data.session.user.id;
+            break;
+        }
+        await new Promise(function(r){ setTimeout(r,200); });
+    }
+    if(!uid) { showStatusToast('⚠️ Connecte-toi pour activer le Premium'); if(ov) ov.style.display='block'; return; }
+    // Mettre à jour le plan
+    await sb.from('profiles').update({plan:'premium'}).eq('id', uid);
     if(window.myProfile) window.myProfile.plan = 'premium';
     if(typeof setPlan==='function') setPlan('premium');
     showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
+    if(ov) ov.style.display = 'none';
+    goTo('profile');
     setTimeout(function(){
-        goTo('profile');
         if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
-    }, 800);
+    }, 500);
 }
 
 function setPlan(plan) {
@@ -4692,6 +4678,8 @@ function toggleCompletFilter() {
 
     document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
+        // Vérifier retour Stripe AVANT tout (indépendant de la session)
+        if(typeof checkStripeReturn==='function') checkStripeReturn();
         var ov = document.getElementById('onboarding-overlay');
         if(ov) ov.style.display = 'block';
         sb.auth.getSession().then(function(res) {

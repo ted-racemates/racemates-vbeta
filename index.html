@@ -862,13 +862,18 @@
         // ── REVIEWS ─────────────────────────────────────────────
         async function sbSubmitReview(reviewedId, stars, comment) {
             if (!currentUser) return;
+            // Essayer d'abord un insert, si conflit faire un update
             const { error } = await sb.from('reviews').upsert({
                 reviewer_id: currentUser.id,
                 reviewed_id: reviewedId,
-                stars,
-                comment
-            });
-            if (error) throw error;
+                stars: stars,
+                comment: comment,
+                rating: stars
+            }, { onConflict: 'reviewer_id,reviewed_id' });
+            if (error) {
+                console.error('sbSubmitReview error:', error);
+                throw error;
+            }
         }
 
         // ── FEEDBACK ────────────────────────────────────────────
@@ -1885,6 +1890,11 @@ function openRealProfile(userId) {
         var contactBtn=el('profile-modal-contact-btn');
         if(contactBtn)(function(aa){contactBtn.onclick=function(){closeProfile();openRealChat(aa.id);};})(a);
         window._currentReviewedId = userId; // stocker pour submitReview
+        // Réinitialiser le formulaire d'avis
+        var reviewText = document.getElementById('review-text');
+        if(reviewText) reviewText.value = '';
+        currentStars = 0;
+        document.querySelectorAll('#star-rating [data-star]').forEach(function(el){ el.style.opacity='0.3'; });
         pm.classList.add('open');pm.scrollTop=0;
         // Charger les avis pour ce profil
         loadProfileReviews(userId);

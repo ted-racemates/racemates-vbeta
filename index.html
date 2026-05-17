@@ -1235,11 +1235,9 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><button class="btn-edit" onclick="openEditProfile()">✏️ Modifier profil</button><button class="btn-saved-link" onclick="openSaved()">🔖 Profils sauvegardés</button></div>
         <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px">❓ Aide &amp; Support</button>
         <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
-        <!-- QUI M'A SAUVEGARDÉ — Premium -->
+        <!-- QUI M'A SAUVEGARDÉ -->
         <div style="margin-bottom:16px">
-            <div class="section-title" style="margin-bottom:10px">👀 Qui a sauvegardé mon profil
-                <span id="saved-by-total" style="font-size:0.75em;color:var(--grey);font-family:Barlow,sans-serif;font-weight:400"></span>
-            </div>
+            <div class="section-title" style="margin-bottom:10px">👀 Qui a sauvegardé mon profil</div>
             <div id="saved-by-list"></div>
         </div>
         <div class="section-title" style="margin-bottom:10px">⭐ Avis reçus</div>
@@ -5239,7 +5237,6 @@ function toggleCompletFilter() {
         }
         // Charger les avis reçus depuis Supabase
         loadMyReviews();
-        // Charger qui m'a sauvegardé
         loadSavedByMe();
     }
 
@@ -5249,88 +5246,81 @@ function toggleCompletFilter() {
         var empty = document.getElementById('my-reviews-empty');
         var list = document.getElementById('my-reviews-list');
         if(!list) return;
-        var {data:reviews} = await sb.from('reviews').select('*,profiles!reviews_reviewer_id_fkey(prenom,pseudo,avatar_initials,avatar_url)').eq('reviewed_id', currentUser.id).order('created_at', {ascending:false});
-        if(!reviews || !reviews.length) { if(empty) empty.style.display=''; return; }
-        if(empty) empty.style.display='none';
-        list.innerHTML = reviews.map(function(r) {
-            var p = r.profiles || {};
-            var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-            var av = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
-            var stars = '⭐'.repeat(Math.min(r.rating||5,5));
-            var d = new Date(r.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-            return '<div style="background:white;border:1px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-bottom:8px">'
-                +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
-                +'<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;overflow:hidden;flex-shrink:0">'+av+'</div>'
-                +'<div style="flex:1"><div style="font-weight:700;font-size:0.85em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
-                +'<div style="font-size:0.72em;color:#64748B">'+d+' · '+stars+'</div></div></div>'
-                +(r.comment?'<div style="font-size:0.82em;color:#0A1628;line-height:1.5">'+r.comment+'</div>':'')
-                +'</div>';
-        }).join('');
+        const { data: reviews } = await sb.from('reviews')
+            .select('*, reviewer:reviewer_id(prenom, pseudo, avatar_initials)')
+            .eq('reviewed_id', currentUser.id)
+            .order('created_at', { ascending: false });
+        if(!reviews || reviews.length === 0) {
+            if(empty) empty.style.display = '';
+            list.innerHTML = '';
+            return;
+        }
+        if(empty) empty.style.display = 'none';
+        // Calculer la moyenne
+        var avg = reviews.reduce(function(acc, r){ return acc + (r.stars||0); }, 0) / reviews.length;
+        var stars = '⭐'.repeat(Math.round(avg));
+        // Afficher résumé
+        list.innerHTML = '<div class="rating-summary"><div class="rating-big">'+avg.toFixed(1)+'</div>'
+            +'<div><div style="font-size:1em;letter-spacing:2px;margin-bottom:2px">'+stars+'</div>'
+            +'<div style="font-size:0.75em;color:var(--grey)">'+reviews.length+' avis</div></div></div>'
+            + reviews.map(function(r) {
+                var reviewer = r.reviewer || {};
+                var initials = reviewer.avatar_initials || ((reviewer.prenom||'?')[0]+(reviewer.pseudo||'A')[0]).toUpperCase();
+                var name = (reviewer.prenom||'') + (reviewer.pseudo?' @'+reviewer.pseudo:'');
+                var stars = '⭐'.repeat(r.stars||0);
+                var date = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR',{month:'short',year:'numeric'}) : '';
+                return '<div class="review-card">'
+                    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+                    +'<div style="display:flex;align-items:center;gap:8px">'
+                    +'<div class="review-av">'+initials+'</div>'
+                    +'<div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">'+name+'</div>'
+                    +'<div style="font-size:0.7em;color:var(--grey)">'+date+'</div></div></div>'
+                    +'<div>'+stars+'</div></div>'
+                    +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+( r.comment||'' )+'"</div></div>';
+            }).join('');
     }
 
     async function loadSavedByMe() {
         if(!currentUser) return;
         var list = document.getElementById('saved-by-list');
-        var total = document.getElementById('saved-by-total');
         if(!list) return;
-
-        // Charger tous ceux qui ont sauvegardé mon profil
-        var {data, count} = await sb.from('saved_profiles')
-            .select('user_id, profiles!saved_profiles_user_id_fkey(id,prenom,pseudo,ville,sports,avatar_url,avatar_initials)', {count:'exact'})
+        var {data} = await sb.from('saved_profiles')
+            .select('user_id, profiles!saved_profiles_user_id_fkey(id,prenom,pseudo,ville,sports,avatar_url,avatar_initials)')
             .eq('saved_user_id', currentUser.id)
-            .order('created_at', {ascending: false});
-
+            .order('created_at', {ascending:false});
         var savers = (data||[]).map(function(r){ return r.profiles; }).filter(Boolean);
-        if(total) total.textContent = savers.length > 0 ? savers.length + ' personne'+(savers.length>1?'s':'') : '';
-
         if(!savers.length) {
-            list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--grey);font-size:0.85em">Personne n\'a encore sauvegardé ton profil.<br>Complete ton profil pour être plus visible !</div>';
+            list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--grey);font-size:0.85em">Personne n\'a encore sauvegardé ton profil.</div>';
             return;
         }
-
-        // Tout flouté pour les non-premium
         var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
-        var visibleCount = isPremium ? savers.length : 0;
-        var hiddenCount = isPremium ? 0 : savers.length;
-
-        var html = savers.slice(0, visibleCount).map(function(p) {
-            var sports = [];
-            try { sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); } catch(e){}
-            var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-            var av = p.avatar_url
-                ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
-                : initials;
-            return '<div style="background:white;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer" onclick="openRealProfile(\''+p.id+'\')">'
-                +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
-                +'<div style="flex:1;min-width:0">'
-                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
-                +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div>'
-                +'</div>'
-                +'<button onclick="event.stopPropagation();openRealChat(\''+p.id+'\')" style="padding:6px 10px;background:#0A1628;color:white;border:none;border-radius:7px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.75em;cursor:pointer">💬</button>'
-                +'</div>';
-        }).join('');
-
-        // Teaser pour les profils cachés
-        if(hiddenCount > 0) {
-            html += '<div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:12px;padding:14px;margin-top:4px;text-align:center">'
-                +'<div style="display:flex;justify-content:center;gap:-6px;margin-bottom:8px">'
-                + Array(Math.min(hiddenCount,4)).fill(0).map(function(_,i){
-                    return '<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:0.8em;filter:blur(4px);margin-left:'+(i>0?'-8px':'0')+'">??</div>';
-                }).join('')
-                +'</div>'
-                +'<div style="color:white;font-weight:700;font-size:0.88em;margin-bottom:4px">+ '+hiddenCount+' autre'+(hiddenCount>1?'s':'')+' personne'+(hiddenCount>1?'s':'')</div>'
-                +'<div style="color:rgba(255,255,255,0.7);font-size:0.75em;margin-bottom:10px">Passe en Premium pour voir qui c\'est</div>'
-                +'<button onclick="openSubSwitcher()" style="padding:8px 16px;background:#FBBF24;color:#0A1628;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer">⚡ Voir avec Premium 5€/mois</button>'
+        if(isPremium) {
+            list.innerHTML = savers.map(function(p) {
+                var sports=[]; try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
+                var initials = p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
+                var av = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+                return '<div style="background:white;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer" onclick="openRealProfile(\''+p.id+'\')">'
+                    +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
+                    +'<div style="flex:1"><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
+                    +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div></div>'
+                    +'<button onclick="event.stopPropagation();openRealChat(\''+p.id+'\')" style="padding:6px 10px;background:#0A1628;color:white;border:none;border-radius:7px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.75em;cursor:pointer">💬</button>'
+                    +'</div>';
+            }).join('');
+        } else {
+            // Tous floutés — teaser Premium
+            var avatarsHtml = savers.slice(0,4).map(function(_,i){
+                return '<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:0.8em;filter:blur(5px);margin-left:'+(i>0?'-8px':'0')+'px">??</div>';
+            }).join('');
+            list.innerHTML = '<div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:14px;padding:16px;text-align:center">'
+                +'<div style="display:flex;justify-content:center;margin-bottom:10px">'+avatarsHtml+'</div>'
+                +'<div style="color:white;font-weight:700;font-size:0.92em;margin-bottom:4px">'+savers.length+' personne'+(savers.length>1?'s':'')+' ont sauvegardé ton profil</div>'
+                +'<div style="color:rgba(255,255,255,0.7);font-size:0.78em;margin-bottom:12px">Passe en Premium pour voir qui c\'est</div>'
+                +'<button onclick="openSubSwitcher()" style="padding:9px 18px;background:#FBBF24;color:#0A1628;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.85em;cursor:pointer">⚡ Premium 5€/mois →</button>'
                 +'</div>';
         }
-
-        list.innerHTML = html;
     }
-        if(!currentUser) return;
-        var section = document.getElementById('my-reviews-section');
-        var empty = document.getElementById('my-reviews-empty');
-        var list = document.getElementById('my-reviews-list');
-        if(!list) return;
+
+
     // ===== SAVED PROFILES =====
     function deleteSaved(btn) {
         var item = btn.closest('.saved-item');

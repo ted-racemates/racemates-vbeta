@@ -1215,41 +1215,51 @@
         <div class="profile-loc">📍 Lyon, France</div>
     </div>
     <div class="profile-body">
+        <!-- COMPLÉTION DU PROFIL -->
         <div class="pcc-card">
-            <div class="pcc-top"><div class="pcc-title">📋 Complétion du profil</div><div class="pcc-pct">80%</div></div>
-            <div class="pcc-bar"><div class="pcc-fill" style="width:80%"></div></div>
-            <div class="pcc-item"><div class="pcc-check done">✓</div><div>Photo de profil</div></div>
-            <div class="pcc-item"><div class="pcc-check done">✓</div><div>Informations de base</div></div>
-            <div id="pcc-items-dynamic"><!-- généré dynamiquement --></div>
+            <div class="pcc-top"><div class="pcc-title">📋 Complétion du profil</div><div class="pcc-pct">0%</div></div>
+            <div class="pcc-bar"><div class="pcc-fill" style="width:0%"></div></div>
+            <div id="pcc-items-dynamic"></div>
         </div>
-        <!-- PROFILE ACTIVE BANNER -->
-        <div id="profile-status-banner" style="display:none;background:linear-gradient(135deg,#15803D,#059669);border-radius:12px;padding:12px 16px;margin-bottom:16px;align-items:center;gap:10px;">
-            <div style="font-size:1.4em">🎉</div>
-            <div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;color:white;font-size:1em">Tu n'apparais plus dans le matching !</div><div style="font-size:0.72em;color:rgba(255,255,255,0.7);margin-top:2px">Repasse en Dispo quand tu cherches à nouveau.</div></div>
-        </div>
-        <!-- RECHERCHES ACTIVES DYNAMIQUES -->
+
+        <!-- RECHERCHES ACTIVES -->
         <div class="status-toggle-card" id="profile-recherches-actives">
             <div class="stc-title">🎯 Mes recherches actives</div>
             <div id="profile-recherches-content"><div style="color:var(--grey);font-size:0.85em">Aucune recherche active.</div></div>
-            <div style="margin-top:10px;padding:8px 10px;background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;font-size:0.72em;color:#92400E;line-height:1.5">
-                💡 Passe en <strong>Complet</strong> pour sortir de la liste de matching et éviter des messages inutiles.
-            </div>
         </div>
+
+        <!-- BADGES + SPORT TABS + STATS SPORTIVES -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="profile-badges-dynamic"></div>
         <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none" id="profile-sport-tabs"></div>
-        <div id="profile-pstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"></div>
+        <div id="profile-pstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px"></div>
         <div class="profile-bio" id="profile-bio-dynamic"></div>
         <div id="profile-social-dynamic" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><button class="btn-edit" onclick="openEditProfile()">✏️ Modifier profil</button><button class="btn-saved-link" onclick="openSaved()">🔖 Profils sauvegardés</button></div>
-        <div id="boost-btn-wrap" style="margin-bottom:12px"></div>
-        <div id="profile-engagement-stats" style="margin-bottom:12px"></div>
-        <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px">❓ Aide &amp; Support</button>
-        <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
-        <!-- QUI M'A SAUVEGARDÉ -->
-        <div style="margin-bottom:16px">
-            <div class="section-title" style="margin-bottom:10px">👀 Qui a sauvegardé mon profil</div>
-            <div id="saved-by-list"></div>
+
+        <!-- BOUTONS MODIFIER + SAUVEGARDÉS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+            <button class="btn-edit" onclick="openEditProfile()">✏️ Modifier profil</button>
+            <button class="btn-saved-link" onclick="openSaved()">🔖 Profils sauvegardés</button>
         </div>
+
+        <!-- SECTION PREMIUM -->
+        <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <span style="font-size:1.1em">⚡</span>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em">Fonctionnalités Premium</div>
+                <span style="background:#FBBF24;color:#0A1628;font-size:0.65em;font-weight:900;padding:2px 7px;border-radius:6px;margin-left:auto">5€/mois</span>
+            </div>
+            <!-- Boost -->
+            <div id="boost-btn-wrap" style="margin-bottom:10px"></div>
+            <!-- Stats engagement -->
+            <div id="profile-engagement-stats"></div>
+            <!-- Qui m'a sauvegardé -->
+            <div style="margin-top:10px">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.88em;margin-bottom:8px">👀 Qui a sauvegardé mon profil</div>
+                <div id="saved-by-list"></div>
+            </div>
+        </div>
+
+        <!-- AVIS REÇUS -->
         <div class="section-title" style="margin-bottom:10px">⭐ Avis reçus</div>
         <div id="my-reviews-section">
             <div id="my-reviews-empty" style="text-align:center;padding:20px;color:var(--grey);font-size:0.85em">
@@ -1258,6 +1268,10 @@
             </div>
             <div id="my-reviews-list"></div>
         </div>
+
+        <!-- AIDE + DÉCONNEXION -->
+        <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px;margin-top:16px">❓ Aide &amp; Support</button>
+        <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
     </div>
     <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between"><div class="footer-logo"><span>RACE</span>MATES</div><div style="font-size:0.7em;color:var(--grey);cursor:pointer" onclick="openAdminModal()">⚙️</div></div>
 </div>
@@ -1838,7 +1852,7 @@ function openRealProfile(userId) {
     if(!userId) return;
     // Tracker la vue
     if(currentUser && currentUser.id !== userId) {
-        sb.from('profile_views').insert({viewed_id:userId,viewer_id:currentUser.id}).then(function(){});
+        try { sb.from('profile_views').insert({viewed_id:userId,viewer_id:currentUser.id}).then(function(){}); } catch(e){}
     }
     // Charger directement le profil par ID
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
@@ -5131,18 +5145,23 @@ function toggleCompletFilter() {
             var hasPhoto = !!p.avatar_url;
             var hasSocial = !!(p.instagram || p.strava || p.facebook);
             var hasPerf = !!(p.best_time || p.nb_courses || p.pace);
-            var html = '';
-            html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Informations de base</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Sport(s) : ' + sports.map(function(s){ return SPORT_LABELS[s] ? SPORT_LABELS[s].icon + ' ' + SPORT_LABELS[s].name : s; }).join(', ') + '</div></div>';
-            if(p.needs && p.needs.length) html += '<div class="pcc-item"><div class="pcc-check done">✓</div><div>Besoins définis</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check '+(hasPhoto?'done':'todo')+'">'+(hasPhoto?'✓':'!')+'</div><div style="color:'+(hasPhoto?'inherit':'var(--grey)')+'">Photo de profil'+(hasPhoto?'':' <span style="font-size:0.85em">— +10%</span>')+'</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check '+(hasPerf?'done':'todo')+'">'+(hasPerf?'✓':'!')+'</div><div style="color:'+(hasPerf?'inherit':'var(--grey)')+'">Perfs '+sportName+(hasPerf?'':' <span style="font-size:0.85em">— +5%</span>')+'</div></div>';
-            html += '<div class="pcc-item"><div class="pcc-check '+(hasSocial?'done':'todo')+'">'+(hasSocial?'✓':'!')+'</div><div style="color:'+(hasSocial?'inherit':'var(--grey)')+'">Réseaux sociaux'+(hasSocial?'':' <span style="font-size:0.85em">— +5%</span>')+'</div></div>';
-            pccItems.innerHTML = html;
-            // Update % bar
-            var done = (pccItems.querySelectorAll('.pcc-check.done').length + 1); // +1 pour le check "photo de profil" fixe en haut
-            var total = (pccItems.querySelectorAll('.pcc-check').length + 1);
-            var pct = Math.round(done/total*100);
+            var hasNeeds = !!(p.needs && p.needs.length);
+            var items = [
+                { done: true,      label: 'Informations de base', bonus: '' },
+                { done: !!sports.length, label: 'Sport(s) : ' + sports.map(function(s){ return SPORT_LABELS[s] ? SPORT_LABELS[s].icon+' '+SPORT_LABELS[s].name : s; }).join(', '), bonus: '' },
+                { done: hasNeeds,  label: 'Besoins définis', bonus: '' },
+                { done: hasPhoto,  label: 'Photo de profil', bonus: ' — +10%' },
+                { done: hasPerf,   label: 'Perfs ' + sportName, bonus: ' — +5%' },
+                { done: hasSocial, label: 'Réseaux sociaux', bonus: ' — +5%' }
+            ];
+            pccItems.innerHTML = items.map(function(item) {
+                return '<div class="pcc-item"><div class="pcc-check '+(item.done?'done':'todo')+'">'+(item.done?'✓':'!')+'</div>'
+                    +'<div style="color:'+(item.done?'inherit':'var(--grey)')+'">'+item.label
+                    +(!item.done&&item.bonus?'<span style="font-size:0.85em">'+item.bonus+'</span>':'')
+                    +'</div></div>';
+            }).join('');
+            var doneCount = items.filter(function(i){ return i.done; }).length;
+            var pct = Math.round(doneCount / items.length * 100);
             var fill = document.querySelector('.pcc-fill');
             if(fill) fill.style.width = pct + '%';
             var pctEl = document.querySelector('.pcc-pct');
@@ -5365,11 +5384,15 @@ function toggleCompletFilter() {
             return;
         }
         var weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString();
-        var [vr, cr, sr] = await Promise.all([
-            sb.from('profile_views').select('id',{count:'exact',head:true}).eq('viewed_id',currentUser.id).gte('created_at',weekAgo),
-            sb.from('conversations').select('id',{count:'exact',head:true}).or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id).gte('created_at',weekAgo),
-            sb.from('saved_profiles').select('id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id).gte('created_at',weekAgo)
-        ]);
+        var vr={count:0}, cr={count:0}, sr={count:0};
+        try {
+            var results = await Promise.all([
+                sb.from('profile_views').select('id',{count:'exact',head:true}).eq('viewed_id',currentUser.id).gte('created_at',weekAgo),
+                sb.from('conversations').select('id',{count:'exact',head:true}).or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id).gte('created_at',weekAgo),
+                sb.from('saved_profiles').select('id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id).gte('created_at',weekAgo)
+            ]);
+            vr = results[0]; cr = results[1]; sr = results[2];
+        } catch(e) { console.warn('stats error:', e); }
         statsEl.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px">'
             +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
             +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'

@@ -4742,20 +4742,26 @@ function toggleCompletFilter() {
         updateProgress();
         var ov = document.getElementById('onboarding-overlay');
 
-        // Vérifier Stripe EN PREMIER avant tout
+        // Détecter un reset de mot de passe via le hash URL
+        var hash = window.location.hash;
+        if(hash && hash.includes('type=recovery')) {
+            if(ov) ov.style.display = 'none';
+            window.history.replaceState({}, '', window.location.pathname);
+            setTimeout(function(){ openResetPasswordModal(); }, 500);
+            return;
+        }
+
+        // Vérifier Stripe EN PREMIER
         var params = new URLSearchParams(window.location.search);
         if(params.get('premium') === 'success') {
             window.history.replaceState({}, '', window.location.pathname);
             sessionStorage.setItem('stripe_premium_pending', '1');
             if(ov) ov.style.display = 'none';
-            // Vérifier si session active
             sb.auth.getSession().then(function(res) {
                 if(res.data && res.data.session) {
-                    // Connecté → activer Premium et charger
                     if(ov) ov.style.display = 'none';
                     loadMyProfile();
                 } else {
-                    // Pas connecté → ouvrir modal login
                     if(ov) ov.style.display = 'none';
                     setTimeout(function(){
                         showStatusToast('✅ Paiement reçu ! Connecte-toi pour activer ton Premium.');
@@ -4763,7 +4769,7 @@ function toggleCompletFilter() {
                     }, 400);
                 }
             });
-            return; // stopper ici — ne pas afficher l'onboarding
+            return;
         }
 
         // Flux normal
@@ -6245,7 +6251,7 @@ setPlan('free');
     <div class="ob-header">
         <div class="ob-top">
             <div class="logo"><span>RACE</span>MATES</div>
-            <button class="ob-skip" onclick="skipOnboarding()">Passer →</button>
+            
         </div>
         <div class="ob-progress">
             <div class="ob-step-labels">
@@ -6550,6 +6556,48 @@ setPlan('free');
         });
     }
 
+    function forgotPassword() {
+        var email = (document.getElementById('login-email')||{}).value.trim();
+        if(!email || !email.includes('@')) {
+            showStatusToast('⚠️ Entre ton email d\'abord');
+            return;
+        }
+        sb.auth.resetPasswordForEmail(email, {
+            redirectTo: 'https://racemates-vbeta.vercel.app'
+        }).then(function(res) {
+            if(res.error) { showStatusToast('❌ Erreur : '+res.error.message); return; }
+            showStatusToast('📧 Email de réinitialisation envoyé !');
+            closeLoginModal();
+        });
+    }
+
+    function openResetPasswordModal() {
+        var existing = document.getElementById('reset-pwd-modal');
+        if(existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'reset-pwd-modal';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999999;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:20px';
+        modal.innerHTML = '<div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:400px">'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.4em;color:#0A1628;margin-bottom:6px">🔐 Nouveau mot de passe</div>'
+            +'<div style="font-size:0.82em;color:#64748B;margin-bottom:20px">Choisis ton nouveau mot de passe RaceMates</div>'
+            +'<label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase">Nouveau mot de passe</label>'
+            +'<input id="reset-pwd-input" type="password" placeholder="8 caractères minimum" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;margin-top:6px;margin-bottom:16px;box-sizing:border-box;outline:none;font-family:Barlow,sans-serif">'
+            +'<button onclick="submitResetPassword()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1em;cursor:pointer">Enregistrer →</button>'
+            +'</div>';
+        document.body.appendChild(modal);
+    }
+
+    async function submitResetPassword() {
+        var pwd = (document.getElementById('reset-pwd-input')||{}).value;
+        if(!pwd || pwd.length < 8) { showStatusToast('⚠️ Mot de passe trop court (8 car. min)'); return; }
+        var {error} = await sb.auth.updateUser({password: pwd});
+        if(error) { showStatusToast('❌ Erreur : '+error.message); return; }
+        var modal = document.getElementById('reset-pwd-modal');
+        if(modal) modal.remove();
+        showStatusToast('✅ Mot de passe mis à jour !');
+        loadMyProfile();
+    }
+
     function openHelp(){
         document.getElementById('help-modal').style.display='block';
         document.body.style.overflow='hidden';
@@ -6609,6 +6657,9 @@ setPlan('free');
         </div>
         <div id="login-error-msg" style="display:none;color:#DC2626;font-size:0.82em;font-weight:600;text-align:center;margin-bottom:8px;padding:8px;background:#FEE2E2;border-radius:8px"></div>
         <button id="login-submit-btn" onclick="submitLogin()" style="width:100%;padding:16px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1em;letter-spacing:1px;cursor:pointer;margin-bottom:12px">Se connecter →</button>
+        <div style="text-align:center;margin-bottom:12px">
+            <span onclick="forgotPassword()" style="font-size:0.82em;color:#64748B;cursor:pointer;text-decoration:underline">Mot de passe oublié ?</span>
+        </div>
         <button onclick="closeLoginModal()" style="width:100%;padding:14px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-family:Barlow,sans-serif;font-size:0.95em;color:#64748B;cursor:pointer">Annuler</button>
     </div>
 </div>

@@ -655,6 +655,19 @@
             }
             if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
             if(typeof setPlan==='function') setPlan(data.plan||'free');
+            // Activer Premium si retour Stripe en attente
+            if(sessionStorage.getItem('stripe_premium_pending') === '1') {
+                sessionStorage.removeItem('stripe_premium_pending');
+                sb.from('profiles').update({plan:'premium'}).eq('id', expectedUserId).then(function(){
+                    if(window.myProfile) window.myProfile.plan = 'premium';
+                    if(typeof setPlan==='function') setPlan('premium');
+                    showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
+                    setTimeout(function(){
+                        goTo('profile');
+                        if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
+                    }, 500);
+                });
+            }
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
             // Charger conversations et badge non-lus
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
@@ -3214,32 +3227,35 @@ function goToPremium() {
 async function checkStripeReturn() {
     var params = new URLSearchParams(window.location.search);
     if(params.get('premium') !== 'success') return;
-    // Nettoyer l'URL immédiatement
+    // Nettoyer l'URL
     window.history.replaceState({}, '', window.location.pathname);
-    // Cacher l'onboarding immédiatement
+    // Cacher l'onboarding
     var ov = document.getElementById('onboarding-overlay');
     if(ov) ov.style.display = 'none';
-    // Attendre la session Supabase (max 5s)
-    var uid = null;
-    for(var i=0; i<25; i++) {
-        var res = await sb.auth.getSession();
-        if(res.data && res.data.session && res.data.session.user) {
-            uid = res.data.session.user.id;
-            break;
-        }
-        await new Promise(function(r){ setTimeout(r,200); });
+    // Vérifier si déjà connecté
+    var res = await sb.auth.getSession();
+    if(res.data && res.data.session && res.data.session.user) {
+        // Déjà connecté — activer Premium directement
+        var uid = res.data.session.user.id;
+        await sb.from('profiles').update({plan:'premium'}).eq('id', uid);
+        if(window.myProfile) window.myProfile.plan = 'premium';
+        if(typeof setPlan==='function') setPlan('premium');
+        if(ov) ov.style.display = 'none';
+        showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
+        setTimeout(function(){
+            goTo('profile');
+            if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
+        }, 500);
+    } else {
+        // Pas connecté — stocker le flag et ouvrir le modal login
+        sessionStorage.setItem('stripe_premium_pending', '1');
+        if(ov) ov.style.display = 'none';
+        // Afficher modal login avec message
+        setTimeout(function(){
+            if(typeof openLoginModal==='function') openLoginModal();
+            showStatusToast('✅ Paiement reçu ! Connecte-toi pour activer ton Premium.');
+        }, 300);
     }
-    if(!uid) { showStatusToast('⚠️ Connecte-toi pour activer le Premium'); if(ov) ov.style.display='block'; return; }
-    // Mettre à jour le plan
-    await sb.from('profiles').update({plan:'premium'}).eq('id', uid);
-    if(window.myProfile) window.myProfile.plan = 'premium';
-    if(typeof setPlan==='function') setPlan('premium');
-    showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
-    if(ov) ov.style.display = 'none';
-    goTo('profile');
-    setTimeout(function(){
-        if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
-    }, 500);
 }
 
 function setPlan(plan) {

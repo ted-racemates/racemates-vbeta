@@ -642,7 +642,8 @@
                 initials: data.avatar_initials||'RM', plan: data.plan||'free',
                 best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||'',
                 avatar_url: data.avatar_url||'',
-                status_map: data.status_map || {}
+                status_map: data.status_map || {},
+                boosted_until: data.boosted_until || null
             };
             // Mettre à jour l'UI — photo ou initiales
             if(data.avatar_url) {
@@ -874,6 +875,13 @@
             }
             console.log('sbGetAthletes: ' + (data ? data.length : 0) + ' profils reçus');
             let athletes = data || [];
+            // Boostés en premier
+            var nowSort = new Date().toISOString();
+            athletes.sort(function(a,b){
+                var ab=a.boosted_until&&a.boosted_until>nowSort;
+                var bb=b.boosted_until&&b.boosted_until>nowSort;
+                return ab&&!bb?-1:!ab&&bb?1:0;
+            });
             // Filtrer par sport côté JS (sports stocké en JSON texte)
             if (filters.sport && athletes.length) {
                 athletes = athletes.filter(function(a) {
@@ -1233,6 +1241,8 @@
         <div class="profile-bio" id="profile-bio-dynamic"></div>
         <div id="profile-social-dynamic" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><button class="btn-edit" onclick="openEditProfile()">✏️ Modifier profil</button><button class="btn-saved-link" onclick="openSaved()">🔖 Profils sauvegardés</button></div>
+        <div id="boost-btn-wrap" style="margin-bottom:12px"></div>
+        <div id="profile-engagement-stats" style="margin-bottom:12px"></div>
         <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px">❓ Aide &amp; Support</button>
         <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
         <!-- QUI M'A SAUVEGARDÉ -->
@@ -1735,14 +1745,24 @@ function loadRealAthletes() {
             if(myProfile.ville && a.ville && myProfile.ville.toLowerCase()===a.ville.toLowerCase()) compatScore += 5;
             compatScore = Math.min(compatScore, 99);
             var aid = a.id;
+            // Statut depuis status_map
+            var aStatusMap={};try{aStatusMap=typeof a.status_map==='string'?JSON.parse(a.status_map):(a.status_map||{});}catch(e){}
+            var allComplet=needs.length>0&&needs.every(function(n){return Object.keys(aStatusMap).some(function(k){return k.includes(n.replace(/\s/g,''))&&aStatusMap[k]==='complet';});});
+            var athleteStatus=allComplet?'complet':'dispo';
+            // Boost
+            var nowStr=new Date().toISOString();
+            var isBoosted=a.boosted_until&&a.boosted_until>nowStr;
+            var cardBorder=isBoosted?'2px solid #FBBF24':'2px solid #059669';
+            var boostBadge=isBoosted?'<div style="position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;font-size:0.6em;font-weight:900;padding:3px 8px;border-radius:6px;font-family:\'Barlow Condensed\',sans-serif">🚀 BOOSTÉ</div>':'';
             fragment += '<div class="athlete-card real-athlete-card"'
                 +' data-sport="'+sportKey+'"'
                 +' data-tags="'+dataTags+'"'
                 +' data-event-ids="'+myEventIds+'"'
-                +' data-status="dispo"'
+                +' data-status="'+athleteStatus+'"'
                 +' data-user-id="'+aid+'"'
-                +' style="cursor:pointer;border:2px solid #059669">'
+                +' style="cursor:pointer;border:'+cardBorder+'">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
+                +boostBadge
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av" style="'+(a.avatar_url?'padding:0;overflow:hidden':'')+'">'+avatarHtml+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
                 +'<div class="ac-loc">&#x1F4CD; '+(a.ville||'France')+'</div></div>'
@@ -1816,6 +1836,10 @@ function buildEventPills(events, userEvents, athletes) {
 
 function openRealProfile(userId) {
     if(!userId) return;
+    // Tracker la vue
+    if(currentUser && currentUser.id !== userId) {
+        sb.from('profile_views').insert({viewed_id:userId,viewer_id:currentUser.id}).then(function(){});
+    }
     // Charger directement le profil par ID
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
@@ -5238,6 +5262,8 @@ function toggleCompletFilter() {
         // Charger les avis reçus depuis Supabase
         loadMyReviews();
         loadSavedByMe();
+        loadProfileStats();
+        renderBoostButton();
     }
 
     async function loadMyReviews() {
@@ -5320,6 +5346,69 @@ function toggleCompletFilter() {
         }
     }
 
+
+    async function loadProfileStats() {
+        if(!currentUser) return;
+        var statsEl = document.getElementById('profile-engagement-stats');
+        if(!statsEl) return;
+        var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+        if(!isPremium) {
+            statsEl.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px">'
+                +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
+                +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
+                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#0A1628">--</div><div style="font-size:0.65em;color:#64748B">VUES</div></div>'
+                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#059669">--</div><div style="font-size:0.65em;color:#64748B">CONTACTS</div></div>'
+                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#1E3A8A">--</div><div style="font-size:0.65em;color:#64748B">SAUVEGARDES</div></div>'
+                +'</div>'
+                +'<div style="text-align:center"><button onclick="openSubSwitcher()" style="padding:8px 16px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer">⚡ Débloquer avec Premium 5€/mois</button></div>'
+                +'</div>';
+            return;
+        }
+        var weekAgo = new Date(Date.now()-7*24*60*60*1000).toISOString();
+        var [vr, cr, sr] = await Promise.all([
+            sb.from('profile_views').select('id',{count:'exact',head:true}).eq('viewed_id',currentUser.id).gte('created_at',weekAgo),
+            sb.from('conversations').select('id',{count:'exact',head:true}).or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id).gte('created_at',weekAgo),
+            sb.from('saved_profiles').select('id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id).gte('created_at',weekAgo)
+        ]);
+        statsEl.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px">'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#0A1628">'+(vr.count||0)+'</div><div style="font-size:0.65em;color:#64748B">VUES</div></div>'
+            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#059669">'+(cr.count||0)+'</div><div style="font-size:0.65em;color:#64748B">CONTACTS</div></div>'
+            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#1E3A8A">'+(sr.count||0)+'</div><div style="font-size:0.65em;color:#64748B">SAUVEGARDES</div></div>'
+            +'</div></div>';
+    }
+
+    function renderBoostButton() {
+        var wrap = document.getElementById('boost-btn-wrap');
+        if(!wrap) return;
+        var p = window.myProfile || {};
+        var isPremium = (p.plan === 'premium');
+        var now = new Date().toISOString();
+        var isBoosted = p.boosted_until && p.boosted_until > now;
+        if(isBoosted) {
+            var until = new Date(p.boosted_until).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
+            wrap.innerHTML = '<div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px">'
+                +'<span style="font-size:1.3em">🚀</span>'
+                +'<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:#0A1628;font-size:0.9em">Boost actif jusqu\'au '+until+'</div>'
+                +'<div style="font-size:0.72em;color:#92400E">Tu apparais en premier dans les résultats !</div></div>'
+                +'</div>';
+        } else if(isPremium) {
+            wrap.innerHTML = '<button onclick="activateBoost()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;cursor:pointer">🚀 Activer le boost visibilité — 7 jours</button>';
+        } else {
+            wrap.innerHTML = '<button onclick="openSubSwitcher()" style="width:100%;padding:12px;background:#F8FAFC;border:1.5px solid #E2E8F0;color:#64748B;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.88em;cursor:pointer">🚀 Boost visibilité — Premium uniquement</button>';
+        }
+    }
+
+    async function activateBoost() {
+        if(!currentUser) return;
+        var until = new Date(Date.now()+7*24*60*60*1000).toISOString();
+        var {error} = await sb.from('profiles').update({boosted_until:until}).eq('id',currentUser.id);
+        if(error){showStatusToast('❌ '+error.message);return;}
+        if(window.myProfile) window.myProfile.boosted_until = until;
+        showStatusToast('🚀 Boost activé pour 7 jours !');
+        renderBoostButton();
+    }
 
     // ===== SAVED PROFILES =====
     function deleteSaved(btn) {

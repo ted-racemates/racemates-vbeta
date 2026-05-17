@@ -3244,20 +3244,15 @@ async function checkStripeReturn() {
     if(params.get('premium') !== 'success') return;
     // Nettoyer l'URL immédiatement
     window.history.replaceState({}, '', window.location.pathname);
-    // Attendre que currentUser soit prêt (max 5s)
-    var waited = 0;
-    while(!currentUser && waited < 5000) {
-        await new Promise(function(r){ setTimeout(r, 300); });
-        waited += 300;
-    }
-    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour activer le Premium'); return; }
-    // Mettre à jour le plan
-    await sb.from('profiles').update({plan: 'premium'}).eq('id', currentUser.id);
+    // currentUser est déjà prêt car appelé depuis loadMyProfile
+    if(!currentUser) return;
+    await sb.from('profiles').update({plan:'premium'}).eq('id', currentUser.id);
     if(window.myProfile) window.myProfile.plan = 'premium';
+    if(typeof setPlan==='function') setPlan('premium');
     showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
     setTimeout(function(){
         goTo('profile');
-        if(typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
+        if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
     }, 800);
 }
 
@@ -4698,39 +4693,12 @@ function toggleCompletFilter() {
     document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
         var ov = document.getElementById('onboarding-overlay');
-        if(ov) ov.style.display = 'none';
-
-        var loader = document.createElement('div');
-        loader.id = 'app-loader';
-        loader.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0A1628;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px';
-        loader.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:2em;color:white;letter-spacing:2px"><span style="color:#DC2626">RACE</span>MATES</div>'
-            + '<div style="width:40px;height:3px;background:#FBBF24;border-radius:2px"></div>';
-        document.body.appendChild(loader);
-
-        function removeLoader() {
-            var l = document.getElementById('app-loader');
-            if(l) l.remove();
-        }
-
-        // Timeout de sécurité — si getSession prend trop longtemps, on affiche l'onboarding
-        var sessionTimeout = setTimeout(function() {
-            removeLoader();
-            if(ov) ov.style.display = 'block';
-        }, 3000);
-
+        if(ov) ov.style.display = 'block';
         sb.auth.getSession().then(function(res) {
-            clearTimeout(sessionTimeout);
-            removeLoader();
             if(res.data && res.data.session) {
                 if(ov) ov.style.display = 'none';
                 loadMyProfile();
-            } else {
-                if(ov) ov.style.display = 'block';
             }
-        }).catch(function() {
-            clearTimeout(sessionTimeout);
-            removeLoader();
-            if(ov) ov.style.display = 'block';
         });
     });
 
@@ -4876,24 +4844,23 @@ function toggleCompletFilter() {
 
     function logoutApp(){
         showStatusToast('👋 À bientôt sur RaceMates !');
-        // Reset complet état
-        window.myProfile = null;
-        window._pendingAuth = null;
-        window._pendingProfileData = null;
-        currentUser = null;
-        currentProfile = null;
-        // Reset UI
-        document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-        var block = document.getElementById('my-events-block');
-        if(block) block.querySelectorAll('.my-event-card').forEach(function(el){ el.remove(); });
-        // Supabase signOut complet (efface le localStorage de session)
+        // Supabase signOut — efface la session
         sb.auth.signOut().then(function() {
-            // Après signOut confirmé → afficher onboarding (page d'accueil inscription/connexion)
+            // Reset état complet
+            window.myProfile = null;
+            window._pendingAuth = null;
+            window._pendingProfileData = null;
+            currentUser = null;
+            currentProfile = null;
+            // Reset UI
+            document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+            var block = document.getElementById('my-events-block');
+            if(block) block.querySelectorAll('.my-event-card').forEach(function(el){ el.remove(); });
+            // Afficher onboarding proprement
             var overlay = document.getElementById('onboarding-overlay');
             if(overlay) {
-                overlay.style.display = 'flex';
-                // Reset onboarding à la slide 1
-                if(typeof currentStep !== 'undefined') currentStep = 1;
+                overlay.style.display = 'block';
+                // Reset à la slide 1
                 document.querySelectorAll('.ob-slide').forEach(function(s){ s.classList.remove('active','leaving'); });
                 var s1 = document.getElementById('slide-1');
                 if(s1) s1.classList.add('active');
@@ -4903,8 +4870,8 @@ function toggleCompletFilter() {
                     if(el) el.value = '';
                 });
             }
-        }).catch(function(){ 
-            // En cas d'erreur, ouvrir quand même le modal login
+        }).catch(function(){
+            // Erreur signOut — ouvrir le modal login directement
             if(typeof openLoginModal==='function') openLoginModal();
         });
     }

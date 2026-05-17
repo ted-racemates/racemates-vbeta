@@ -642,8 +642,7 @@
                 initials: data.avatar_initials||'RM', plan: data.plan||'free',
                 best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||'',
                 avatar_url: data.avatar_url||'',
-                status_map: data.status_map || {},
-                boosted_until: data.boosted_until || null
+                status_map: data.status_map || {}
             };
             // Mettre à jour l'UI — photo ou initiales
             if(data.avatar_url) {
@@ -875,15 +874,6 @@
             }
             console.log('sbGetAthletes: ' + (data ? data.length : 0) + ' profils reçus');
             let athletes = data || [];
-            // Trier : profils boostés en premier
-            var now = new Date().toISOString();
-            athletes.sort(function(a, b) {
-                var aBoost = a.boosted_until && a.boosted_until > now;
-                var bBoost = b.boosted_until && b.boosted_until > now;
-                if(aBoost && !bBoost) return -1;
-                if(!aBoost && bBoost) return 1;
-                return 0;
-            });
             // Filtrer par sport côté JS (sports stocké en JSON texte)
             if (filters.sport && athletes.length) {
                 athletes = athletes.filter(function(a) {
@@ -1243,7 +1233,6 @@
         <div class="profile-bio" id="profile-bio-dynamic"></div>
         <div id="profile-social-dynamic" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><button class="btn-edit" onclick="openEditProfile()">✏️ Modifier profil</button><button class="btn-saved-link" onclick="openSaved()">🔖 Profils sauvegardés</button></div>
-        <div id="boost-btn-wrap" style="margin-bottom:12px"></div>
         <button onclick="openHelp()" style="width:100%;padding:14px;background:rgba(59,130,246,0.08);border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;color:var(--blue);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:10px">❓ Aide &amp; Support</button>
         <button onclick="logoutApp()" style="width:100%;padding:14px;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);border-radius:14px;color:#EF4444;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Se déconnecter</button>
         <!-- QUI M'A SAUVEGARDÉ -->
@@ -1727,17 +1716,6 @@ function loadRealAthletes() {
             }).join(' ');
             var dataTags = (allSportKeys+' '+needTags+' dispo').trim();
 
-            // Déterminer si l'athlète est "complet" (tous ses needs = complet)
-            var aStatusMap = {};
-            try { aStatusMap = typeof a.status_map === 'string' ? JSON.parse(a.status_map) : (a.status_map || {}); } catch(e){}
-            var allComplet = needs.length > 0 && Object.keys(aStatusMap).length > 0 &&
-                needs.every(function(n) {
-                    return Object.keys(aStatusMap).some(function(k){
-                        return k.includes(n.replace(/\s/g,'')) && aStatusMap[k] === 'complet';
-                    });
-                });
-            var athleteStatus = allComplet ? 'complet' : 'dispo';
-
             // IDs des events auxquels cet athlete est inscrit (pipe-separes)
             var myEventIds = userEvents[a.id] ? Array.from(userEvents[a.id]).join('|') : '';
 
@@ -1757,19 +1735,14 @@ function loadRealAthletes() {
             if(myProfile.ville && a.ville && myProfile.ville.toLowerCase()===a.ville.toLowerCase()) compatScore += 5;
             compatScore = Math.min(compatScore, 99);
             var aid = a.id;
-            var now = new Date().toISOString();
-            var isBoosted = a.boosted_until && a.boosted_until > now;
-            var cardBorder = isBoosted ? '2px solid #FBBF24' : '2px solid #059669';
-            var boostBadge = isBoosted ? '<div style="position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;font-size:0.6em;font-weight:900;padding:3px 8px;border-radius:6px;letter-spacing:1px;font-family:\'Barlow Condensed\',sans-serif">🚀 BOOSTÉ</div>' : '';
             fragment += '<div class="athlete-card real-athlete-card"'
                 +' data-sport="'+sportKey+'"'
                 +' data-tags="'+dataTags+'"'
                 +' data-event-ids="'+myEventIds+'"'
-                +' data-status="'+athleteStatus+'"'
+                +' data-status="dispo"'
                 +' data-user-id="'+aid+'"'
-                +' style="cursor:pointer;border:'+cardBorder+'">'
+                +' style="cursor:pointer;border:2px solid #059669">'
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
-                +boostBadge
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av" style="'+(a.avatar_url?'padding:0;overflow:hidden':'')+'">'+avatarHtml+'</div>'
                 +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
                 +'<div class="ac-loc">&#x1F4CD; '+(a.ville||'France')+'</div></div>'
@@ -1843,10 +1816,6 @@ function buildEventPills(events, userEvents, athletes) {
 
 function openRealProfile(userId) {
     if(!userId) return;
-    // Tracker la vue (pas sur son propre profil)
-    if(currentUser && currentUser.id !== userId) {
-        sb.from('profile_views').insert({ viewed_id: userId, viewer_id: currentUser.id }).then(function(){});
-    }
     // Charger directement le profil par ID
     sb.from('profiles').select('*').eq('id', userId).single().then(function(res) {
         var a = res.data;
@@ -5269,26 +5238,6 @@ function toggleCompletFilter() {
         // Charger les avis reçus depuis Supabase
         loadMyReviews();
         loadSavedByMe();
-        loadProfileStats();
-        // Bouton boost
-        var boostWrap = document.getElementById('boost-btn-wrap');
-        if(boostWrap) {
-            var isPremium = (p.plan === 'premium');
-            var now = new Date().toISOString();
-            var isBoosted = p.boosted_until && p.boosted_until > now;
-            if(isBoosted) {
-                var until = new Date(p.boosted_until).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-                boostWrap.innerHTML = '<div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px">'
-                    +'<span style="font-size:1.3em">🚀</span>'
-                    +'<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:#0A1628;font-size:0.9em">Boost actif jusqu\'au '+until+'</div>'
-                    +'<div style="font-size:0.72em;color:#92400E">Tu apparais en premier dans les résultats !</div></div>'
-                    +'</div>';
-            } else if(isPremium) {
-                boostWrap.innerHTML = '<button onclick="activateBoost()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;cursor:pointer">🚀 Activer le boost visibilité — 7 jours</button>';
-            } else {
-                boostWrap.innerHTML = '<button onclick="openSubSwitcher()" style="width:100%;padding:12px;background:#F8FAFC;border:1.5px solid #E2E8F0;color:#64748B;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.88em;cursor:pointer">🚀 Boost visibilité — Premium uniquement</button>';
-            }
-        }
     }
 
     async function loadMyReviews() {
@@ -5331,16 +5280,6 @@ function toggleCompletFilter() {
             }).join('');
     }
 
-    async function activateBoost() {
-        if(!currentUser) return;
-        var until = new Date(Date.now() + 7*24*60*60*1000).toISOString();
-        var {error} = await sb.from('profiles').update({boosted_until: until}).eq('id', currentUser.id);
-        if(error) { showStatusToast('❌ Erreur : '+error.message); return; }
-        if(window.myProfile) window.myProfile.boosted_until = until;
-        showStatusToast('🚀 Boost activé pour 7 jours !');
-        if(typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
-    }
-
     async function loadSavedByMe() {
         if(!currentUser) return;
         var list = document.getElementById('saved-by-list');
@@ -5381,68 +5320,6 @@ function toggleCompletFilter() {
         }
     }
 
-
-    async function loadProfileStats() {
-        if(!currentUser) return;
-        var pstats = document.getElementById('profile-pstats');
-        if(!pstats) return;
-        var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
-        var p = window.myProfile || {};
-
-        // Stats sportives (toujours visibles)
-        var lbl3 = p.pace ? 'PACE / STAT' : 'PACE';
-        var sportStatsHtml = '<div class="pstat"><div class="pstat-val">'+(p.best_time||'-')+'</div><div class="pstat-lbl">BEST PERF</div></div>'
-            +'<div class="pstat"><div class="pstat-val">'+(p.nb_courses||'-')+'</div><div class="pstat-lbl">COURSES</div></div>'
-            +'<div class="pstat"><div class="pstat-val">'+(p.pace||'-')+'</div><div class="pstat-lbl">'+lbl3+'</div></div>';
-        pstats.innerHTML = sportStatsHtml;
-
-        if(!isPremium) {
-            // Ajouter le bloc stats Premium flouté en dessous
-            var statsBloc = document.getElementById('profile-engagement-stats');
-            if(!statsBloc) {
-                statsBloc = document.createElement('div');
-                statsBloc.id = 'profile-engagement-stats';
-                pstats.parentNode.insertBefore(statsBloc, pstats.nextSibling);
-            }
-            statsBloc.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:12px">'
-                +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
-                +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
-                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#0A1628">--</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">VUES</div></div>'
-                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#059669">--</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">CONTACTS</div></div>'
-                +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(4px)"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#1E3A8A">--</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">SAUVEGARDES</div></div>'
-                +'</div>'
-                +'<div style="text-align:center">'
-                +'<div style="font-size:0.75em;color:#64748B;margin-bottom:8px">🔒 Débloque le Premium pour voir tes vraies stats</div>'
-                +'<button onclick="openSubSwitcher()" style="padding:8px 16px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer">⚡ Premium 5€/mois →</button>'
-                +'</div></div>';
-            return;
-        }
-
-        // Premium — charger les vraies stats
-        var weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
-        var [viewsRes, convsRes, savedRes] = await Promise.all([
-            sb.from('profile_views').select('id', {count:'exact', head:true}).eq('viewed_id', currentUser.id).gte('created_at', weekAgo),
-            sb.from('conversations').select('id', {count:'exact', head:true}).or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id).gte('created_at', weekAgo),
-            sb.from('saved_profiles').select('id', {count:'exact', head:true}).eq('saved_user_id', currentUser.id).gte('created_at', weekAgo)
-        ]);
-        var views = viewsRes.count || 0;
-        var contacts = convsRes.count || 0;
-        var saves = savedRes.count || 0;
-
-        var statsBloc = document.getElementById('profile-engagement-stats');
-        if(!statsBloc) {
-            statsBloc = document.createElement('div');
-            statsBloc.id = 'profile-engagement-stats';
-            pstats.parentNode.insertBefore(statsBloc, pstats.nextSibling);
-        }
-        statsBloc.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px;margin-bottom:12px">'
-            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
-            +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
-            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#0A1628">'+views+'</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">VUES</div></div>'
-            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#059669">'+contacts+'</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">CONTACTS</div></div>'
-            +'<div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.6em;color:#1E3A8A">'+saves+'</div><div style="font-size:0.65em;color:#64748B;margin-top:2px">SAUVEGARDES</div></div>'
-            +'</div></div>';
-    }
 
     // ===== SAVED PROFILES =====
     function deleteSaved(btn) {

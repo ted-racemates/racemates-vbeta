@@ -3252,8 +3252,25 @@ async function checkStripeReturn() {
 
 function setPlan(plan) {
     currentPlan = plan;
+    var isPremium = (plan === 'premium');
+    // Mettre à jour tous les éléments qui affichent le plan
     var ppl = document.getElementById('profile-plan-label');
-    if(ppl) ppl.textContent = (plan === 'premium') ? '⚡ Premium' : 'Gratuit';
+    if(ppl) ppl.textContent = isPremium ? '⚡ Premium' : 'Gratuit';
+    // Badges plan dans l'app
+    ['pt-home','pt-training','pt-matching'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el) {
+            el.textContent = isPremium ? 'PREMIUM' : 'GRATUIT';
+            el.style.background = isPremium ? 'linear-gradient(135deg,#FBBF24,#F59E0B)' : '';
+            el.style.color = isPremium ? '#0A1628' : '';
+        }
+    });
+    // Badge header accueil
+    document.querySelectorAll('.plan-text').forEach(function(el){
+        el.textContent = isPremium ? 'PREMIUM' : 'GRATUIT';
+        el.style.background = isPremium ? 'linear-gradient(135deg,#FBBF24,#F59E0B)' : '';
+        el.style.color = isPremium ? '#0A1628' : '';
+    });
     document.querySelectorAll('.btn-contact,[id^="contact-btn-"]').forEach(function(btn){
         btn.style.background='var(--red)'; btn.style.cursor='pointer';
         btn.style.opacity='1'; btn.disabled=false; btn.removeAttribute('data-locked');
@@ -3262,8 +3279,34 @@ function setPlan(plan) {
 function openSubSwitcher() {
     document.getElementById('sub-modal').classList.add('open');
     document.getElementById('sub-modal').scrollTop = 0;
-    var em = document.getElementById('premium-waitlist-email');
-    if(em && currentUser && currentUser.email) em.value = currentUser.email;
+    var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+    // Adapter le modal selon le plan actuel
+    var premiumBtn = document.querySelector('#sub-premium button[onclick="goToPremium()"]');
+    if(premiumBtn) {
+        if(isPremium) {
+            premiumBtn.textContent = '✅ Abonné — Premium actif';
+            premiumBtn.style.background = 'linear-gradient(135deg,#059669,#047857)';
+            premiumBtn.style.cursor = 'default';
+            premiumBtn.onclick = null;
+        } else {
+            premiumBtn.textContent = '⚡ S\'abonner — 5€/mois →';
+            premiumBtn.style.background = 'linear-gradient(135deg,#FBBF24,#F59E0B)';
+            premiumBtn.style.cursor = 'pointer';
+            premiumBtn.onclick = goToPremium;
+        }
+    }
+    // Mettre à jour la sélection active
+    var freePlan = document.getElementById('sub-free');
+    var premiumPlan = document.getElementById('sub-premium');
+    if(freePlan && premiumPlan) {
+        if(isPremium) {
+            freePlan.classList.remove('active');
+            premiumPlan.classList.add('active');
+        } else {
+            freePlan.classList.add('active');
+            premiumPlan.classList.remove('active');
+        }
+    }
     if(currentUser) {
         sb.from('saved_profiles').select('user_id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id)
         .then(function(r){ var el=document.getElementById('saved-by-count'); if(el) el.textContent=(r.count||0)+' personne'+(r.count>1?'s':''); });

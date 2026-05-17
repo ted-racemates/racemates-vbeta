@@ -4778,11 +4778,10 @@ function toggleCompletFilter() {
         var hash = window.location.hash;
         if(hash && hash.includes('type=recovery')) {
             if(ov) ov.style.display = 'none';
-            // NE PAS faire return ni ouvrir le modal ici :
-            // Supabase va parser le hash, authentifier la session et déclencher
-            // onAuthStateChange avec event='PASSWORD_RECOVERY' qui ouvre le modal.
-            // On nettoie juste le hash pour éviter un rechargement avec token exposé.
+            // Nettoyer le hash après 1s
             setTimeout(function(){ window.history.replaceState({}, '', window.location.pathname); }, 1000);
+            // STOP ici : onAuthStateChange (PASSWORD_RECOVERY) prend la main
+            return;
         }
 
         // Vérifier Stripe EN PREMIER
@@ -6591,17 +6590,54 @@ setPlan('free');
     }
 
     function forgotPassword() {
-        var email = (document.getElementById('login-email')||{}).value.trim();
+        var existing = document.getElementById('forgot-pwd-modal');
+        if(existing) existing.remove();
+        var prefill = (document.getElementById('login-email')||{}).value || '';
+        var modal = document.createElement('div');
+        modal.id = 'forgot-pwd-modal';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:99999999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px';
+        modal.innerHTML = '<div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:400px;box-sizing:border-box">'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.4em;color:#0A1628;margin-bottom:6px">🔑 Mot de passe oublié</div>'
+            +'<div style="font-size:0.83em;color:#64748B;margin-bottom:20px">Entre ton email et on t\'envoie un lien de réinitialisation.</div>'
+            +'<label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Email</label>'
+            +'<input id="forgot-pwd-email" type="email" placeholder="ton@email.com" value="'+prefill+'" style="width:100%;padding:13px 16px;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.95em;margin-bottom:16px;box-sizing:border-box;outline:none;font-family:Barlow,sans-serif">'
+            +'<div id="forgot-pwd-error" style="display:none;color:#DC2626;font-size:0.82em;font-weight:600;text-align:center;margin-bottom:12px;padding:8px;background:#FEE2E2;border-radius:8px"></div>'
+            +'<button id="forgot-pwd-btn" onclick="submitForgotPassword()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px;margin-bottom:10px">Envoyer le lien →</button>'
+            +'<button onclick="document.getElementById(\'forgot-pwd-modal\').remove()" style="width:100%;padding:12px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-family:Barlow,sans-serif;font-size:0.9em;color:#64748B;cursor:pointer">Annuler</button>'
+            +'</div>';
+        document.body.appendChild(modal);
+        setTimeout(function(){ var inp=document.getElementById('forgot-pwd-email'); if(inp) inp.focus(); }, 100);
+    }
+
+    function submitForgotPassword() {
+        var emailEl = document.getElementById('forgot-pwd-email');
+        var errorEl = document.getElementById('forgot-pwd-error');
+        var btn = document.getElementById('forgot-pwd-btn');
+        if(!emailEl) return;
+        var email = emailEl.value.trim();
         if(!email || !email.includes('@')) {
-            showStatusToast('⚠️ Entre ton email d\'abord');
+            if(errorEl){ errorEl.textContent='⚠️ Entre une adresse email valide'; errorEl.style.display='block'; }
             return;
         }
+        if(errorEl) errorEl.style.display='none';
+        if(btn){ btn.textContent='Envoi en cours...'; btn.disabled=true; }
         sb.auth.resetPasswordForEmail(email, {
             redirectTo: 'https://racemates-vbeta.vercel.app'
         }).then(function(res) {
-            if(res.error) { showStatusToast('❌ Erreur : '+res.error.message); return; }
-            showStatusToast('📧 Email de réinitialisation envoyé !');
-            closeLoginModal();
+            if(res.error) {
+                if(btn){ btn.textContent='Envoyer le lien →'; btn.disabled=false; }
+                if(errorEl){ errorEl.textContent='❌ '+res.error.message; errorEl.style.display='block'; }
+                return;
+            }
+            var modal = document.getElementById('forgot-pwd-modal');
+            if(modal) {
+                modal.querySelector('div').innerHTML = '<div style="text-align:center;padding:10px 0">'
+                    +'<div style="font-size:2.5em;margin-bottom:12px">📧</div>'
+                    +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.3em;color:#0A1628;margin-bottom:8px">Email envoyé !</div>'
+                    +'<div style="font-size:0.85em;color:#64748B;margin-bottom:24px;line-height:1.5">Vérifie ta boîte mail (et tes spams).<br>Clique sur le lien pour définir ton nouveau mot de passe.</div>'
+                    +'<button onclick="document.getElementById(\'forgot-pwd-modal\').remove()" style="padding:13px 32px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1em;cursor:pointer">OK ✓</button>'
+                    +'</div>';
+            }
         });
     }
 

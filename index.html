@@ -678,6 +678,8 @@
             // Démarrer realtime notifs + badge
             if(typeof startNotifSubscription==='function') startNotifSubscription();
             if(typeof updateNotifBadge==='function') setTimeout(updateNotifBadge, 800);
+            // Vérifier retour Stripe
+            if(typeof checkStripeReturn==='function') setTimeout(checkStripeReturn, 1000);
             // Les athlètes se chargent uniquement via goTo('matching')
         }
 
@@ -1421,14 +1423,10 @@
                     <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">🚀 Boost visibilité 7j</span>
                     <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">📊 Stats de profil</span>
                 </div>
-                <div style="margin-top:10px;padding:8px 10px;background:#F8FAFC;border-radius:8px;font-size:0.75em;color:#64748B">
-                    💡 Laisse ton email pour être notifié au lancement du Premium.
+                <div style="margin-top:10px">
+                    <button onclick="goToPremium()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">⚡ S'abonner — 5€/mois →</button>
+                    <div style="font-size:0.72em;color:#64748B;text-align:center;margin-top:6px">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
                 </div>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                    <input id="premium-waitlist-email" type="email" placeholder="ton@email.com" style="flex:1;padding:9px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:0.82em;font-family:Barlow,sans-serif;outline:none">
-                    <button onclick="joinPremiumWaitlist()" style="padding:9px 14px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85em;cursor:pointer;white-space:nowrap">M'alerter →</button>
-                </div>
-                <div id="waitlist-confirm" style="display:none;font-size:0.78em;color:#15803D;font-weight:700;margin-top:6px">✅ Tu seras notifié au lancement !</div>
             </div>
             <div class="sub-price" style="color:#0A1628">5€<span class="sub-price-period">/mois</span></div>
         </div>
@@ -3225,6 +3223,38 @@ var PLAN_PREVIEWS = {
             '✅ Accès prioritaire nouvelles fonctionnalités'
         ]
     };
+
+// ===== STRIPE PREMIUM =====
+// 🔧 REMPLACE PAR TON LIEN STRIPE ICI :
+var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_bJe8wOfrfanSeADcpp2sM00';
+
+function goToPremium() {
+    if(!currentUser) { showStatusToast('⚠️ Connecte-toi d\'abord'); return; }
+    // Ajouter l'email et l'ID user dans l'URL Stripe pour tracking
+    var email = currentUser.email || '';
+    var link = STRIPE_PAYMENT_LINK
+        + '?prefilled_email=' + encodeURIComponent(email)
+        + '&client_reference_id=' + currentUser.id;
+    window.open(link, '_blank');
+}
+
+// Détecter le retour depuis Stripe après paiement réussi
+async function checkStripeReturn() {
+    var params = new URLSearchParams(window.location.search);
+    if(params.get('premium') === 'success' && currentUser) {
+        // Mettre à jour le plan dans Supabase
+        await sb.from('profiles').update({plan: 'premium'}).eq('id', currentUser.id);
+        if(window.myProfile) window.myProfile.plan = 'premium';
+        // Nettoyer l'URL
+        window.history.replaceState({}, '', window.location.pathname);
+        // Feedback
+        showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
+        setTimeout(function(){
+            goTo('profile');
+            if(typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
+        }, 1000);
+    }
+}
 
 function setPlan(plan) {
     currentPlan = plan;

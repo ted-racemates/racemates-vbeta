@@ -629,6 +629,13 @@
             console.log('loadMyProfile: fetching profile for', expectedUserId);
             const { data, error } = await sb.from('profiles').select('*').eq('id', expectedUserId).single();
             console.log('loadMyProfile: got data=', !!data, 'error=', error?.message);
+            // Si erreur réseau/auth → vider le cache et forcer déconnexion propre
+            if(error && (error.status === 400 || error.status === 401 || error.message === 'Failed to fetch')) {
+                console.warn('loadMyProfile: auth error, clearing session');
+                localStorage.removeItem('supabase.auth.token');
+                await sb.auth.signOut();
+                return;
+            }
             // Vérifier que ce token est toujours le plus récent
             if(myToken && _authToken !== myToken) { console.log('loadMyProfile CANCELLED token='+myToken); return; }
             if (!data || !currentUser || currentUser.id !== expectedUserId) return;
@@ -684,7 +691,7 @@
             }, 800);
             // Charger le compteur profils sauvegardés
             if(currentUser) {
-                sb.from('saved_profiles').select('saved_user_id', {count:'exact'}).eq('user_id', currentUser.id)
+                sb.from('saved_profiles').select('id', {count:'exact', head:true}).eq('user_id', currentUser.id)
                 .then(function(res){
                     var n = res.count || 0;
                     var el = document.getElementById('qa-sub-saved');

@@ -886,7 +886,7 @@
             if (existing) {
                 // UPDATE : l'utilisateur a déjà laissé un avis → mise à jour
                 const res = await sb.from('reviews')
-                    .update({ stars: stars, comment: comment, rating: stars })
+                    .update({ stars: stars, comment: comment })
                     .eq('reviewer_id', currentUser.id)
                     .eq('reviewed_id', reviewedId);
                 error = res.error;
@@ -896,8 +896,7 @@
                     reviewer_id: currentUser.id,
                     reviewed_id: reviewedId,
                     stars: stars,
-                    comment: comment,
-                    rating: stars
+                    comment: comment
                 });
                 error = res.error;
             }

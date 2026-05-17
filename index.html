@@ -3241,19 +3241,24 @@ function goToPremium() {
 // Détecter le retour depuis Stripe après paiement réussi
 async function checkStripeReturn() {
     var params = new URLSearchParams(window.location.search);
-    if(params.get('premium') === 'success' && currentUser) {
-        // Mettre à jour le plan dans Supabase
-        await sb.from('profiles').update({plan: 'premium'}).eq('id', currentUser.id);
-        if(window.myProfile) window.myProfile.plan = 'premium';
-        // Nettoyer l'URL
-        window.history.replaceState({}, '', window.location.pathname);
-        // Feedback
-        showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
-        setTimeout(function(){
-            goTo('profile');
-            if(typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
-        }, 1000);
+    if(params.get('premium') !== 'success') return;
+    // Nettoyer l'URL immédiatement
+    window.history.replaceState({}, '', window.location.pathname);
+    // Attendre que currentUser soit prêt (max 5s)
+    var waited = 0;
+    while(!currentUser && waited < 5000) {
+        await new Promise(function(r){ setTimeout(r, 300); });
+        waited += 300;
     }
+    if(!currentUser) { showStatusToast('⚠️ Connecte-toi pour activer le Premium'); return; }
+    // Mettre à jour le plan
+    await sb.from('profiles').update({plan: 'premium'}).eq('id', currentUser.id);
+    if(window.myProfile) window.myProfile.plan = 'premium';
+    showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
+    setTimeout(function(){
+        goTo('profile');
+        if(typeof updateMyProfileScreen === 'function') updateMyProfileScreen();
+    }, 800);
 }
 
 function setPlan(plan) {
@@ -4692,16 +4697,33 @@ function toggleCompletFilter() {
 
     document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
-        // Show onboarding if not logged in
         var ov = document.getElementById('onboarding-overlay');
-        if(ov) ov.style.display = 'block';
-        // Check if already logged in via Supabase
+        // Masquer tout pendant la vérification de session
+        if(ov) ov.style.display = 'none';
+        // Afficher un loader temporaire
+        var loader = document.createElement('div');
+        loader.id = 'app-loader';
+        loader.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0A1628;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px';
+        loader.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:2em;color:white;letter-spacing:2px"><span style="color:#DC2626">RACE</span>MATES</div>'
+            + '<div style="width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden"><div style="height:100%;background:#FBBF24;border-radius:2px;animation:pulse 1s ease-in-out infinite;width:100%"></div></div>';
+        document.body.appendChild(loader);
+
         sb.auth.getSession().then(function(res) {
+            // Supprimer le loader
+            var l = document.getElementById('app-loader');
+            if(l) l.remove();
             if(res.data && res.data.session) {
-                // Already logged in — hide onboarding
+                // Connecté — aller directement à l'app
                 if(ov) ov.style.display = 'none';
                 loadMyProfile();
+            } else {
+                // Pas connecté — afficher l'onboarding
+                if(ov) ov.style.display = 'block';
             }
+        }).catch(function() {
+            var l = document.getElementById('app-loader');
+            if(l) l.remove();
+            if(ov) ov.style.display = 'block';
         });
     });
 
@@ -6201,7 +6223,7 @@ setPlan('free');
             <div class="field-group">
                 <label class="field-label">Adresse e-mail</label>
                 <div style="position:relative">
-                    <input class="ob-input" id="f-email" type="email" placeholder="thomas@exemple.com" style="padding-left:44px;margin-bottom:6px">
+                    <input class="ob-input" id="f-email" type="email" autocomplete="off" placeholder="thomas@exemple.com" style="padding-left:44px;margin-bottom:6px">
                     <span style="position:absolute;left:14px;top:50%;transform:translateY(-65%);font-size:1em">✉️</span>
                 </div>
                 <div style="font-size:0.68em;color:#94A3B8;margin-bottom:14px">Utilisée pour ta connexion — jamais partagée</div>
@@ -6209,7 +6231,7 @@ setPlan('free');
             <div class="field-group">
                 <label class="field-label">Pseudo <span class="optional">visible par les autres</span></label>
                 <div style="position:relative">
-                    <input class="ob-input" id="f-pseudo" type="text" placeholder="speedrunner_59" style="padding-left:44px;margin-bottom:6px">
+                    <input class="ob-input" id="f-pseudo" type="text" autocomplete="off" placeholder="speedrunner_59" style="padding-left:44px;margin-bottom:6px">
                     <span style="position:absolute;left:14px;top:50%;transform:translateY(-65%);font-size:1em">@</span>
                 </div>
                 <div style="font-size:0.68em;color:#94A3B8;margin-bottom:14px">Ton identifiant public — ton nom de famille ne sera jamais affiché</div>
@@ -6218,7 +6240,7 @@ setPlan('free');
             <div class="field-group">
                 <label class="field-label">Mot de passe</label>
                 <div style="position:relative">
-                    <input class="ob-input" id="f-password" type="password" placeholder="8 caractères minimum" style="padding-left:44px;padding-right:44px;margin-bottom:6px" oninput="checkPassword(this.value)">
+                    <input class="ob-input" id="f-password" type="new-password" autocomplete="new-password" placeholder="8 caractères minimum" style="padding-left:44px;padding-right:44px;margin-bottom:6px" oninput="checkPassword(this.value)">
                     <span style="position:absolute;left:14px;top:50%;transform:translateY(-65%);font-size:1em">🔒</span>
                     <button onclick="togglePwd()" style="position:absolute;right:14px;top:50%;transform:translateY(-65%);background:none;border:none;cursor:pointer;font-size:1em;color:var(--grey)" id="pwd-eye">👁</button>
                 </div>
@@ -6262,7 +6284,7 @@ setPlan('free');
                 <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhoto(this)">
                 <div class="photo-hint">Optionnel — mais <strong>+40% de matchs</strong> avec une photo</div>
             </div>
-            <div class="field-group"><label class="field-label">Prénom</label><input class="ob-input" id="f-prenom" type="text" placeholder="Thomas"></div>
+            <div class="field-group"><label class="field-label">Prénom</label><input class="ob-input" id="f-prenom" type="text" autocomplete="off" placeholder="Thomas"></div>
 
             <div class="field-group">
                 <label class="field-label">Genre</label>
@@ -6456,7 +6478,20 @@ setPlan('free');
             if(ov) ov.style.display = 'none';
             showStatusToast('✅ Connecté !');
             goTo('home');
-            setTimeout(function(){ if(typeof updateMyProfileScreen==='function') updateMyProfileScreen(); }, 500);
+            // Attendre que loadMyProfile soit terminé (onAuthStateChange le déclenche)
+            var attempts = 0;
+            var waitForProfile = setInterval(function() {
+                attempts++;
+                if(window.myProfile && window.myProfile.prenom) {
+                    clearInterval(waitForProfile);
+                    if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
+                    if(typeof loadDashboardStats==='function') loadDashboardStats();
+                    if(typeof checkStripeReturn==='function') checkStripeReturn();
+                } else if(attempts > 20) { // max 4 secondes
+                    clearInterval(waitForProfile);
+                    if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
+                }
+            }, 200);
         }, function(err) {
             var msg = '⚠️ Email ou mot de passe incorrect';
             if(err && err.message) {

@@ -931,7 +931,7 @@
             <div class="qa-card" onclick="goTo('events')"><div class="qa-icon">📅</div><div class="qa-label">Mes événements</div><div class="qa-sub" id="qa-sub-events">0 inscrit</div></div>
             <div class="qa-card" onclick="openSaved()"><div class="qa-icon">🔖</div><div class="qa-label">Profils sauvegardés</div><div class="qa-sub" id="qa-sub-saved">0 profil</div></div>
         </div>
-        <div class="section-title" style="margin-bottom:10px">⚡ Nouveaux matchs <span class="section-link" onclick="goTo('sport-select')">Voir tout →</span></div>
+        <div class="section-title" style="margin-bottom:10px">⚡ Profils compatibles <span class="section-link" onclick="goTo('sport-select')">Voir tout →</span></div>
         <div id="home-matches-list"></div>
     </div>
 </div>
@@ -3468,7 +3468,18 @@ var HOTEL_TEMPLATES = [
 var _lodgingActiveEventId='all', _lodgingActiveCity='', _lodgingActiveLat=null, _lodgingActiveLng=null, _lodgingActiveEventName='';
 
 async function loadLodgingScreen() {
+    // Attendre que currentUser soit prêt (max 3s)
+    if(!currentUser) {
+        var waited = 0;
+        await new Promise(function(resolve) {
+            var check = setInterval(function() {
+                waited += 200;
+                if(currentUser || waited >= 3000) { clearInterval(check); resolve(); }
+            }, 200);
+        });
+    }
     if(!currentUser) return;
+
     var av = document.getElementById('lodging-av');
     if(av && window.myProfile) {
         if(window.myProfile.avatar_url) { av.innerHTML='<img src="'+window.myProfile.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; }
@@ -3478,8 +3489,11 @@ async function loadLodgingScreen() {
     buildLodgingPills(events||[]);
     var sel = document.getElementById('lodging-offer-event');
     if(sel && events) sel.innerHTML='<option value="">Événement concerné...</option>'+events.map(function(ev){ return '<option value="'+ev.id+'">'+ev.name+' · '+(ev.city||'')+'</option>'; }).join('');
-    loadLodgingSeekers('all');
-    loadLodgingOffers('all');
+    // Charger le tab actif par défaut (Cherchent)
+    var activeTabBtn = document.querySelector('.lodging-tab[style*="background: rgb(10, 22, 40)"], .lodging-tab[style*="background:#0A1628"]');
+    if(!activeTabBtn) activeTabBtn = document.querySelector('.lodging-tab[data-tab="seeking"]');
+    if(activeTabBtn) switchLodgingTab(activeTabBtn, activeTabBtn.getAttribute('data-tab') || 'seeking');
+    else { loadLodgingSeekers('all'); loadLodgingOffers('all'); }
 }
 
 function buildLodgingPills(events) {
@@ -3507,16 +3521,20 @@ function buildLodgingPills(events) {
 function selectLodgingEvent(pill) {
     document.querySelectorAll('#lodging-event-pills .epill').forEach(function(p){p.classList.remove('active');});
     pill.classList.add('active');
-    _lodgingActiveEventId=pill.getAttribute('data-event-id');
-    _lodgingActiveCity=pill.getAttribute('data-city');
-    _lodgingActiveLat=parseFloat(pill.getAttribute('data-lat'))||null;
-    _lodgingActiveLng=parseFloat(pill.getAttribute('data-lng'))||null;
-    _lodgingActiveEventName=pill.getAttribute('data-event-name')||'';
-    loadLodgingSeekers(_lodgingActiveEventId);
-    loadLodgingOffers(_lodgingActiveEventId);
-    // Charger hôtels si tab hôtels actif
-    var activeTab=document.querySelector('.lodging-tab.active');
-    if(activeTab && activeTab.getAttribute('data-tab')==='hotels') loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
+    _lodgingActiveEventId  = pill.getAttribute('data-event-id');
+    _lodgingActiveCity     = pill.getAttribute('data-city');
+    _lodgingActiveLat      = parseFloat(pill.getAttribute('data-lat'))||null;
+    _lodgingActiveLng      = parseFloat(pill.getAttribute('data-lng'))||null;
+    _lodgingActiveEventName= pill.getAttribute('data-event-name')||'';
+    // Trouver le tab actif via data-active
+    var activeBtns = document.querySelectorAll('.lodging-tab');
+    var activeTab = 'seeking';
+    activeBtns.forEach(function(b){
+        if(b.getAttribute('data-active')==='1') activeTab = b.getAttribute('data-tab');
+    });
+    if(activeTab==='seeking')  loadLodgingSeekers(_lodgingActiveEventId);
+    if(activeTab==='offering') loadLodgingOffers(_lodgingActiveEventId);
+    if(activeTab==='hotels')   loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
 }
 
 async function loadLodgingSeekers(eventId) {
@@ -3695,14 +3713,18 @@ async function submitLodgingOffer() {
 }
 
 function switchLodgingTab(btn, tab) {
-    document.querySelectorAll('.lodging-tab').forEach(function(b){b.style.background='transparent';b.style.color='#64748B';});
+    document.querySelectorAll('.lodging-tab').forEach(function(b){
+        b.style.background='transparent'; b.style.color='#64748B';
+        b.removeAttribute('data-active');
+    });
     btn.style.background='#0A1628'; btn.style.color='white';
+    btn.setAttribute('data-active','1');
     document.getElementById('lodging-tab-seeking').style.display  = tab==='seeking'  ? '' : 'none';
     document.getElementById('lodging-tab-offering').style.display = tab==='offering' ? '' : 'none';
     document.getElementById('lodging-tab-hotels').style.display   = tab==='hotels'   ? '' : 'none';
     if(tab==='seeking')  loadLodgingSeekers(_lodgingActiveEventId);
     if(tab==='offering') loadLodgingOffers(_lodgingActiveEventId);
-    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity,_lodgingActiveLat,_lodgingActiveLng,_lodgingActiveEventName);
+    if(tab==='hotels')   loadLodgingHotels(_lodgingActiveCity, _lodgingActiveLat, _lodgingActiveLng, _lodgingActiveEventName);
 }
 
 // ===================== DASHBOARD STATS =====================

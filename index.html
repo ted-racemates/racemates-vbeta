@@ -4685,14 +4685,37 @@ function toggleCompletFilter() {
     document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
         var ov = document.getElementById('onboarding-overlay');
+
+        // Vérifier Stripe EN PREMIER avant tout
+        var params = new URLSearchParams(window.location.search);
+        if(params.get('premium') === 'success') {
+            window.history.replaceState({}, '', window.location.pathname);
+            sessionStorage.setItem('stripe_premium_pending', '1');
+            if(ov) ov.style.display = 'none';
+            // Vérifier si session active
+            sb.auth.getSession().then(function(res) {
+                if(res.data && res.data.session) {
+                    // Connecté → activer Premium et charger
+                    if(ov) ov.style.display = 'none';
+                    loadMyProfile();
+                } else {
+                    // Pas connecté → ouvrir modal login
+                    if(ov) ov.style.display = 'none';
+                    setTimeout(function(){
+                        showStatusToast('✅ Paiement reçu ! Connecte-toi pour activer ton Premium.');
+                        if(typeof openLoginModal==='function') openLoginModal();
+                    }, 400);
+                }
+            });
+            return; // stopper ici — ne pas afficher l'onboarding
+        }
+
+        // Flux normal
         if(ov) ov.style.display = 'block';
         sb.auth.getSession().then(function(res) {
             if(res.data && res.data.session) {
                 if(ov) ov.style.display = 'none';
                 loadMyProfile();
-            } else {
-                // Pas connecté — vérifier si retour Stripe
-                if(typeof checkStripeReturn==='function') checkStripeReturn();
             }
         });
     });

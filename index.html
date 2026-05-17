@@ -4698,31 +4698,38 @@ function toggleCompletFilter() {
     document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
         var ov = document.getElementById('onboarding-overlay');
-        // Masquer tout pendant la vérification de session
         if(ov) ov.style.display = 'none';
-        // Afficher un loader temporaire
+
         var loader = document.createElement('div');
         loader.id = 'app-loader';
         loader.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0A1628;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px';
         loader.innerHTML = '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:2em;color:white;letter-spacing:2px"><span style="color:#DC2626">RACE</span>MATES</div>'
-            + '<div style="width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;overflow:hidden"><div style="height:100%;background:#FBBF24;border-radius:2px;animation:pulse 1s ease-in-out infinite;width:100%"></div></div>';
+            + '<div style="width:40px;height:3px;background:#FBBF24;border-radius:2px"></div>';
         document.body.appendChild(loader);
 
-        sb.auth.getSession().then(function(res) {
-            // Supprimer le loader
+        function removeLoader() {
             var l = document.getElementById('app-loader');
             if(l) l.remove();
+        }
+
+        // Timeout de sécurité — si getSession prend trop longtemps, on affiche l'onboarding
+        var sessionTimeout = setTimeout(function() {
+            removeLoader();
+            if(ov) ov.style.display = 'block';
+        }, 3000);
+
+        sb.auth.getSession().then(function(res) {
+            clearTimeout(sessionTimeout);
+            removeLoader();
             if(res.data && res.data.session) {
-                // Connecté — aller directement à l'app
                 if(ov) ov.style.display = 'none';
                 loadMyProfile();
             } else {
-                // Pas connecté — afficher l'onboarding
                 if(ov) ov.style.display = 'block';
             }
         }).catch(function() {
-            var l = document.getElementById('app-loader');
-            if(l) l.remove();
+            clearTimeout(sessionTimeout);
+            removeLoader();
             if(ov) ov.style.display = 'block';
         });
     });

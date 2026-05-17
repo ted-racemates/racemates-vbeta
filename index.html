@@ -571,54 +571,46 @@
         let _loadingProfile = false;
 
         sb.auth.onAuthStateChange(async (event, session) => {
+            console.log('onAuthStateChange:', event, session?.user?.id);
             currentUser = session?.user || null;
-            // reset athletes flag
-            
+
             if (event === 'SIGNED_OUT') {
-                // Stopper les subscriptions realtime
                 if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
                 if(window._realtimeSubscription) { try{ sb.removeChannel(window._realtimeSubscription); }catch(e){} window._realtimeSubscription = null; }
                 if(window._notifChannel) { try{ sb.removeChannel(window._notifChannel); }catch(e){} window._notifChannel = null; }
-                // Reset complet des données utilisateur
-                currentUser = null;
-                currentProfile = null;
-                window.myProfile = null;
-                window._pendingAuth = null;
-                window._trainingData = [];
-                window._myEventIds = new Set();
-                window._matchingEvents = [];
-                window._matchingUserEvents = {};
-                window._athletesLoadedAt = 0;
-                // Reset UI profil pour éviter que les données de l'ancien user restent affichées
+                currentUser = null; currentProfile = null; window.myProfile = null;
+                window._pendingAuth = null; window._trainingData = [];
+                window._myEventIds = new Set(); window._matchingEvents = [];
+                window._matchingUserEvents = {}; window._athletesLoadedAt = 0;
+                _loadingProfile = false; // IMPORTANT : reset le flag
                 var selectors = [
-                    ['#home-welcome', 'textContent', 'Bonjour 👋'],
-                    ['#screen-profile .profile-name', 'textContent', ''],
-                    ['#screen-profile .profile-loc', 'textContent', ''],
-                    ['#screen-profile .profile-avatar', 'textContent', '?'],
-                    ['#stat-val-matches', 'textContent', '-'],
-                    ['#stat-val-messages', 'textContent', '-'],
-                    ['#stat-val-events', 'textContent', '-'],
-                    ['#athletes-list', 'innerHTML', ''],
-                    ['#home-matches-list', 'innerHTML', ''],
-                    ['#training-list', 'innerHTML', ''],
-                    ['#profile-badges-dynamic', 'innerHTML', ''],
-                    ['#profile-pstats', 'innerHTML', '']
+                    ['#home-welcome','textContent','Bonjour 👋'],
+                    ['#screen-profile .profile-name','textContent',''],
+                    ['#screen-profile .profile-loc','textContent',''],
+                    ['#stat-val-matches','textContent','-'],
+                    ['#stat-val-messages','textContent','-'],
+                    ['#stat-val-events','textContent','-'],
+                    ['#athletes-list','innerHTML',''],
+                    ['#home-matches-list','innerHTML',''],
+                    ['#profile-badges-dynamic','innerHTML',''],
+                    ['#profile-pstats','innerHTML','']
                 ];
-                selectors.forEach(function(s) {
-                    var el = document.querySelector(s[0]);
-                    if(el) el[s[1]] = s[2];
-                });
-                document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = '?'; });
+                selectors.forEach(function(s){ var el=document.querySelector(s[0]); if(el) el[s[1]]=s[2]; });
+                document.querySelectorAll('.user-av').forEach(function(el){ el.textContent='?'; });
                 return;
             }
 
-            if (currentUser && !_loadingProfile) {
-                _loadingProfile = true;
-                try { await loadMyProfile(); } finally { _loadingProfile = false; }
-                // Profil en attente (signup)
-                if(window._pendingProfileData) {
-                    var pd = window._pendingProfileData; window._pendingProfileData = null;
-                    try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+                if(currentUser && !_loadingProfile) {
+                    _loadingProfile = true;
+                    console.log('loadMyProfile START', currentUser.id);
+                    try { await loadMyProfile(); console.log('loadMyProfile OK'); }
+                    catch(e) { console.error('loadMyProfile ERROR:', e); }
+                    finally { _loadingProfile = false; }
+                    if(window._pendingProfileData) {
+                        var pd = window._pendingProfileData; window._pendingProfileData = null;
+                        try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
+                    }
                 }
             }
         });

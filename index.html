@@ -603,14 +603,20 @@
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
                 if(currentUser && !_loadingProfile) {
                     _loadingProfile = true;
-                    console.log('loadMyProfile START', currentUser.id);
-                    try { await loadMyProfile(); console.log('loadMyProfile OK'); }
+                    var loadingUserId = currentUser.id;
+                    console.log('loadMyProfile START', loadingUserId);
+                    try { 
+                        await loadMyProfile(); 
+                        console.log('loadMyProfile OK');
+                    }
                     catch(e) { console.error('loadMyProfile ERROR:', e); }
                     finally { _loadingProfile = false; }
                     if(window._pendingProfileData) {
                         var pd = window._pendingProfileData; window._pendingProfileData = null;
                         try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
                     }
+                } else if(currentUser && _loadingProfile) {
+                    console.log('loadMyProfile SKIP - already loading');
                 }
             }
         });
@@ -621,7 +627,9 @@
             var expectedUserId = currentUser.id;
             var parseSafe = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):[];}catch(e){return[];} };
             var parseSafeObj = function(v){ try{ return v?(typeof v==='string'?JSON.parse(v):v):{};}catch(e){return{};} };
-            const { data } = await sb.from('profiles').select('*').eq('id', expectedUserId).single();
+            console.log('loadMyProfile: fetching profile for', expectedUserId);
+            const { data, error } = await sb.from('profiles').select('*').eq('id', expectedUserId).single();
+            console.log('loadMyProfile: got data=', !!data, 'error=', error?.message);
             // Vérifier que l'utilisateur n'a pas changé pendant la requête
             if (!data || !currentUser || currentUser.id !== expectedUserId) return;
             currentProfile = data;
@@ -661,12 +669,21 @@
                 });
             }
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
-            // Charger conversations et badge non-lus
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
-            // Charger les matchs récents sur la home
             setTimeout(function(){ if(typeof loadHomeMatches==='function') loadHomeMatches(); }, 500);
-            // Mettre à jour les compteurs sport
             setTimeout(function(){ if(typeof updateSportCounts==='function') updateSportCounts(); }, 600);
+            setTimeout(function(){ if(typeof loadDashboardStats==='function') loadDashboardStats(); }, 400);
+            // Forcer le rechargement de l'écran actif
+            setTimeout(function(){
+                var activeScreen = document.querySelector('.screen.active');
+                if(activeScreen) {
+                    var screenId = activeScreen.id.replace('screen-', '');
+                    if(screenId === 'matching') { window._athletesLoadedAt = 0; loadRealAthletes(); }
+                    if(screenId === 'events') { if(typeof loadEvents==='function') loadEvents(); }
+                    if(screenId === 'lodging') { if(typeof loadLodgingScreen==='function') loadLodgingScreen(); }
+                    if(screenId === 'messages') { if(typeof loadConversationsList==='function') loadConversationsList(); }
+                }
+            }, 800);
             // Charger le compteur profils sauvegardés
             if(currentUser) {
                 sb.from('saved_profiles').select('saved_user_id', {count:'exact'}).eq('user_id', currentUser.id)
@@ -3219,35 +3236,16 @@ function goToPremium() {
 async function checkStripeReturn() {
     var params = new URLSearchParams(window.location.search);
     if(params.get('premium') !== 'success') return;
-    // Nettoyer l'URL
     window.history.replaceState({}, '', window.location.pathname);
-    // Cacher l'onboarding
+    // Stocker le flag Premium
+    sessionStorage.setItem('stripe_premium_pending', '1');
+    // Cacher l'onboarding et ouvrir le modal login
     var ov = document.getElementById('onboarding-overlay');
     if(ov) ov.style.display = 'none';
-    // Vérifier si déjà connecté
-    var res = await sb.auth.getSession();
-    if(res.data && res.data.session && res.data.session.user) {
-        // Déjà connecté — activer Premium directement
-        var uid = res.data.session.user.id;
-        await sb.from('profiles').update({plan:'premium'}).eq('id', uid);
-        if(window.myProfile) window.myProfile.plan = 'premium';
-        if(typeof setPlan==='function') setPlan('premium');
-        if(ov) ov.style.display = 'none';
-        showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
-        setTimeout(function(){
-            goTo('profile');
-            if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
-        }, 500);
-    } else {
-        // Pas connecté — stocker le flag et ouvrir le modal login
-        sessionStorage.setItem('stripe_premium_pending', '1');
-        if(ov) ov.style.display = 'none';
-        // Afficher modal login avec message
-        setTimeout(function(){
-            if(typeof openLoginModal==='function') openLoginModal();
-            showStatusToast('✅ Paiement reçu ! Connecte-toi pour activer ton Premium.');
-        }, 300);
-    }
+    setTimeout(function(){
+        showStatusToast('✅ Paiement reçu ! Connecte-toi pour activer ton Premium.');
+        if(typeof openLoginModal==='function') openLoginModal();
+    }, 500);
 }
 
 function setPlan(plan) {
@@ -4686,14 +4684,15 @@ function toggleCompletFilter() {
 
     document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
-        // Vérifier retour Stripe AVANT tout (indépendant de la session)
-        if(typeof checkStripeReturn==='function') checkStripeReturn();
         var ov = document.getElementById('onboarding-overlay');
         if(ov) ov.style.display = 'block';
         sb.auth.getSession().then(function(res) {
             if(res.data && res.data.session) {
                 if(ov) ov.style.display = 'none';
                 loadMyProfile();
+            } else {
+                // Pas connecté — vérifier si retour Stripe
+                if(typeof checkStripeReturn==='function') checkStripeReturn();
             }
         });
     });

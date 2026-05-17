@@ -1504,7 +1504,7 @@
             <button class="lodging-tab" data-tab="hotels" onclick="switchLodgingTab(this,'hotels')" style="flex:1;border:none;border-radius:9px;padding:8px 6px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82em;cursor:pointer;background:transparent;color:#64748B">🏨 Hôtels</button>
         </div>
         <div id="lodging-tab-seeking">
-            <div style="font-size:0.78em;color:#64748B;margin-bottom:10px">Athlètes inscrits à cet event qui cherchent un logement</div>
+            <div style="font-size:0.78em;color:#64748B;margin-bottom:10px">Athlètes qui cherchent un logement · filtre par événement via les pills</div>
             <div id="lodging-seekers-list"><div style="text-align:center;padding:24px;color:#94A3B8;font-size:0.85em">Sélectionne un événement</div></div>
         </div>
         <div id="lodging-tab-offering" style="display:none">
@@ -3560,7 +3560,15 @@ async function loadLodgingSeekers(eventId) {
 
     // Filtrer par event si sélectionné
     if(eventId !== 'all') {
-        seekers = seekers.filter(function(p){ return p.lodging_event_id === eventId; });
+        var byLodgingEvent = seekers.filter(function(p){ return p.lodging_event_id === eventId; });
+        // Si personne n'a renseigné lodging_event_id pour cet event, fallback sur event_registrations
+        if(byLodgingEvent.length > 0) {
+            seekers = byLodgingEvent;
+        } else {
+            var {data:regs} = await sb.from('event_registrations').select('user_id').eq('event_id', eventId);
+            var regIds = new Set((regs||[]).map(function(r){ return r.user_id; }));
+            seekers = seekers.filter(function(p){ return regIds.has(p.id); });
+        }
     }
 
     if(!seekers.length){
@@ -3703,7 +3711,7 @@ async function submitLodgingOffer() {
     if(!eventId){showStatusToast('⚠️ Sélectionne un événement');return;}
     if(!desc){showStatusToast('⚠️ Ajoute une description');return;}
     if(!price){showStatusToast('⚠️ Indique un prix par nuit');return;}
-    var {error}=await sb.from('lodgings').insert({user_id:currentUser.id,event_id:eventId,name:desc.substring(0,50),places:places,price_per_night:price,description:desc});
+    var {error}=await sb.from('lodgings').insert({user_id:currentUser.id,event_id:eventId,places:places,price_per_night:price,description:desc});
     if(error){showStatusToast('❌ Erreur : '+error.message);return;}
     showStatusToast('✅ Annonce publiée !');
     document.getElementById('lodging-offer-desc').value='';

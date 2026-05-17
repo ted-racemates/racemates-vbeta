@@ -576,6 +576,20 @@
             console.log('onAuthStateChange:', event, session?.user?.id);
             currentUser = session?.user || null;
 
+            // Intercepter le flux de reset de mot de passe AVANT tout le reste
+            if (event === 'PASSWORD_RECOVERY') {
+                console.log('PASSWORD_RECOVERY event détecté');
+                // Cacher l'onboarding si visible
+                var ov = document.getElementById('onboarding-overlay');
+                if(ov) ov.style.display = 'none';
+                // Fermer le login modal si ouvert
+                var lm = document.getElementById('login-modal');
+                if(lm) lm.style.display = 'none';
+                // Ouvrir le modal de reset
+                setTimeout(function(){ openResetPasswordModal(); }, 300);
+                return;
+            }
+
             if (event === 'SIGNED_OUT') {
                 _authToken++; // annuler tout loadMyProfile en cours
                 _loadingProfile = false;
@@ -862,14 +876,31 @@
         // ── REVIEWS ─────────────────────────────────────────────
         async function sbSubmitReview(reviewedId, stars, comment) {
             if (!currentUser) return;
-            // Essayer d'abord un insert, si conflit faire un update
-            const { error } = await sb.from('reviews').upsert({
-                reviewer_id: currentUser.id,
-                reviewed_id: reviewedId,
-                stars: stars,
-                comment: comment,
-                rating: stars
-            }, { onConflict: 'reviewer_id,reviewed_id' });
+            // Vérifier si un avis existe déjà (évite les problèmes RLS avec upsert)
+            const { data: existing } = await sb.from('reviews')
+                .select('id')
+                .eq('reviewer_id', currentUser.id)
+                .eq('reviewed_id', reviewedId)
+                .maybeSingle();
+            let error;
+            if (existing) {
+                // UPDATE : l'utilisateur a déjà laissé un avis → mise à jour
+                const res = await sb.from('reviews')
+                    .update({ stars: stars, comment: comment, rating: stars })
+                    .eq('reviewer_id', currentUser.id)
+                    .eq('reviewed_id', reviewedId);
+                error = res.error;
+            } else {
+                // INSERT : premier avis
+                const res = await sb.from('reviews').insert({
+                    reviewer_id: currentUser.id,
+                    reviewed_id: reviewedId,
+                    stars: stars,
+                    comment: comment,
+                    rating: stars
+                });
+                error = res.error;
+            }
             if (error) {
                 console.error('sbSubmitReview error:', error);
                 throw error;
@@ -4743,12 +4774,16 @@ function toggleCompletFilter() {
         var ov = document.getElementById('onboarding-overlay');
 
         // Détecter un reset de mot de passe via le hash URL
+        // Supabase v2 passe les tokens via fragment (#type=recovery)
+        // On cache l'onboarding ici ; c'est onAuthStateChange (PASSWORD_RECOVERY) qui ouvre le modal
         var hash = window.location.hash;
         if(hash && hash.includes('type=recovery')) {
             if(ov) ov.style.display = 'none';
-            window.history.replaceState({}, '', window.location.pathname);
-            setTimeout(function(){ openResetPasswordModal(); }, 500);
-            return;
+            // NE PAS faire return ni ouvrir le modal ici :
+            // Supabase va parser le hash, authentifier la session et déclencher
+            // onAuthStateChange avec event='PASSWORD_RECOVERY' qui ouvre le modal.
+            // On nettoie juste le hash pour éviter un rechargement avec token exposé.
+            setTimeout(function(){ window.history.replaceState({}, '', window.location.pathname); }, 1000);
         }
 
         // Vérifier Stripe EN PREMIER

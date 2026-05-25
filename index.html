@@ -3900,15 +3900,15 @@ async function loadDashboardStats() {
         if(sub) sub.textContent = n + ' disponible' + (n > 1 ? 's' : '');
     });
 
-    // --- MESSAGES : conversations actives ---
-    sb.from('conversations').select('id', {count: 'exact'})
-    .or('user1_id.eq.' + currentUser.id + ',user2_id.eq.' + currentUser.id)
+    // --- MESSAGES : messages non lus (read_at IS NULL et pas envoyés par moi) ---
+    sb.from('messages').select('id', {count: 'exact'})
+    .is('read_at', null)
+    .neq('sender_id', currentUser.id)
     .then(function(res) {
         var n = res.count || 0;
         var el = document.getElementById('stat-val-messages');
         if(el) {
             el.textContent = n;
-            // Rouge seulement si > 0
             el.style.color = n > 0 ? 'var(--red)' : 'var(--blue)';
         }
     });
@@ -5594,7 +5594,7 @@ function toggleCompletFilter() {
         if(modalCount) modalCount.textContent = savedCount + (savedCount > 1 ? ' profils' : ' profil');
         // Sync saved nav badge in modal
         var savedNavBadge = document.getElementById('saved-nav-msg-badge');
-        var msgCount = document.querySelectorAll('.conv-item').length;
+        var msgCount = document.querySelectorAll('.conv-card.unread').length;
         if(savedNavBadge) {
             savedNavBadge.textContent = msgCount;
             savedNavBadge.style.display = msgCount > 0 ? '' : 'none';
@@ -6558,7 +6558,12 @@ setPlan('free');
             resetLoginBtn();
             return;
         }
+        // Timeout 12s anti-blocage
+        var loginTimeout = setTimeout(function() {
+            resetLoginBtn('⚠️ Délai dépassé, réessaie');
+        }, 12000);
         signInFn(email, pwd).then(function() {
+            clearTimeout(loginTimeout);
             resetLoginBtn('');
             closeLoginModal();
             var ov = document.getElementById('onboarding-overlay');
@@ -6579,6 +6584,7 @@ setPlan('free');
                 }
             }, 200);
         }, function(err) {
+            clearTimeout(loginTimeout);
             var msg = '⚠️ Email ou mot de passe incorrect';
             if(err && err.message) {
                 if(err.message.indexOf('Email not confirmed') > -1) msg = '⚠️ Confirme ton email avant de te connecter';

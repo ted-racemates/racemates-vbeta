@@ -563,7 +563,14 @@
     <script>
         const SUPABASE_URL = 'https://gikxjkozjwjqieddolkt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdpa3hqa296andqcWllZGRvbGt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTc5NTMsImV4cCI6MjA4ODEzMzk1M30.c-_I1BGuwVS7XJj_5wDa8vpeEoJ1Yv1vG67U1K7SaIw';
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storageKey: 'racemates-session'
+            }
+        });
 
         // ── Auth state ──────────────────────────────────────────
         let currentUser = null;
@@ -571,6 +578,8 @@
         let _loadingProfile = false;
 
         var _authToken = 0; // token incrémenté à chaque SIGNED_IN pour annuler les appels précédents
+        var _lastSignedInUser = null; // debounce SIGNED_IN
+        var _signedInDebounce = null; // timer debounce
 
         sb.auth.onAuthStateChange(async (event, session) => {
             console.log('onAuthStateChange:', event, session?.user?.id);
@@ -593,6 +602,8 @@
             if (event === 'SIGNED_OUT') {
                 _authToken++; // annuler tout loadMyProfile en cours
                 _loadingProfile = false;
+                _lastSignedInUser = null; // reset debounce
+                if(_signedInDebounce){ clearTimeout(_signedInDebounce); _signedInDebounce = null; }
                 if(window._globalChannel) { try{ sb.removeChannel(window._globalChannel); }catch(e){} window._globalChannel = null; }
                 if(window._realtimeSubscription) { try{ sb.removeChannel(window._realtimeSubscription); }catch(e){} window._realtimeSubscription = null; }
                 if(window._notifChannel) { try{ sb.removeChannel(window._notifChannel); }catch(e){} window._notifChannel = null; }
@@ -618,19 +629,33 @@
             }
 
             if(currentUser) {
-                _authToken++; // incrémenter le token — annule les appels précédents
-                var myToken = _authToken;
-                console.log('loadMyProfile START token='+myToken, currentUser.id);
-                try {
-                    await loadMyProfile(myToken);
-                    console.log('loadMyProfile OK token='+myToken);
-                } catch(e) {
-                    console.error('loadMyProfile ERROR:', e);
-                }
-                if(window._pendingProfileData && _authToken === myToken) {
-                    var pd = window._pendingProfileData; window._pendingProfileData = null;
-                    try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
-                }
+                var incomingUserId = currentUser.id;
+                // Debounce : ignorer les SIGNED_IN en rafale pour le meme user
+                if(_signedInDebounce) { clearTimeout(_signedInDebounce); }
+                _signedInDebounce = setTimeout(async function() {
+                    _signedInDebounce = null;
+                    // Si l'user a change entre-temps, abandonner
+                    if(!currentUser || currentUser.id !== incomingUserId) return;
+                    // Si meme user deja charge, ne pas recharger
+                    if(_lastSignedInUser === incomingUserId && window.myProfile) {
+                        console.log('SIGNED_IN debounce: meme user deja charge, skip');
+                        return;
+                    }
+                    _lastSignedInUser = incomingUserId;
+                    _authToken++;
+                    var myToken = _authToken;
+                    console.log('loadMyProfile START token='+myToken, incomingUserId);
+                    try {
+                        await loadMyProfile(myToken);
+                        console.log('loadMyProfile OK token='+myToken);
+                    } catch(e) {
+                        console.error('loadMyProfile ERROR:', e);
+                    }
+                    if(window._pendingProfileData && _authToken === myToken) {
+                        var pd = window._pendingProfileData; window._pendingProfileData = null;
+                        try { await sbUpdateProfile(pd, currentUser.id); } catch(e) {}
+                    }
+                }, 400); // attendre 400ms avant de charger
             }
         });
 
@@ -3900,17 +3925,27 @@ async function loadDashboardStats() {
         if(sub) sub.textContent = n + ' disponible' + (n > 1 ? 's' : '');
     });
 
-    // --- MESSAGES : messages non lus (read_at IS NULL et pas envoyés par moi) ---
-    sb.from('messages').select('id', {count: 'exact'})
-    .is('read_at', null)
-    .neq('sender_id', currentUser.id)
-    .then(function(res) {
-        var n = res.count || 0;
-        var el = document.getElementById('stat-val-messages');
-        if(el) {
-            el.textContent = n;
-            el.style.color = n > 0 ? 'var(--red)' : 'var(--blue)';
+    // --- MESSAGES : compter les convs avec messages non lus ---
+    // On passe par les conversations dont on est membre, puis on compte
+    // les messages non lus (read_at IS NULL, sender != moi) dans ces convs
+    sb.from('conversations').select('id')
+    .or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id)
+    .then(function(cRes) {
+        var convIds = (cRes.data||[]).map(function(c){ return c.id; });
+        if(!convIds.length) {
+            var el = document.getElementById('stat-val-messages');
+            if(el){ el.textContent = 0; el.style.color = 'var(--blue)'; }
+            return;
         }
+        sb.from('messages').select('id', {count:'exact'})
+        .in('conversation_id', convIds)
+        .is('read_at', null)
+        .neq('sender_id', currentUser.id)
+        .then(function(res) {
+            var n = res.count || 0;
+            var el = document.getElementById('stat-val-messages');
+            if(el){ el.textContent = n; el.style.color = n > 0 ? 'var(--red)' : 'var(--blue)'; }
+        });
     });
 
     // --- ÉVÉNEMENTS : mes inscriptions ---
@@ -5211,6 +5246,16 @@ function toggleCompletFilter() {
         // Bonjour + prénom sur l'accueil
         var homeWelcome = document.getElementById('home-welcome');
         if(homeWelcome) homeWelcome.textContent = 'Bonjour ' + p.prenom + ' 👋';
+        // Mettre à jour le welcome-avatar (hero card)
+        var welcomeAv = document.querySelector('.welcome-avatar');
+        if(welcomeAv) {
+            if(p.avatar_url) {
+                welcomeAv.innerHTML = '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                welcomeAv.style.padding = '0'; welcomeAv.style.overflow = 'hidden';
+            } else {
+                welcomeAv.textContent = p.avatar_initials || p.initials || '?';
+            }
+        }
 
         // Nom + initiales/photo + localisation
         var profName = document.querySelector('#screen-profile .profile-name');

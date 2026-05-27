@@ -580,6 +580,7 @@
         var _authToken = 0; // token incrémenté à chaque SIGNED_IN pour annuler les appels précédents
         var _lastSignedInUser = null; // debounce SIGNED_IN
         var _signedInDebounce = null; // timer debounce
+        var _isRecoveryMode = false; // bloque le flux SIGNED_IN pendant un reset mdp
 
         sb.auth.onAuthStateChange(async (event, session) => {
             console.log('onAuthStateChange:', event, session?.user?.id);
@@ -588,9 +589,13 @@
             // Intercepter le flux de reset de mot de passe AVANT tout le reste
             if (event === 'PASSWORD_RECOVERY') {
                 console.log('PASSWORD_RECOVERY event détecté');
+                _isRecoveryMode = true; // bloquer SIGNED_IN qui suit
+                if(_signedInDebounce){ clearTimeout(_signedInDebounce); _signedInDebounce = null; }
                 // Cacher l'onboarding si visible
                 var ov = document.getElementById('onboarding-overlay');
                 if(ov) ov.style.display = 'none';
+                // Cacher tous les screens, afficher fond vide
+                document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; });
                 // Fermer le login modal si ouvert
                 var lm = document.getElementById('login-modal');
                 if(lm) lm.style.display = 'none';
@@ -634,6 +639,8 @@
                 if(_signedInDebounce) { clearTimeout(_signedInDebounce); }
                 _signedInDebounce = setTimeout(async function() {
                     _signedInDebounce = null;
+                    // Si on est en mode recovery, ne pas charger le profil
+                    if(_isRecoveryMode) { console.log('SIGNED_IN skip: recovery mode actif'); return; }
                     // Si l'user a change entre-temps, abandonner
                     if(!currentUser || currentUser.id !== incomingUserId) return;
                     // Si meme user deja charge, ne pas recharger
@@ -6717,6 +6724,7 @@ setPlan('free');
     }
 
     async function submitResetPassword() {
+        _isRecoveryMode = false; // fin du mode recovery
         var pwd = (document.getElementById('reset-pwd-input')||{}).value;
         if(!pwd || pwd.length < 8) { showStatusToast('⚠️ Mot de passe trop court (8 car. min)'); return; }
         var {error} = await sb.auth.updateUser({password: pwd});

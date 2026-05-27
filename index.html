@@ -594,12 +594,10 @@
                 // Cacher l'onboarding si visible
                 var ov = document.getElementById('onboarding-overlay');
                 if(ov) ov.style.display = 'none';
-                // Cacher tous les screens, afficher fond vide
-                document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; });
                 // Fermer le login modal si ouvert
                 var lm = document.getElementById('login-modal');
                 if(lm) lm.style.display = 'none';
-                // Ouvrir le modal de reset
+                // Ouvrir le modal de reset (par dessus l'app)
                 setTimeout(function(){ openResetPasswordModal(); }, 300);
                 return;
             }
@@ -6732,7 +6730,12 @@ setPlan('free');
         var modal = document.getElementById('reset-pwd-modal');
         if(modal) modal.remove();
         showStatusToast('✅ Mot de passe mis à jour !');
-        loadMyProfile();
+        // Recharger le profil puis afficher l'accueil
+        loadMyProfile().then(function(){
+            if(typeof goTo === 'function') goTo('home');
+        }).catch(function(){
+            if(typeof goTo === 'function') goTo('home');
+        });
     }
 
     function openHelp(){

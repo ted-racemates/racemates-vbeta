@@ -2049,11 +2049,16 @@ async function loadMessages(convId) {
     if (data && data.length > 0 && currentUser) {
         // 1. Mettre à jour l'UI instantanément
         _markConvAsRead(convId);
-        // 2. Marquer en base
+        // 2. Marquer en base (le .then() est indispensable pour que Supabase JS v2 execute la requete)
         sb.from('messages').update({ read_at: new Date().toISOString() })
             .eq('conversation_id', convId)
             .neq('sender_id', currentUser.id)
-            .is('read_at', null);
+            .is('read_at', null)
+            .then(function(res) {
+                if(res.error) console.error('markRead error:', res.error);
+                else console.log('markRead OK, rows updated:', res.data ? res.data.length : '?');
+                if(typeof loadDashboardStats === 'function') setTimeout(loadDashboardStats, 300);
+            });
     }
 }
 
@@ -2074,7 +2079,10 @@ function subscribeToMessages(convId) {
                 msgs.appendChild(wrap);
                 msgs.scrollTop = msgs.scrollHeight;
                 // Marquer lu
-                sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id);
+                sb.from('messages').update({ read_at: new Date().toISOString() }).eq('id', m.id)
+                .then(function(){
+                    if(typeof loadDashboardStats === 'function') setTimeout(loadDashboardStats, 300);
+                });
             })
         .subscribe();
 }

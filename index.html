@@ -1030,7 +1030,15 @@
             <div class="qa-card" style="background:linear-gradient(135deg,#0A1628,#065F46);color:white;border:none" onclick="goTo('training')"><div class="qa-icon">🤝</div><div class="qa-label" style="color:white">Partenaire entraîn.</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-training">...</div></div>
             <div class="qa-card" onclick="goTo('events')"><div class="qa-icon">📅</div><div class="qa-label">Mes événements</div><div class="qa-sub" id="qa-sub-events">0 inscrit</div></div>
             <div class="qa-card" onclick="openSaved()"><div class="qa-icon">🔖</div><div class="qa-label">Profils sauvegardés</div><div class="qa-sub" id="qa-sub-saved">0 profil</div></div>
+            <div class="qa-card" style="background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none" onclick="openLastMinuteForm()"><div class="qa-icon">🚨</div><div class="qa-label" style="color:white">Dernière minute</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-alerts">Poster une alerte</div></div>
+            <div class="qa-card" style="background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none" onclick="openCarpoolForm()"><div class="qa-icon">🚗</div><div class="qa-label" style="color:white">Covoiturage</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-carpool">Proposer / Rejoindre</div></div>
         </div>
+        <!-- DERNIERE MINUTE -->
+        <div class="section-title" style="margin-bottom:10px;margin-top:20px">🚨 Dernière minute <span class="section-link" onclick="openLastMinuteForm()">+ Poster</span></div>
+        <div id="last-minute-section" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"><div style="text-align:center;color:var(--grey);font-size:0.82em;padding:14px 0">👍 Aucune alerte pour le moment</div></div>
+        <!-- COVOITURAGE -->
+        <div class="section-title" style="margin-bottom:10px">🚗 Covoiturage <span class="section-link" onclick="openCarpoolForm()">+ Proposer</span></div>
+        <div id="carpool-section" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"><div style="text-align:center;color:var(--grey);font-size:0.82em;padding:14px 0">👍 Aucun covoiturage pour le moment</div></div>
         <div class="section-title" style="margin-bottom:10px">⚡ Profils compatibles <span class="section-link" onclick="goTo('sport-select')">Voir tout →</span></div>
         <div id="home-matches-list"></div>
     </div>
@@ -3679,7 +3687,188 @@ function filterTraining(el, sport) {
     renderTraining(_trainingData);
 }
 
-function selRegion(el, region) {
+
+    // ===== DERNIERE MINUTE =====
+    function openLastMinuteForm() {
+        var existing = document.getElementById('last-minute-modal');
+        if(existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'last-minute-modal';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:99999999;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;padding:0';
+        modal.innerHTML = '<div style="background:white;border-radius:24px 24px 0 0;padding:28px 20px 36px;width:100%;max-width:480px;box-sizing:border-box">'
+            +'<div style="width:36px;height:4px;background:#E2E8F0;border-radius:2px;margin:0 auto 20px"></div>'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.4em;color:#0A1628;margin-bottom:4px">\uD83D\uDEA8 Alerte Derni\u00e8re Minute</div>'
+            +'<div style="font-size:0.8em;color:#64748B;margin-bottom:20px">Ton partenaire s\'est d\u00e9sist\u00e9 ? Trouve quelqu\'un rapidement !</div>'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">\u00c9v\u00e9nement</label>'
+            +'<input id="lm-event-name" placeholder="Ex: Hyrox Grand Palais" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Date de l\'\u00e9v\u00e9nement</label>'
+            +'<input id="lm-event-date" type="date" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:8px">Ce que tu cherches</label>'
+            +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
+            +'<div class="lm-need-chip active" onclick="selLmNeed(this,\'duo\')" data-need="duo" style="padding:6px 14px;border-radius:20px;border:1.5px solid #0A1628;background:#0A1628;color:white;font-size:0.8em;font-weight:700;cursor:pointer">\uD83C\uDFC5 Partenaire Duo</div>'
+            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'relais\')" data-need="relais" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\u26A1 Relais</div>'
+            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'logement\')" data-need="logement" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83C\uDFE0 Logement</div>'
+            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'entrainement\')" data-need="entrainement" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83E\uDD1D Entra\u00eenement</div>'
+            +'</div>'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Message (optionnel)</label>'
+            +'<textarea id="lm-message" placeholder="Ex: Mon duo s\'est bless\u00e9, je cherche quelqu\'un pour Hyrox Double..." style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:16px;box-sizing:border-box;font-family:Barlow,sans-serif;resize:none;height:70px"></textarea>'
+            +'<button onclick="submitLastMinute()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1em;cursor:pointer;margin-bottom:10px">\uD83D\uDEA8 Poster l\'alerte</button>'
+            +'<button onclick="document.getElementById(\'last-minute-modal\').remove()" style="width:100%;padding:12px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.9em;color:#64748B;cursor:pointer">Annuler</button>'
+            +'</div>';
+        document.body.appendChild(modal);
+    }
+
+    function selLmNeed(el, need) {
+        document.querySelectorAll('.lm-need-chip').forEach(function(c){
+            c.style.background='white'; c.style.color='#0A1628'; c.style.borderColor='#E2E8F0';
+        });
+        el.style.background='#0A1628'; el.style.color='white'; el.style.borderColor='#0A1628';
+    }
+
+    async function submitLastMinute() {
+        if(!currentUser) { showStatusToast('\u26A0\uFE0F Connecte-toi d\'abord'); return; }
+        var eventName = (document.getElementById('lm-event-name')||{}).value.trim();
+        var eventDate = (document.getElementById('lm-event-date')||{}).value;
+        var need = (document.querySelector('.lm-need-chip[style*="background:#0A1628"]')||{}).getAttribute ? document.querySelector('.lm-need-chip[style*="background:#0A1628"]').getAttribute('data-need') : 'duo';
+        var message = (document.getElementById('lm-message')||{}).value.trim();
+        if(!eventName || !eventDate) { showStatusToast('\u26A0\uFE0F Remplis l\'\u00e9v\u00e9nement et la date'); return; }
+        var res = await sb.from('last_minute_alerts').insert({ user_id: currentUser.id, event_name: eventName, event_date: eventDate, need: need, message: message });
+        if(res.error) { showStatusToast('\u274C Erreur : '+res.error.message); return; }
+        document.getElementById('last-minute-modal').remove();
+        showStatusToast('\uD83D\uDEA8 Alerte post\u00e9e !');
+        loadLastMinuteAlerts();
+    }
+
+    async function loadLastMinuteAlerts() {
+        var container = document.getElementById('last-minute-section');
+        var today = new Date().toISOString().split('T')[0];
+        var res = await sb.from('last_minute_alerts').select('*,profiles(prenom,pseudo,avatar_initials,avatar_url)').gte('event_date', today).order('created_at', {ascending:false}).limit(10);
+        if(res.error || !res.data || res.data.length === 0) {
+            if(container) container.innerHTML = '<div style="text-align:center;color:var(--grey);font-size:0.82em;padding:14px 0">\uD83D\uDC4D Aucune alerte pour le moment</div>';
+            var sub = document.getElementById('qa-sub-alerts');
+            if(sub) sub.textContent = 'Poster une alerte';
+            return;
+        }
+        var sub = document.getElementById('qa-sub-alerts');
+        if(sub) sub.textContent = res.data.length + ' alerte'+(res.data.length>1?'s':'');
+        var needLabels = {duo:'\uD83C\uDFC5 Duo',relais:'\u26A1 Relais',logement:'\uD83C\uDFE0 Logement',entrainement:'\uD83E\uDD1D Entra\u00eenement'};
+        var needColors = {duo:'#1E3A8A',relais:'#92400E',logement:'#065F46',entrainement:'#6B21A8'};
+        var html = res.data.map(function(a) {
+            var p = a.profiles || {};
+            var name = p.prenom || p.pseudo || 'Athl\u00e8te';
+            var initials = p.avatar_initials || (name[0]||'?').toUpperCase();
+            var avatarHtml = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+            var date = new Date(a.event_date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+            var needColor = needColors[a.need] || '#0A1628';
+            var needLabel = needLabels[a.need] || a.need;
+            var isOwn = currentUser && a.user_id === currentUser.id;
+            return '<div style="background:white;border-radius:14px;padding:14px 16px;border:1.5px solid #FEE2E2;display:flex;gap:12px;align-items:flex-start">'
+                +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:0.9em;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'
+                +'<div style="flex:1;min-width:0">'
+                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+name+' <span style="font-size:0.8em;color:#64748B;font-weight:400">· '+a.event_name+'</span></div>'
+                +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'
+                +'<span style="background:'+needColor+';color:white;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">'+needLabel+'</span>'
+                +'<span style="background:#F1F5F9;color:#64748B;font-size:0.7em;padding:2px 8px;border-radius:6px">\uD83D\uDCC5 '+date+'</span>'
+                +'</div>'
+                +(a.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+a.message+'</div>' : '')
+                +'</div>'
+                +(isOwn ? '<button onclick="deleteLastMinute(\''+a.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
+                +'</div>';
+        }).join('');
+        if(container) container.innerHTML = html;
+    }
+
+    async function deleteLastMinute(id) {
+        await sb.from('last_minute_alerts').delete().eq('id', id);
+        loadLastMinuteAlerts();
+    }
+
+    // ===== COVOITURAGE =====
+    function openCarpoolForm() {
+        var existing = document.getElementById('carpool-modal');
+        if(existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'carpool-modal';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:99999999;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;padding:0';
+        modal.innerHTML = '<div style="background:white;border-radius:24px 24px 0 0;padding:28px 20px 36px;width:100%;max-width:480px;box-sizing:border-box">'
+            +'<div style="width:36px;height:4px;background:#E2E8F0;border-radius:2px;margin:0 auto 20px"></div>'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.4em;color:#0A1628;margin-bottom:4px">\uD83D\uDE97 Proposer un Covoiturage</div>'
+            +'<div style="font-size:0.8em;color:#64748B;margin-bottom:20px">Partage ton trajet vers un \u00e9v\u00e9nement !</div>'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">\u00c9v\u00e9nement</label>'
+            +'<input id="cp-event-name" placeholder="Ex: Hyrox Lyon" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Date</label>'
+            +'<input id="cp-event-date" type="date" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Ville de d\u00e9part</label>'
+            +'<input id="cp-departure" placeholder="Ex: Lyon, Paris..." style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Places disponibles</label>'
+            +'<select id="cp-seats" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<option value="1">1 place</option><option value="2">2 places</option><option value="3">3 places</option><option value="4">4 places</option></select>'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Message (optionnel)</label>'
+            +'<textarea id="cp-message" placeholder="Ex: D\u00e9part Lyon Part-Dieu \u00e0 7h, retour le soir..." style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:16px;box-sizing:border-box;font-family:Barlow,sans-serif;resize:none;height:70px"></textarea>'
+            +'<button onclick="submitCarpool()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1em;cursor:pointer;margin-bottom:10px">\uD83D\uDE97 Proposer le covoiturage</button>'
+            +'<button onclick="document.getElementById(\'carpool-modal\').remove()" style="width:100%;padding:12px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-size:0.9em;color:#64748B;cursor:pointer">Annuler</button>'
+            +'</div>';
+        document.body.appendChild(modal);
+    }
+
+    async function submitCarpool() {
+        if(!currentUser) { showStatusToast('\u26A0\uFE0F Connecte-toi d\'abord'); return; }
+        var eventName = (document.getElementById('cp-event-name')||{}).value.trim();
+        var eventDate = (document.getElementById('cp-event-date')||{}).value;
+        var departure = (document.getElementById('cp-departure')||{}).value.trim();
+        var seats = parseInt((document.getElementById('cp-seats')||{}).value) || 1;
+        var message = (document.getElementById('cp-message')||{}).value.trim();
+        if(!eventName || !eventDate || !departure) { showStatusToast('\u26A0\uFE0F Remplis tous les champs obligatoires'); return; }
+        var res = await sb.from('carpools').insert({ user_id: currentUser.id, event_name: eventName, event_date: eventDate, departure_city: departure, seats: seats, message: message });
+        if(res.error) { showStatusToast('\u274C Erreur : '+res.error.message); return; }
+        document.getElementById('carpool-modal').remove();
+        showStatusToast('\uD83D\uDE97 Covoiturage propos\u00e9 !');
+        loadCarpools();
+    }
+
+    async function loadCarpools() {
+        var container = document.getElementById('carpool-section');
+        var today = new Date().toISOString().split('T')[0];
+        var res = await sb.from('carpools').select('*,profiles(prenom,pseudo,avatar_initials,avatar_url)').gte('event_date', today).order('event_date', {ascending:true}).limit(10);
+        if(res.error || !res.data || res.data.length === 0) {
+            if(container) container.innerHTML = '<div style="text-align:center;color:var(--grey);font-size:0.82em;padding:14px 0">\uD83D\uDC4D Aucun covoiturage pour le moment</div>';
+            var sub = document.getElementById('qa-sub-carpool');
+            if(sub) sub.textContent = 'Proposer / Rejoindre';
+            return;
+        }
+        var sub = document.getElementById('qa-sub-carpool');
+        if(sub) sub.textContent = res.data.length + ' trajet'+(res.data.length>1?'s':'');
+        var html = res.data.map(function(c) {
+            var p = c.profiles || {};
+            var name = p.prenom || p.pseudo || 'Athl\u00e8te';
+            var initials = p.avatar_initials || (name[0]||'?').toUpperCase();
+            var avatarHtml = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+            var date = new Date(c.event_date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+            var isOwn = currentUser && c.user_id === currentUser.id;
+            return '<div style="background:white;border-radius:14px;padding:14px 16px;border:1.5px solid #D1FAE5;display:flex;gap:12px;align-items:flex-start">'
+                +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:0.9em;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'
+                +'<div style="flex:1;min-width:0">'
+                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+name+' <span style="font-size:0.8em;color:#64748B;font-weight:400">\u2192 '+c.event_name+'</span></div>'
+                +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'
+                +'<span style="background:#166534;color:white;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">\uD83D\uDCCD '+c.departure_city+'</span>'
+                +'<span style="background:#F1F5F9;color:#64748B;font-size:0.7em;padding:2px 8px;border-radius:6px">\uD83D\uDCC5 '+date+'</span>'
+                +'<span style="background:#FEF3C7;color:#92400E;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">\uD83D\uDC65 '+c.seats+' place'+(c.seats>1?'s':'')+'</span>'
+                +'</div>'
+                +(c.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+c.message+'</div>' : '')
+                +'</div>'
+                +(isOwn ? '<button onclick="deleteCarpool(\''+c.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
+                +'</div>';
+        }).join('');
+        if(container) container.innerHTML = html;
+    }
+
+    async function deleteCarpool(id) {
+        await sb.from('carpools').delete().eq('id', id);
+        loadCarpools();
+    }
+
+
+    function selRegion(el, region) {
     document.querySelectorAll('#region-chips .fchip').forEach(function(c){ c.classList.remove('active'); });
     el.classList.add('active');
     _trainingActiveRegion = region;
@@ -3988,6 +4177,10 @@ async function loadDashboardStats() {
         var sub = document.getElementById('qa-sub-athletes');
         if(sub) sub.textContent = n + ' disponible' + (n > 1 ? 's' : '');
     });
+
+    // Charger derniere minute + covoiturage
+    loadLastMinuteAlerts();
+    loadCarpools();
 
     // --- MESSAGES : compter les convs avec messages non lus ---
     // On passe par les conversations dont on est membre, puis on compte

@@ -2273,10 +2273,61 @@ function closeChat() {
 
 function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
 
+
+    // ===== DETECTION COORDONNEES DANS MESSAGES =====
+    function containsPersonalContact(text) {
+        var t = text.toLowerCase().trim();
+        // Telephone : 06/07, +33, 0033, 10 chiffres
+        if(/(?:^|\s|\()(?:(?:\+33|0033)[\s.\-]?[67]|0[67])[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}(?:\s|$)/.test(t)) return true;
+        if(/\b\d{10}\b/.test(t.replace(/[\s.\-]/g,''))) return true;
+        // Email
+        if(/[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}/.test(t)) return true;
+        // Reseaux sociaux
+        if(/(instagram\.com|insta\.com|\binstagram\b|\binsta\b)/.test(t)) return true;
+        if(/(facebook\.com|fb\.com|\bfacebook\b|\bfb\.me\b)/.test(t)) return true;
+        if(/(strava\.com|\bstrava\b)/.test(t)) return true;
+        if(/(whatsapp\.com|wa\.me|\bwhatsapp\b|\bwhatsap\b)/.test(t)) return true;
+        if(/(snapchat\.com|\bsnapchat\b|\bsnap\b)/.test(t)) return true;
+        if(/(tiktok\.com|\btiktok\b)/.test(t)) return true;
+        if(/(twitter\.com|x\.com|\btwitter\b)/.test(t)) return true;
+        if(/(linkedin\.com|\blinkedin\b)/.test(t)) return true;
+        // @ pseudo (ex: @monpseudo)
+        if(/(?:^|\s)@[a-z0-9_.]{2,}/.test(t)) return true;
+        return false;
+    }
+
+    function showPremiumContactModal() {
+        var existing = document.getElementById('premium-contact-modal');
+        if(existing) existing.remove();
+        var modal = document.createElement('div');
+        modal.id = 'premium-contact-modal';
+        modal.style.cssText = 'position:fixed;inset:0;z-index:99999999;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px';
+        modal.innerHTML = '<div style="background:white;border-radius:24px;padding:32px 24px;width:100%;max-width:400px;box-sizing:border-box;text-align:center">'
+            +'<div style="font-size:2.8em;margin-bottom:12px">\uD83D\uDE80</div>'
+            +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628;margin-bottom:8px">Partage de coordonn\u00e9es</div>'
+            +'<div style="font-size:0.88em;color:#64748B;margin-bottom:24px;line-height:1.6">Tu souhaites \u00e9changer vos contacts\u00a0? C\'est r\u00e9serv\u00e9 aux membres <strong>Premium</strong>.<br><br>Pour <strong>5\u20AC/mois</strong> ou <strong>60\u20AC/an</strong>, partage ton num\u00e9ro, Instagram ou tout autre contact en toute s\u00e9curit\u00e9.</div>'
+            +'<button onclick="closePremiumContactModal();openPremium();" style="width:100%;padding:15px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#0A1628;border:none;border-radius:14px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.1em;cursor:pointer;letter-spacing:0.5px;margin-bottom:10px">\u26A1 Passer Premium</button>'
+            +'<button onclick="closePremiumContactModal()" style="width:100%;padding:12px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-family:Barlow,sans-serif;font-size:0.9em;color:#64748B;cursor:pointer">Annuler</button>'
+            +'</div>';
+        document.body.appendChild(modal);
+    }
+
+    function closePremiumContactModal() {
+        var m = document.getElementById('premium-contact-modal');
+        if(m) m.remove();
+    }
+
 function sendMsgBtn() {
     var input = document.getElementById('msg-input');
     var text = input.value.trim();
     if(!text) return;
+    // Bloquer coordonnees pour non-premium
+    var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+    if(!isPremium && containsPersonalContact(text)) {
+        input.value = text;
+        showPremiumContactModal();
+        return;
+    }
     input.value = '';
     var msgs = document.getElementById('chat-messages');
     var now = new Date();

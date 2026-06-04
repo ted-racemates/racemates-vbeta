@@ -3816,7 +3816,7 @@ function filterTraining(el, sport) {
                 +'</div>'
                 +(isOwn ? '<button onclick="deleteLastMinute(\''+a.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
                 +'</div>'
-                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',,\''+a.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
+                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',\'\',\''+a.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
                 +'</div>';
         }).join('');
         if(container) container.innerHTML = html;
@@ -3906,7 +3906,7 @@ function filterTraining(el, sport) {
                 +'</div>'
                 +(isOwn ? '<button onclick="deleteCarpool(\''+c.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
                 +'</div>'
-                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',,\''+c.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
+                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',\'\',\''+c.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
                 +'</div>';
         }).join('');
         if(container) container.innerHTML = html;

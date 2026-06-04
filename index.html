@@ -1030,20 +1030,60 @@
             <div class="qa-card" style="background:linear-gradient(135deg,#0A1628,#065F46);color:white;border:none" onclick="goTo('training')"><div class="qa-icon">🤝</div><div class="qa-label" style="color:white">Partenaire entraîn.</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-training">...</div></div>
             <div class="qa-card" onclick="goTo('events')"><div class="qa-icon">📅</div><div class="qa-label">Mes événements</div><div class="qa-sub" id="qa-sub-events">0 inscrit</div></div>
             <div class="qa-card" onclick="openSaved()"><div class="qa-icon">🔖</div><div class="qa-label">Profils sauvegardés</div><div class="qa-sub" id="qa-sub-saved">0 profil</div></div>
-            <div class="qa-card" style="background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none" onclick="openLastMinuteForm()"><div class="qa-icon">🚨</div><div class="qa-label" style="color:white">Dernière minute</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-alerts">Poster une alerte</div></div>
-            <div class="qa-card" style="background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none" onclick="openCarpoolForm()"><div class="qa-icon">🚗</div><div class="qa-label" style="color:white">Covoiturage</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-carpool">Proposer / Rejoindre</div></div>
+            <div class="qa-card" style="background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none" onclick="goTo('last-minute')"><div class="qa-icon">🚨</div><div class="qa-label" style="color:white">Dernière minute</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-alerts">Poster une alerte</div></div>
+            <div class="qa-card" style="background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none" onclick="goTo('carpool')"><div class="qa-icon">🚗</div><div class="qa-label" style="color:white">Covoiturage</div><div class="qa-sub" style="color:rgba(255,255,255,0.6)" id="qa-sub-carpool">Proposer / Rejoindre</div></div>
         </div>
-        <!-- DERNIERE MINUTE -->
-        <div class="section-title" style="margin-bottom:10px;margin-top:20px">🚨 Dernière minute <span class="section-link" onclick="openLastMinuteForm()">+ Poster</span></div>
-        <div id="last-minute-section" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"><div style="text-align:center;color:var(--grey);font-size:0.82em;padding:14px 0">👍 Aucune alerte pour le moment</div></div>
-        <!-- COVOITURAGE -->
-        <div class="section-title" style="margin-bottom:10px">🚗 Covoiturage <span class="section-link" onclick="openCarpoolForm()">+ Proposer</span></div>
-        <div id="carpool-section" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px"><div style="text-align:center;color:var(--grey);font-size:0.82em;padding:14px 0">👍 Aucun covoiturage pour le moment</div></div>
         <div class="section-title" style="margin-bottom:10px">⚡ Profils compatibles <span class="section-link" onclick="goTo('sport-select')">Voir tout →</span></div>
         <div id="home-matches-list"></div>
     </div>
 </div>
 
+
+<!-- ===== DERNIERE MINUTE ===== -->
+<div class="screen" id="screen-last-minute">
+    <div class="page-header" style="padding-bottom:20px">
+        <div class="header-top">
+            <div style="display:flex;align-items:center;gap:10px">
+                <button onclick="goTo('home')" style="background:rgba(255,255,255,0.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center">←</button>
+                <div><div class="logo"><span>RACE</span>MATES</div></div>
+            </div>
+            <div class="user-av" onclick="goTo('profile')">TJ</div>
+        </div>
+        <div style="margin-top:16px;position:relative;z-index:2">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6em;color:white;line-height:1.1;margin-bottom:4px">🚨 Dernière Minute</div>
+            <div style="font-size:0.8em;color:rgba(255,255,255,0.6)">Partenaire blessé ? Trouve quelqu'un rapidement</div>
+        </div>
+    </div>
+    <div style="padding:16px 20px 100px">
+        <button onclick="openLastMinuteForm()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:14px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;cursor:pointer;margin-bottom:20px;letter-spacing:0.5px">🚨 Poster une alerte</button>
+        <div id="last-minute-section" style="display:flex;flex-direction:column;gap:12px">
+            <div style="text-align:center;color:var(--grey);font-size:0.82em;padding:24px 0">👍 Aucune alerte pour le moment</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== COVOITURAGE ===== -->
+<div class="screen" id="screen-carpool">
+    <div class="page-header" style="padding-bottom:20px">
+        <div class="header-top">
+            <div style="display:flex;align-items:center;gap:10px">
+                <button onclick="goTo('home')" style="background:rgba(255,255,255,0.15);border:none;color:white;width:32px;height:32px;border-radius:50%;font-size:1em;cursor:pointer;display:flex;align-items:center;justify-content:center">←</button>
+                <div><div class="logo"><span>RACE</span>MATES</div></div>
+            </div>
+            <div class="user-av" onclick="goTo('profile')">TJ</div>
+        </div>
+        <div style="margin-top:16px;position:relative;z-index:2">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6em;color:white;line-height:1.1;margin-bottom:4px">🚗 Covoiturage</div>
+            <div style="font-size:0.8em;color:rgba(255,255,255,0.6)">Partage ton trajet vers un événement</div>
+        </div>
+    </div>
+    <div style="padding:16px 20px 100px">
+        <button onclick="openCarpoolForm()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:14px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;cursor:pointer;margin-bottom:20px;letter-spacing:0.5px">🚗 Proposer un trajet</button>
+        <div id="carpool-section" style="display:flex;flex-direction:column;gap:12px">
+            <div style="text-align:center;color:var(--grey);font-size:0.82em;padding:24px 0">👍 Aucun covoiturage pour le moment</div>
+        </div>
+    </div>
+</div>
 
 <!-- ===== SPORT SELECTOR ===== -->
 <div class="screen" id="screen-sport-select">
@@ -1747,6 +1787,8 @@ function goTo(page) {
         if(typeof loadEvents === 'function') loadEvents();
     }
     if(page === 'lodging') { if(typeof loadLodgingScreen==='function') loadLodgingScreen(); }
+    if(page === 'last-minute') { loadLastMinuteAlerts(); }
+    if(page === 'carpool') { loadCarpools(); }
     if(page === 'training') {
         if(typeof loadTraining === 'function') loadTraining();
     }
@@ -3773,6 +3815,8 @@ function filterTraining(el, sport) {
                 +(a.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+a.message+'</div>' : '')
                 +'</div>'
                 +(isOwn ? '<button onclick="deleteLastMinute(\''+a.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
+                +'</div>'
+                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',,\''+a.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
                 +'</div>';
         }).join('');
         if(container) container.innerHTML = html;
@@ -3800,6 +3844,8 @@ function filterTraining(el, sport) {
             +'<input id="cp-event-date" type="date" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Ville de d\u00e9part</label>'
             +'<input id="cp-departure" placeholder="Ex: Lyon, Paris..." style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Heure de départ (optionnel)</label>'
+            +'<input id="cp-departure-time" type="time" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Places disponibles</label>'
             +'<select id="cp-seats" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<option value="1">1 place</option><option value="2">2 places</option><option value="3">3 places</option><option value="4">4 places</option></select>'
@@ -3818,8 +3864,10 @@ function filterTraining(el, sport) {
         var departure = (document.getElementById('cp-departure')||{}).value.trim();
         var seats = parseInt((document.getElementById('cp-seats')||{}).value) || 1;
         var message = (document.getElementById('cp-message')||{}).value.trim();
+        var depTime = (document.getElementById('cp-departure-time')||{}).value || '';
         if(!eventName || !eventDate || !departure) { showStatusToast('\u26A0\uFE0F Remplis tous les champs obligatoires'); return; }
-        var res = await sb.from('carpools').insert({ user_id: currentUser.id, event_name: eventName, event_date: eventDate, departure_city: departure, seats: seats, message: message });
+        var fullMsg = depTime ? ('🕐 Départ à '+depTime+(message?' — '+message:'')) : message;
+        var res = await sb.from('carpools').insert({ user_id: currentUser.id, event_name: eventName, event_date: eventDate, departure_city: departure, seats: seats, message: fullMsg });
         if(res.error) { showStatusToast('\u274C Erreur : '+res.error.message); return; }
         document.getElementById('carpool-modal').remove();
         showStatusToast('\uD83D\uDE97 Covoiturage propos\u00e9 !');
@@ -3857,6 +3905,8 @@ function filterTraining(el, sport) {
                 +(c.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+c.message+'</div>' : '')
                 +'</div>'
                 +(isOwn ? '<button onclick="deleteCarpool(\''+c.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
+                +'</div>'
+                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',,\''+c.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
                 +'</div>';
         }).join('');
         if(container) container.innerHTML = html;

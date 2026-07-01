@@ -2357,7 +2357,7 @@ function sendMsg(e) { if(e.key === 'Enter') sendMsgBtn(); }
         modal.innerHTML = '<div style="background:white;border-radius:24px;padding:32px 24px;width:100%;max-width:400px;box-sizing:border-box;text-align:center">'
             +'<div style="font-size:2.8em;margin-bottom:12px">\uD83D\uDE80</div>'
             +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628;margin-bottom:8px">Partage de coordonn\u00e9es</div>'
-            +'<div style="font-size:0.88em;color:#64748B;margin-bottom:24px;line-height:1.6">Tu souhaites \u00e9changer vos contacts\u00a0? C\'est r\u00e9serv\u00e9 aux membres <strong>Premium</strong>.<br><br>Pour <strong>5\u20AC/mois</strong> ou <strong>60\u20AC/an</strong>, partage ton num\u00e9ro, Instagram ou tout autre contact en toute s\u00e9curit\u00e9.</div>'
+            +'<div style="font-size:0.88em;color:#64748B;margin-bottom:24px;line-height:1.6">Tu souhaites \u00e9changer vos contacts\u00a0? C\'est r\u00e9serv\u00e9 aux membres <strong>Premium</strong>.<br><br>Pour <strong>5\u20AC/mois</strong> ou <strong>50\u20AC/an</strong>, partage ton num\u00e9ro, Instagram ou tout autre contact en toute s\u00e9curit\u00e9.</div>'
             +'<button onclick="closePremiumContactModal();goToPremium();" style="width:100%;padding:15px;background:linear-gradient(135deg,#F59E0B,#D97706);color:#0A1628;border:none;border-radius:14px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:1.1em;cursor:pointer;letter-spacing:0.5px;margin-bottom:10px">\u26A1 Passer Premium</button>'
             +'<button onclick="closePremiumContactModal()" style="width:100%;padding:12px;background:none;border:1.5px solid #E2E8F0;border-radius:12px;font-family:Barlow,sans-serif;font-size:0.9em;color:#64748B;cursor:pointer">Annuler</button>'
             +'</div>';
@@ -2545,9 +2545,10 @@ function closeChat() {
 
 // ===================== ADMIN EVENTS =====================
 var ADMIN_EMAIL = 'teddy.jarron@hotmail.com'; // email admin // ton email admin
+var ADMIN_EMAILS = ['teddy.jarron@hotmail.com', 'samory.soubes@gmail.com'];
 
 function openAdminModal() {
-    if(!currentUser || currentUser.email !== ADMIN_EMAIL) {
+    if(!currentUser || !ADMIN_EMAILS.includes(currentUser.email)) {
         showStatusToast('⛔ Accès admin uniquement');
         return;
     }

@@ -1527,17 +1527,19 @@
             <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></div>
             <div class="sub-radio"><div class="sub-radio-dot"></div></div>
             <div class="sub-info">
-                <div class="sub-name">⚡ Premium <span style="background:#FFFBEB;color:#92400E;font-size:0.68em;padding:2px 8px;border-radius:6px;margin-left:4px;font-weight:700">BIENTÔT</span></div>
+                <div class="sub-name">⚡ Premium</div>
                 <div class="sub-desc">Tous les avantages + fonctions exclusives</div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+                    <span style="font-size:0.72em;background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">📱 Échange de coordonnées</span>
                     <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Tout le plan Gratuit</span>
                     <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">👀 Voir qui t'a sauvegardé</span>
                     <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">🚀 Boost visibilité 7j</span>
                     <span style="font-size:0.72em;background:#FFFBEB;color:#92400E;padding:3px 8px;border-radius:6px;font-weight:700">📊 Stats de profil</span>
                 </div>
-                <div style="margin-top:10px">
-                    <button onclick="goToPremium()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">⚡ S'abonner — 5€/mois →</button>
-                    <div style="font-size:0.72em;color:#64748B;text-align:center;margin-top:6px">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
+                <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+                    <button onclick="goToPremium()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">⚡ 5€/mois — Résiliable à tout moment →</button>
+                    <button onclick="goToPremiumAnnual()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">🏆 50€/an — soit 4,16€/mois →</button>
+                    <div style="font-size:0.72em;color:#64748B;text-align:center">Paiement sécurisé par Stripe · 2 offres indépendantes, choisissez l'une ou l'autre</div>
                 </div>
             </div>
             <div class="sub-price" style="color:#0A1628">5€<span class="sub-price-period">/mois</span></div>
@@ -3404,7 +3406,15 @@ var PLAN_PREVIEWS = {
 // 🔧 REMPLACE PAR TON LIEN STRIPE ICI :
 var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/fZu3cucjHalV4qH7nq4sE00';
 
-function goToPremium() {
+var STRIPE_ANNUAL_LINK = 'https://buy.stripe.com/00wcN497v2Tt4qH37a4sE01';
+
+    function goToPremiumAnnual() {
+        var link = STRIPE_ANNUAL_LINK;
+        if(currentUser) link += (link.includes('?') ? '&' : '?') + 'client_reference_id=' + currentUser.id;
+        window.open(link, '_blank');
+    }
+
+    function goToPremium() {
     if(!currentUser) { showStatusToast('⚠️ Connecte-toi d\'abord'); return; }
     // Ajouter l'email et l'ID user dans l'URL Stripe pour tracking
     var email = currentUser.email || '';

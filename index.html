@@ -5921,7 +5921,10 @@ function toggleCompletFilter() {
         } else if(isPremium) {
             wrap.innerHTML = '<button onclick="activateBoost()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;cursor:pointer">🚀 Activer le boost visibilité — 7 jours</button>';
         } else {
-            wrap.innerHTML = '<button onclick="openSubSwitcher()" style="width:100%;padding:12px;background:#F8FAFC;border:1.5px solid #E2E8F0;color:#64748B;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.88em;cursor:pointer">🚀 Boost visibilité — Premium uniquement</button>';
+            wrap.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">'
+                + '<button onclick="goToPremium()" style="width:100%;padding:10px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">📱 Échange de coordonnées — Premium</button>'
+                + '<button onclick="openSubSwitcher()" style="width:100%;padding:10px;background:#F8FAFC;border:1.5px solid #E2E8F0;color:#64748B;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.88em;cursor:pointer">🚀 Boost visibilité — Premium uniquement</button>'
+                + '</div>';
         }
     }
 

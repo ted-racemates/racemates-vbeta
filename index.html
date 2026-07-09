@@ -1628,31 +1628,36 @@
         </div>
         <div id="sub-saved-teaser" style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px 18px;margin-bottom:10px">
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:10px">👀 Qui a sauvegardé ton profil ?</div>
-            <div style="display:flex;margin-bottom:10px">
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px)">AB</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">CD</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">EF</div>
-                <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.75em;color:rgba(255,255,255,0.7);margin-left:-8px">+?</div>
+            <div id="sub-saved-content">
+                <div style="display:flex;margin-bottom:10px">
+                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px)">AB</div>
+                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">CD</div>
+                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px);margin-left:-8px">EF</div>
+                    <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.75em;color:rgba(255,255,255,0.7);margin-left:-8px">+?</div>
+                </div>
+                <div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin-bottom:10px"><span id="saved-by-count" style="color:white;font-weight:700">? personnes</span> ont sauvegardé ton profil.</div>
             </div>
-            <div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin-bottom:10px"><span id="saved-by-count" style="color:white;font-weight:700">? personnes</span> ont sauvegardé ton profil.</div>
+            <div id="sub-saved-hidden-box" style="display:none;background:rgba(0,0,0,0.35);border-radius:10px;padding:20px 12px;text-align:center;margin-bottom:10px;color:rgba(255,255,255,0.6);font-size:0.78em">🔒 Contenu Premium</div>
             <div id="sub-saved-lock-msg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-size:0.75em;color:rgba(255,255,255,0.8)">🔒 Débloque le Premium pour voir qui c'est</div>
         </div>
         <div id="sub-stats-teaser" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:10px">
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:12px">📊 Stats de ton profil cette semaine</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+            <div id="sub-stats-content" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
                 <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628">47</div><div style="font-size:0.65em;color:#64748B">VUES</div></div>
                 <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#059669">8</div><div style="font-size:0.65em;color:#64748B">CONTACTS</div></div>
                 <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#1E3A8A">12</div><div style="font-size:0.65em;color:#64748B">SAUVEGARDES</div></div>
             </div>
+            <div id="sub-stats-hidden-box" style="display:none;background:#E2E8F0;border-radius:10px;padding:20px 12px;text-align:center;margin-bottom:12px;color:#94A3B8;font-size:0.78em">🔒 Contenu Premium</div>
             <div id="sub-stats-lock-msg" style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour voir tes vraies stats</div>
         </div>
         <div id="sub-boost-teaser" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:16px">
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:6px">🚀 Boost visibilité — 7 jours</div>
             <div style="font-size:0.8em;color:#64748B;margin-bottom:10px;line-height:1.5">Ton profil apparaît <strong>en premier</strong> dans les résultats pendant 7 jours.</div>
-            <div style="display:flex;align-items:center;gap:10px;background:white;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;opacity:0.5">
+            <div id="sub-boost-content" style="display:flex;align-items:center;gap:10px;background:white;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;opacity:0.5">
                 <div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.7em;color:white">🚀 BOOSTÉ</div>
                 <div style="font-size:0.8em;color:#0A1628;font-weight:600">Ton profil · visible par tous</div>
             </div>
+            <div id="sub-boost-hidden-box" style="display:none;background:#E2E8F0;border-radius:10px;padding:20px 12px;text-align:center;margin-bottom:0;color:#94A3B8;font-size:0.78em">🔒 Contenu Premium</div>
             <div id="sub-boost-lock-msg" style="margin-top:8px;background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour activer le boost</div>
         </div>
         <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer">OK, compris !</button>
@@ -3583,6 +3588,8 @@ function openSubSwitcher() {
         'sub-stats-lock-msg': '🔒 Débloque le Premium pour voir tes vraies stats',
         'sub-boost-lock-msg': '🔒 Débloque le Premium pour activer le boost'
     };
+    var teaserContentIds = { 'sub-saved-teaser':'sub-saved-content', 'sub-stats-teaser':'sub-stats-content', 'sub-boost-teaser':'sub-boost-content' };
+    var teaserHiddenBoxIds = { 'sub-saved-teaser':'sub-saved-hidden-box', 'sub-stats-teaser':'sub-stats-hidden-box', 'sub-boost-teaser':'sub-boost-hidden-box' };
     if (inLaunchFree) {
         // Période de lancement gratuite : on ne pousse pas à l'achat, tout est déjà débloqué ailleurs
         if (premiumBtn) {
@@ -3600,14 +3607,24 @@ function openSubSwitcher() {
             annualBtn.onclick = null;
         }
         if (launchBanner) launchBanner.style.display = 'block';
-        teaserIds.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.opacity = '0.5'; });
+        teaserIds.forEach(function(id){
+            var contentEl = document.getElementById(teaserContentIds[id]);
+            var hiddenEl = document.getElementById(teaserHiddenBoxIds[id]);
+            if (contentEl) contentEl.style.display = 'none';
+            if (hiddenEl) hiddenEl.style.display = 'block';
+        });
         Object.keys(lockMsgs).forEach(function(id){
             var el = document.getElementById(id);
             if (el) el.textContent = '✅ Déjà débloqué gratuitement pendant le lancement';
         });
     } else {
         if (launchBanner) launchBanner.style.display = 'none';
-        teaserIds.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.opacity = '1'; });
+        teaserIds.forEach(function(id){
+            var contentEl = document.getElementById(teaserContentIds[id]);
+            var hiddenEl = document.getElementById(teaserHiddenBoxIds[id]);
+            if (contentEl) contentEl.style.display = (id === 'sub-boost-teaser') ? 'flex' : (id === 'sub-stats-teaser' ? 'grid' : 'block');
+            if (hiddenEl) hiddenEl.style.display = 'none';
+        });
         if (!isPremium) {
             Object.keys(lockMsgs).forEach(function(id){
                 var el = document.getElementById(id);
@@ -6074,17 +6091,18 @@ function toggleCompletFilter() {
         // une fois que l'accès est débloqué (période de lancement ou vrai abonné).
         var titleEl = document.getElementById('premium-section-title');
         var badgeEl = document.getElementById('premium-section-badge');
-        if (titleEl) titleEl.textContent = isPremium ? 'Fonctionnalités débloquées' : 'Fonctionnalités Premium';
+        if (titleEl) titleEl.textContent = isPremium ? 'Fonctionnalités disponibles' : 'Fonctionnalités Premium';
         if (badgeEl) badgeEl.style.display = isPremium ? 'none' : '';
         var now = new Date().toISOString();
         var isBoosted = p.boosted_until && p.boosted_until > now;
         if(isBoosted) {
             var until = new Date(p.boosted_until).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-            wrap.innerHTML = '<div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px">'
+            wrap.innerHTML = '<div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:8px">'
                 +'<span style="font-size:1.3em">🚀</span>'
                 +'<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:#0A1628;font-size:0.9em">Boost actif jusqu\'au '+until+'</div>'
                 +'<div style="font-size:0.72em;color:#92400E">Tu apparais en premier dans les résultats !</div></div>'
-                +'</div>';
+                +'</div>'
+                +'<button onclick="deactivateBoost()" style="width:100%;padding:10px;background:#F8FAFC;border:1.5px solid #E2E8F0;color:#64748B;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.85em;cursor:pointer">Désactiver le boost</button>';
         } else if(isPremium) {
             wrap.innerHTML = '<button onclick="activateBoost()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:12px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.95em;cursor:pointer">🚀 Activer le boost visibilité — 7 jours</button>';
         } else {
@@ -6102,6 +6120,15 @@ function toggleCompletFilter() {
         if(error){showStatusToast('❌ '+error.message);return;}
         if(window.myProfile) window.myProfile.boosted_until = until;
         showStatusToast('🚀 Boost activé pour 7 jours !');
+        renderBoostButton();
+    }
+
+    async function deactivateBoost() {
+        if(!currentUser) return;
+        var {error} = await sb.from('profiles').update({boosted_until:null}).eq('id',currentUser.id);
+        if(error){showStatusToast('❌ '+error.message);return;}
+        if(window.myProfile) window.myProfile.boosted_until = null;
+        showStatusToast('Boost désactivé');
         renderBoostButton();
     }
 

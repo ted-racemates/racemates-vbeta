@@ -1299,9 +1299,10 @@
         <div id="fchip-container" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none">
             <div class="fchip active" onclick="selFC(this)">🎯 Tous besoins</div>
             <div class="fchip" onclick="selFC(this)">🏠 Logement</div>
-            <div class="fchip" onclick="selFC(this)">🏅 Duo</div>
-            <div class="fchip" onclick="selFC(this)">⚡ Relais</div>
+            <div class="fchip" onclick="selFC(this)">🏅 Compétitions</div>
+            <div class="fchip" onclick="selFC(this)">🚗 Covoiturage</div>
             <div class="fchip" onclick="selFC(this)">🤝 Entraîn.</div>
+            <div class="fchip" onclick="selFC(this)">🚨 Alerte</div>
             <div class="fchip" onclick="selFC(this)">🌟 Confirmé+</div>
         </div>
     </div>
@@ -1340,8 +1341,8 @@
         <div class="mft" onclick="selMFT(this)" data-filter="unread">Non lus <span id="unread-count-badge" style="background:var(--red);color:white;border-radius:10px;padding:0 5px;font-size:0.85em">3</span></div>
         <div class="mft" onclick="selMFT(this)" data-filter="logement">🏠 Logement</div>
         <div class="mft" onclick="selMFT(this)" data-filter="entrainement">🤝 Entraîn.</div>
-        <div class="mft" onclick="selMFT(this)" data-filter="duo">🏅 Duo</div>
-        <div class="mft" onclick="selMFT(this)" data-filter="relais">⚡ Relais</div>
+        <div class="mft" onclick="selMFT(this)" data-filter="competition">🏅 Compétitions</div>
+        <div class="mft" onclick="selMFT(this)" data-filter="covoiturage">🚗 Covoiturage</div>
         <div class="mft" onclick="selMFT(this)" data-filter="hyrox">🏋️ Hyrox</div>
         <div class="mft" onclick="selMFT(this)" data-filter="trail">🌿 Trail</div>
         <div class="mft" onclick="selMFT(this)" data-filter="triathlon">🏊 Triathlon</div>
@@ -1594,9 +1595,9 @@
                     <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Événements</span>
                     <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Logement</span>
                     <span style="font-size:0.72em;background:#F0FDF4;color:#15803D;padding:3px 8px;border-radius:6px">✓ Notifications</span>
-                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Voir qui t'a sauvegardé</span>
-                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Boost visibilité</span>
-                    <span style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Stats de profil</span>
+                    <span id="sub-free-badge-saved" style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Voir qui t'a sauvegardé</span>
+                    <span id="sub-free-badge-boost" style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Boost visibilité</span>
+                    <span id="sub-free-badge-stats" style="font-size:0.72em;background:#FEF2F2;color:#EF4444;padding:3px 8px;border-radius:6px">✗ Stats de profil</span>
                 </div>
             </div>
             <div class="sub-price">0€<span class="sub-price-period">/mois</span></div>
@@ -1671,7 +1672,7 @@
     <div class="bs-handle-wrap"><div class="bs-handle"></div></div>
     <div class="bs-header"><div class="bs-title">🎚 Recherche avancée</div><button class="bs-reset" onclick="resetBS()">Réinitialiser</button></div>
     <div class="bs-body">
-        <div class="bs-section"><div class="bs-label">Je cherche</div><div class="bs-chips"><div class="bs-chip on" onclick="toggleChip(this);countAndUpdateBsFilters()">🏠 Logement</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🏅 Duo</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">⚡ Relais</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🤝 Entraînement</div></div></div>
+        <div class="bs-section"><div class="bs-label">Je cherche</div><div class="bs-chips"><div class="bs-chip on" onclick="toggleChip(this);countAndUpdateBsFilters()">🏠 Logement</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🏅 Compétitions</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🚗 Covoiturage</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🤝 Entraînement</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🚨 Alerte</div></div></div>
         <div class="bs-section"><div class="bs-label">Niveau</div><div class="bs-chips"><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">😅 Débutant</div><div class="bs-chip on" onclick="toggleChip(this);countAndUpdateBsFilters()">🏃 Intermédiaire</div><div class="bs-chip on" onclick="toggleChip(this);countAndUpdateBsFilters()">🌟 Confirmé</div><div class="bs-chip" onclick="toggleChip(this);countAndUpdateBsFilters()">🏆 Élite</div></div></div>
         <div class="bs-section"><div class="bs-label">Pace au km</div>
         <div style="background:linear-gradient(135deg,var(--dark),var(--blue));border-radius:14px;padding:14px 16px">
@@ -1932,9 +1933,10 @@ function loadRealAthletes() {
             var allSportKeys = sports.map(function(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); }).join(' ');
             var needTags = needs.map(function(n){
                 if(n.includes('Logement')) return 'logement';
-                if(n.includes('Duo')) return 'duo';
-                if(n.includes('Relais')) return 'relais';
-                if(n.includes('Entra')) return 'training';
+                if(n.includes('compétitions') || n.includes('competitions')) return 'competition';
+                if(n.includes('Covoiturage')) return 'covoiturage';
+                if(n.includes('Entra') || n.includes('Duo')) return 'training';
+                if(n.includes('Alerte')) return 'alerte';
                 return '';
             }).join(' ');
             var dataTags = (allSportKeys+' '+needTags+' dispo').trim();
@@ -3272,7 +3274,7 @@ function selPill(el, showLodging) {
     filterAthletes();
 }
 
-// ===================== MATCHING CHIPS (Logement+Duo multi, rest single) =====================
+// ===================== MATCHING CHIPS (Logement multi, rest single) =====================
 function selFC(el) {
     var text = el.textContent.trim().toLowerCase();
     var container = document.getElementById('fchip-container');
@@ -3323,9 +3325,10 @@ function filterAthletes() {
         } else {
             activeChips.forEach(function(ct) {
                 if(ct.includes('logement') && tags.includes('logement')) showByChip = true;
-                if(ct.includes('duo') && tags.includes('duo')) showByChip = true;
-                if(ct.includes('relais') && tags.includes('relais')) showByChip = true;
+                if((ct.includes('compétitions') || ct.includes('competitions')) && tags.includes('competition')) showByChip = true;
+                if(ct.includes('covoiturage') && tags.includes('covoiturage')) showByChip = true;
                 if(ct.includes('entra') && tags.includes('training')) showByChip = true;
+                if(ct.includes('alerte') && tags.includes('alerte')) showByChip = true;
                 if(ct.includes('confirm') && tags.includes('confirm')) showByChip = true;
             });
         }
@@ -3594,12 +3597,26 @@ function openSubSwitcher() {
     var premiumDesc = document.getElementById('sub-premium-desc');
     var premiumBadges = document.getElementById('sub-premium-badges');
     var premiumPrice = document.getElementById('sub-premium-price');
+    var freeBadgeIds = ['sub-free-badge-saved', 'sub-free-badge-boost', 'sub-free-badge-stats'];
+    var freeBadgeLabels = {
+        'sub-free-badge-saved': 'Voir qui t\'a sauvegardé',
+        'sub-free-badge-boost': 'Boost visibilité',
+        'sub-free-badge-stats': 'Stats de profil'
+    };
     if (inLaunchFree) {
         // Période de lancement gratuite : on ne pousse pas à l'achat, tout est déjà débloqué ailleurs
         if (premiumDesc) premiumDesc.style.display = 'none';
         if (premiumBadges) premiumBadges.style.display = 'none';
         if (premiumPrice) premiumPrice.style.display = 'none';
         if (launchBanner) launchBanner.style.display = 'none'; // bandeau retiré, redondant avec les boutons "bientôt disponible"
+        freeBadgeIds.forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) {
+                el.textContent = '✓ ' + freeBadgeLabels[id];
+                el.style.background = '#F0FDF4';
+                el.style.color = '#15803D';
+            }
+        });
         if (premiumBtn) {
             premiumBtn.textContent = '🚀 Premium — bientôt disponible (6 octobre)';
             premiumBtn.style.background = '#E2E8F0';
@@ -3624,9 +3641,17 @@ function openSubSwitcher() {
         });
         Object.keys(lockMsgs).forEach(function(id){
             var el = document.getElementById(id);
-            if (el) el.textContent = '✅ Déjà débloqué gratuitement pendant le lancement';
+            if (el) el.style.display = 'none';
         });
     } else {
+        freeBadgeIds.forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) {
+                el.textContent = '✗ ' + freeBadgeLabels[id];
+                el.style.background = '#FEF2F2';
+                el.style.color = '#EF4444';
+            }
+        });
         if (premiumDesc) premiumDesc.style.display = 'block';
         if (premiumBadges) premiumBadges.style.display = 'flex';
         if (premiumPrice) premiumPrice.style.display = 'block';
@@ -3642,7 +3667,7 @@ function openSubSwitcher() {
         if (!isPremium) {
             Object.keys(lockMsgs).forEach(function(id){
                 var el = document.getElementById(id);
-                if (el) el.textContent = lockMsgs[id];
+                if (el) { el.style.display = 'block'; el.textContent = lockMsgs[id]; }
             });
         }
         if(premiumBtn) {
@@ -3697,7 +3722,7 @@ async function joinPremiumWaitlist() {
 var ATHLETE_DATA = {
     'SL': { initials:'SL', name:'Sarah Lemaire', loc:'Lyon, France', chrono:'01:08:22', badges:['🏃 Runner','Confirmée','🏠 Logement','🤝 Entraîn.'], stat1:'44:10', stat2:'5 Hyrox', stat3:'4:55/km', bio:"Passionnée de course, je cherche quelqu'un pour partager un Airbnb à Toulouse.", event:'Hyrox Toulouse · Mars 2026', eventBadge:'🏠 LOGEMENT', chatStatus:'online', chatEvent:'🏠 Hyrox Toulouse · Mars 2026' },
     'JD': { initials:'JD', name:'Julie Durand', loc:'Bordeaux, France', chrono:'1er Hyrox 🔥', badges:['😅 Rookie','Débutante','🏠 Logement','🤝 Entraîn.'], stat1:'52:00', stat2:'1er Hyrox', stat3:'5:45/km', bio:"Mon premier Hyrox à Toulouse ! Je cherche quelqu'un pour partager un logement.", event:'Hyrox Toulouse · Mars 2026', eventBadge:'🏠 LOGEMENT', chatStatus:'offline', chatEvent:'🏠 Hyrox Toulouse · Mars 2026' },
-    'MR': { initials:'MR', name:'Marc Rousseau', loc:'Paris, France', chrono:'01:15:40', badges:['💪 Force','Intermédiaire','🏅 Duo'], stat1:'48:20', stat2:'3 Hyrox', stat3:'5:10/km', bio:"Je cherche un partenaire de duo solide pour Grand Palais.", event:'Hyrox Grand Palais · Avr. 2026', eventBadge:'🏅 DUO', chatStatus:'online', chatEvent:'🏅 Hyrox Grand Palais · Avr. 2026' },
+    'MR': { initials:'MR', name:'Marc Rousseau', loc:'Paris, France', chrono:'01:15:40', badges:['💪 Force','Intermédiaire','🏅 Compétitions'], stat1:'48:20', stat2:'3 Hyrox', stat3:'5:10/km', bio:"Je cherche un partenaire de compétition solide pour Grand Palais.", event:'Hyrox Grand Palais · Avr. 2026', eventBadge:'🏅 COMPÉTITIONS', chatStatus:'online', chatEvent:'🏅 Hyrox Grand Palais · Avr. 2026' },
     'AL': { initials:'AL', name:'Alex Laurent', loc:'Bordeaux, France', chrono:'Pace 5:10/km', badges:['⚡ Hybride','Intermédiaire','🤝 Entraîn.'], stat1:'46:30', stat2:'2 Hyrox', stat3:'5:10/km', bio:"Cherche partenaire pour des sessions sur Toulouse. Dispo les week-ends.", event:'Hyrox Toulouse · Mars 2026', eventBadge:'🤝 ENTRAÎNEMENT', chatStatus:'offline', chatEvent:'🤝 Entraînement · Toulouse' },
     'EF': { initials:'EF', name:'Emma Fontaine', loc:'Paris, France', chrono:'01:11:30', badges:['🏃 Runner','Confirmée','🏠 Logement'], stat1:'42:15', stat2:'4 Hyrox', stat3:'4:45/km', bio:"Coureuse confirmée, je cherche une coloc pour Grand Palais.", event:'Hyrox Grand Palais · Avr. 2026', eventBadge:'🏠 LOGEMENT', chatStatus:'online', chatEvent:'🏠 Hyrox Grand Palais · Avr. 2026' }
 };
@@ -3717,7 +3742,7 @@ function openAthleteProfile(initials) {
     document.getElementById('pm-bio').textContent = d.bio;
     var badgesEl = document.getElementById('pm-badges');
     badgesEl.innerHTML = d.badges.map(function(b) {
-        var cls = b.includes('Entraîn') ? 'badge-training' : (b.includes('Logement') || b.includes('Duo')) ? 'badge-blue' : 'badge-dark';
+        var cls = b.includes('Entraîn') ? 'badge-training' : (b.includes('Logement') || b.includes('Compétitions') || b.includes('Covoiturage')) ? 'badge-blue' : 'badge-dark';
         return '<span class="badge ' + cls + '">' + b + '</span>';
     }).join('');
     document.getElementById('pm-event').innerHTML = '<div class="pevent"><div style="display:flex;align-items:center;gap:10px"><div class="pevent-dot"></div><div><div class="pevent-name">' + d.event + '</div></div></div><span class="badge badge-blue">' + d.eventBadge + '</span></div>';
@@ -3939,10 +3964,10 @@ function filterTraining(el, sport) {
             +'<input id="lm-event-date" type="date" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:8px">Ce que tu cherches</label>'
             +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
-            +'<div class="lm-need-chip active" onclick="selLmNeed(this,\'duo\')" data-need="duo" style="padding:6px 14px;border-radius:20px;border:1.5px solid #0A1628;background:#0A1628;color:white;font-size:0.8em;font-weight:700;cursor:pointer">\uD83C\uDFC5 Partenaire Duo</div>'
-            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'relais\')" data-need="relais" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\u26A1 Relais</div>'
             +'<div class="lm-need-chip" onclick="selLmNeed(this,\'logement\')" data-need="logement" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83C\uDFE0 Logement</div>'
-            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'entrainement\')" data-need="entrainement" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83E\uDD1D Entra\u00eenement</div>'
+            +'<div class="lm-need-chip active" onclick="selLmNeed(this,\'competition\')" data-need="competition" style="padding:6px 14px;border-radius:20px;border:1.5px solid #0A1628;background:#0A1628;color:white;font-size:0.8em;font-weight:700;cursor:pointer">\uD83C\uDFC5 Partenaire de comp\u00e9titions</div>'
+            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'covoiturage\')" data-need="covoiturage" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83D\uDE97 Covoiturage</div>'
+            +'<div class="lm-need-chip" onclick="selLmNeed(this,\'entrainement\')" data-need="entrainement" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83E\uDD1D Partenaire d\'entra\u00eenement</div>'
             +'</div>'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Message (optionnel)</label>'
             +'<textarea id="lm-message" placeholder="Ex: Mon duo s\'est bless\u00e9, je cherche quelqu\'un pour Hyrox Double..." style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:16px;box-sizing:border-box;font-family:Barlow,sans-serif;resize:none;height:70px"></textarea>'
@@ -3963,7 +3988,7 @@ function filterTraining(el, sport) {
         if(!currentUser) { showStatusToast('\u26A0\uFE0F Connecte-toi d\'abord'); return; }
         var eventName = (document.getElementById('lm-event-name')||{}).value.trim();
         var eventDate = (document.getElementById('lm-event-date')||{}).value;
-        var need = (document.querySelector('.lm-need-chip[style*="background:#0A1628"]')||{}).getAttribute ? document.querySelector('.lm-need-chip[style*="background:#0A1628"]').getAttribute('data-need') : 'duo';
+        var need = (document.querySelector('.lm-need-chip[style*="background:#0A1628"]')||{}).getAttribute ? document.querySelector('.lm-need-chip[style*="background:#0A1628"]').getAttribute('data-need') : 'competition';
         var message = (document.getElementById('lm-message')||{}).value.trim();
         if(!eventName || !eventDate) { showStatusToast('\u26A0\uFE0F Remplis l\'\u00e9v\u00e9nement et la date'); return; }
         var res = await sb.from('last_minute_alerts').insert({ user_id: currentUser.id, event_name: eventName, event_date: eventDate, need: need, message: message });
@@ -3985,8 +4010,8 @@ function filterTraining(el, sport) {
         }
         var sub = document.getElementById('qa-sub-alerts');
         if(sub) sub.textContent = res.data.length + ' alerte'+(res.data.length>1?'s':'');
-        var needLabels = {duo:'\uD83C\uDFC5 Duo',relais:'\u26A1 Relais',logement:'\uD83C\uDFE0 Logement',entrainement:'\uD83E\uDD1D Entra\u00eenement'};
-        var needColors = {duo:'#1E3A8A',relais:'#92400E',logement:'#065F46',entrainement:'#6B21A8'};
+        var needLabels = {competition:'\uD83C\uDFC5 Comp\u00e9titions',covoiturage:'\uD83D\uDE97 Covoiturage',logement:'\uD83C\uDFE0 Logement',entrainement:'\uD83E\uDD1D Entra\u00eenement'};
+        var needColors = {competition:'#1E3A8A',covoiturage:'#065F46',logement:'#92400E',entrainement:'#6B21A8'};
         var html = res.data.map(function(a) {
             var p = a.profiles || {};
             var name = p.prenom || p.pseudo || 'Athl\u00e8te';
@@ -4742,8 +4767,8 @@ function toggleCompletFilter() {
             } else {
                 activeChips.forEach(function(ct) {
                     if(ct.includes('logement') && tags.includes('logement')) showByChip = true;
-                    if(ct.includes('duo') && tags.includes('duo')) showByChip = true;
-                    if(ct.includes('relais') && tags.includes('relais')) showByChip = true;
+                    if((ct.includes('compétitions') || ct.includes('competitions')) && tags.includes('competition')) showByChip = true;
+                    if(ct.includes('covoiturage') && tags.includes('covoiturage')) showByChip = true;
                     if(ct.includes('entra') && tags.includes('training')) showByChip = true;
                     if(ct.includes('confirmé') && tags.includes('confirmé')) showByChip = true;
                 });
@@ -6314,6 +6339,7 @@ function toggleCompletFilter() {
                 avatarEl.textContent = initials || '?';
             }
         }
+        updateAvatarDeleteButton();
         // Wirer le file input pour upload immédiat
         var fileInput = el('avatar-file-input');
         if(fileInput) {
@@ -6366,6 +6392,7 @@ function toggleCompletFilter() {
 
             // Mettre à jour partout dans l'UI
             applyAvatarEverywhere(publicUrl);
+            updateAvatarDeleteButton();
 
         } catch(e) {
             console.error('uploadAvatar error:', e);
@@ -6373,17 +6400,53 @@ function toggleCompletFilter() {
         }
     }
 
+    // Supprime la photo de profil (revient aux initiales)
+    async function deleteAvatar() {
+        if(!currentUser) return;
+        var statusEl = document.getElementById('avatar-upload-status');
+        var previewEl = document.getElementById('edit-avatar-preview');
+        if(statusEl) statusEl.textContent = '⏳ Suppression...';
+
+        try {
+            var { error } = await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUser.id);
+            if(error) throw error;
+
+            if(!window.myProfile) window.myProfile = {};
+            window.myProfile.avatar_url = null;
+
+            var initials = window.myProfile.initials || 'AT';
+            if(previewEl) previewEl.innerHTML = initials;
+            if(statusEl) statusEl.textContent = '✅ Photo supprimée';
+
+            applyAvatarEverywhere(null);
+            updateAvatarDeleteButton();
+
+        } catch(e) {
+            console.error('deleteAvatar error:', e);
+            if(statusEl) statusEl.textContent = '❌ Erreur : ' + (e.message||'réessaie');
+        }
+    }
+
+    // Affiche le bouton "Supprimer" uniquement si une photo est actuellement définie
+    function updateAvatarDeleteButton() {
+        var btn = document.getElementById('avatar-delete-btn');
+        if(!btn) return;
+        var hasAvatar = !!(window.myProfile && window.myProfile.avatar_url);
+        btn.style.display = hasAvatar ? 'inline-block' : 'none';
+    }
+
     // Applique la photo de profil partout dans l'UI
     function applyAvatarEverywhere(url) {
-        var imgTag = '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        var initials = (window.myProfile && window.myProfile.initials) || 'AT';
+        var content = url ? '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
         // Avatar profil principal
         var profAv = document.querySelector('#screen-profile .profile-avatar');
-        if(profAv) { profAv.innerHTML = imgTag; profAv.style.padding = '0'; profAv.style.overflow = 'hidden'; }
+        if(profAv) { profAv.innerHTML = content; profAv.style.padding = url ? '0' : ''; profAv.style.overflow = url ? 'hidden' : ''; }
         // Avatar nav / accueil
         document.querySelectorAll('.user-av').forEach(function(el) {
-            el.innerHTML = imgTag;
-            el.style.padding = '0';
-            el.style.overflow = 'hidden';
+            el.innerHTML = content;
+            el.style.padding = url ? '0' : '';
+            el.style.overflow = url ? 'hidden' : '';
         });
     }
 
@@ -6588,9 +6651,10 @@ setPlan('free');
             if(activeNeeds.length) {
                 var needMatch = activeNeeds.some(function(need) {
                     if(need.includes('logement')) return tags.includes('logement');
-                    if(need.includes('duo')) return tags.includes('duo');
-                    if(need.includes('relais')) return tags.includes('relais');
+                    if(need.includes('compétitions') || need.includes('competitions')) return tags.includes('competition');
+                    if(need.includes('covoiturage')) return tags.includes('covoiturage');
                     if(need.includes('entra')) return tags.includes('training');
+                    if(need.includes('alerte')) return tags.includes('alerte');
                     return true;
                 });
                 if(!needMatch) match = false;
@@ -7351,7 +7415,10 @@ setPlan('free');
                 </div>
                 <div style="flex:1">
                     <div style="font-weight:700;font-size:0.9em;color:#0A1628;margin-bottom:4px">Photo de profil</div>
-                    <button onclick="document.getElementById('avatar-file-input').click()" style="background:#0A1628;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">📸 Changer la photo</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button onclick="document.getElementById('avatar-file-input').click()" style="background:#0A1628;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">📸 Changer la photo</button>
+                        <button id="avatar-delete-btn" onclick="deleteAvatar()" style="display:none;background:#FEF2F2;color:#EF4444;border:1px solid #FEE2E2;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">🗑️ Supprimer</button>
+                    </div>
                     <div id="avatar-upload-status" style="font-size:0.72em;color:#94A3B8;margin-top:4px">JPG, PNG — max 5 Mo</div>
                 </div>
                 <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp" style="display:none">

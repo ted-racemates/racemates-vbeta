@@ -1437,8 +1437,8 @@
         <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px;margin-bottom:16px">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
                 <span style="font-size:1.1em">⚡</span>
-                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em">Fonctionnalités Premium</div>
-                <span style="background:#FBBF24;color:#0A1628;font-size:0.65em;font-weight:900;padding:2px 7px;border-radius:6px;margin-left:auto">5€/mois</span>
+                <div id="premium-section-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em">Fonctionnalités Premium</div>
+                <span id="premium-section-badge" style="background:#FBBF24;color:#0A1628;font-size:0.65em;font-weight:900;padding:2px 7px;border-radius:6px;margin-left:auto">5€/mois</span>
             </div>
             <!-- Boost -->
             <div id="boost-btn-wrap" style="margin-bottom:10px"></div>
@@ -1616,13 +1616,17 @@
                 </div>
                 <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
                     <button onclick="goToPremium()" style="width:100%;padding:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);color:#0A1628;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">⚡ 5€/mois ou 50€/an — Résiliable à tout moment →</button>
-                    <button onclick="goToPremiumAnnual()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">🏆 50€/an — soit 4,16€/mois →</button>
+                    <button id="sub-annual-btn" onclick="goToPremiumAnnual()" style="width:100%;padding:12px;background:linear-gradient(135deg,#0A1628,#1E3A8A);color:white;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;cursor:pointer;letter-spacing:0.5px">🏆 50€/an — soit 4,16€/mois →</button>
                     <div style="font-size:0.72em;color:#64748B;text-align:center">Paiement sécurisé par Stripe · 2 offres indépendantes, choisissez l'une ou l'autre</div>
                 </div>
             </div>
             <div class="sub-price" style="color:#0A1628">5€<span class="sub-price-period">/mois</span></div>
         </div>
-        <div style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px 18px;margin-bottom:10px">
+        <div id="sub-launch-banner" style="display:none;background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:14px;padding:14px 16px;margin-bottom:16px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.92em;color:#0A1628">⚡ Premium disponible à partir du 6 octobre</div>
+            <div style="font-size:0.78em;color:#78350F;margin-top:2px">En attendant, tout est débloqué gratuitement pour tout le monde — rien à faire, rien à payer.</div>
+        </div>
+        <div id="sub-saved-teaser" style="background:linear-gradient(135deg,#0A1628,#1E3A8A);border-radius:16px;padding:16px 18px;margin-bottom:10px">
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:1em;margin-bottom:10px">👀 Qui a sauvegardé ton profil ?</div>
             <div style="display:flex;margin-bottom:10px">
                 <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;color:white;font-size:0.85em;filter:blur(4px)">AB</div>
@@ -1631,25 +1635,25 @@
                 <div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.75em;color:rgba(255,255,255,0.7);margin-left:-8px">+?</div>
             </div>
             <div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin-bottom:10px"><span id="saved-by-count" style="color:white;font-weight:700">? personnes</span> ont sauvegardé ton profil.</div>
-            <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-size:0.75em;color:rgba(255,255,255,0.8)">🔒 Débloque le Premium pour voir qui c'est</div>
+            <div id="sub-saved-lock-msg" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:8px 12px;font-size:0.75em;color:rgba(255,255,255,0.8)">🔒 Débloque le Premium pour voir qui c'est</div>
         </div>
-        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:10px">
+        <div id="sub-stats-teaser" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:10px">
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:12px">📊 Stats de ton profil cette semaine</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
                 <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#0A1628">47</div><div style="font-size:0.65em;color:#64748B">VUES</div></div>
                 <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#059669">8</div><div style="font-size:0.65em;color:#64748B">CONTACTS</div></div>
                 <div style="text-align:center;background:white;border-radius:10px;padding:10px 6px;border:1px solid #E2E8F0;filter:blur(3px)"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5em;color:#1E3A8A">12</div><div style="font-size:0.65em;color:#64748B">SAUVEGARDES</div></div>
             </div>
-            <div style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour voir tes vraies stats</div>
+            <div id="sub-stats-lock-msg" style="background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour voir tes vraies stats</div>
         </div>
-        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:16px">
+        <div id="sub-boost-teaser" style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:16px;padding:16px 18px;margin-bottom:16px">
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#0A1628;font-size:1em;margin-bottom:6px">🚀 Boost visibilité — 7 jours</div>
             <div style="font-size:0.8em;color:#64748B;margin-bottom:10px;line-height:1.5">Ton profil apparaît <strong>en premier</strong> dans les résultats pendant 7 jours.</div>
             <div style="display:flex;align-items:center;gap:10px;background:white;border:1px solid #E2E8F0;border-radius:10px;padding:10px 12px;opacity:0.5">
                 <div style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:6px;padding:3px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.7em;color:white">🚀 BOOSTÉ</div>
                 <div style="font-size:0.8em;color:#0A1628;font-weight:600">Ton profil · visible par tous</div>
             </div>
-            <div style="margin-top:8px;background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour activer le boost</div>
+            <div id="sub-boost-lock-msg" style="margin-top:8px;background:#FEF3C7;border:1px solid #FDE047;border-radius:8px;padding:8px 12px;font-size:0.75em;color:#92400E">🔒 Débloque le Premium pour activer le boost</div>
         </div>
         <button onclick="closeSubSwitcher()" style="width:100%;background:linear-gradient(135deg,var(--dark) 0%,var(--blue) 100%);color:white;border:none;padding:14px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05em;letter-spacing:1px;cursor:pointer">OK, compris !</button>
     </div>
@@ -3568,19 +3572,68 @@ function openSubSwitcher() {
     document.getElementById('sub-modal').classList.add('open');
     document.getElementById('sub-modal').scrollTop = 0;
     var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+    var inLaunchFree = (typeof isLaunchFreePeriod === 'function') && isLaunchFreePeriod() && !isPremium;
     // Adapter le modal selon le plan actuel
     var premiumBtn = document.querySelector('#sub-premium button[onclick="goToPremium()"]');
-    if(premiumBtn) {
-        if(isPremium) {
-            premiumBtn.textContent = '✅ Abonné — Premium actif';
-            premiumBtn.style.background = 'linear-gradient(135deg,#059669,#047857)';
-            premiumBtn.style.cursor = 'default';
+    var annualBtn = document.getElementById('sub-annual-btn');
+    var launchBanner = document.getElementById('sub-launch-banner');
+    var teaserIds = ['sub-saved-teaser', 'sub-stats-teaser', 'sub-boost-teaser'];
+    var lockMsgs = {
+        'sub-saved-lock-msg': '🔒 Débloque le Premium pour voir qui c\'est',
+        'sub-stats-lock-msg': '🔒 Débloque le Premium pour voir tes vraies stats',
+        'sub-boost-lock-msg': '🔒 Débloque le Premium pour activer le boost'
+    };
+    if (inLaunchFree) {
+        // Période de lancement gratuite : on ne pousse pas à l'achat, tout est déjà débloqué ailleurs
+        if (premiumBtn) {
+            premiumBtn.textContent = '🚀 Premium — bientôt disponible (6 octobre)';
+            premiumBtn.style.background = '#E2E8F0';
+            premiumBtn.style.color = '#94A3B8';
+            premiumBtn.style.cursor = 'not-allowed';
             premiumBtn.onclick = null;
-        } else {
-            premiumBtn.textContent = '⚡ S\'abonner — 5€/mois →';
-            premiumBtn.style.background = 'linear-gradient(135deg,#FBBF24,#F59E0B)';
-            premiumBtn.style.cursor = 'pointer';
-            premiumBtn.onclick = goToPremium;
+        }
+        if (annualBtn) {
+            annualBtn.textContent = '🚀 Bientôt disponible (6 octobre)';
+            annualBtn.style.background = '#E2E8F0';
+            annualBtn.style.color = '#94A3B8';
+            annualBtn.style.cursor = 'not-allowed';
+            annualBtn.onclick = null;
+        }
+        if (launchBanner) launchBanner.style.display = 'block';
+        teaserIds.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.opacity = '0.5'; });
+        Object.keys(lockMsgs).forEach(function(id){
+            var el = document.getElementById(id);
+            if (el) el.textContent = '✅ Déjà débloqué gratuitement pendant le lancement';
+        });
+    } else {
+        if (launchBanner) launchBanner.style.display = 'none';
+        teaserIds.forEach(function(id){ var el = document.getElementById(id); if (el) el.style.opacity = '1'; });
+        if (!isPremium) {
+            Object.keys(lockMsgs).forEach(function(id){
+                var el = document.getElementById(id);
+                if (el) el.textContent = lockMsgs[id];
+            });
+        }
+        if(premiumBtn) {
+            if(isPremium) {
+                premiumBtn.textContent = '✅ Abonné — Premium actif';
+                premiumBtn.style.background = 'linear-gradient(135deg,#059669,#047857)';
+                premiumBtn.style.cursor = 'default';
+                premiumBtn.onclick = null;
+            } else {
+                premiumBtn.textContent = '⚡ S\'abonner — 5€/mois →';
+                premiumBtn.style.background = 'linear-gradient(135deg,#FBBF24,#F59E0B)';
+                premiumBtn.style.color = '#0A1628';
+                premiumBtn.style.cursor = 'pointer';
+                premiumBtn.onclick = goToPremium;
+            }
+        }
+        if(annualBtn) {
+            annualBtn.textContent = '🏆 50€/an — soit 4,16€/mois →';
+            annualBtn.style.background = 'linear-gradient(135deg,#0A1628,#1E3A8A)';
+            annualBtn.style.color = 'white';
+            annualBtn.style.cursor = isPremium ? 'default' : 'pointer';
+            annualBtn.onclick = isPremium ? null : goToPremiumAnnual;
         }
     }
     // Mettre à jour la sélection active
@@ -6015,7 +6068,14 @@ function toggleCompletFilter() {
         var wrap = document.getElementById('boost-btn-wrap');
         if(!wrap) return;
         var p = window.myProfile || {};
-        var isPremium = (p.plan === 'premium');
+        var isPremium = isUserPremium();
+
+        // Titre de la section : on ne parle plus de "Premium" ni de prix
+        // une fois que l'accès est débloqué (période de lancement ou vrai abonné).
+        var titleEl = document.getElementById('premium-section-title');
+        var badgeEl = document.getElementById('premium-section-badge');
+        if (titleEl) titleEl.textContent = isPremium ? 'Fonctionnalités débloquées' : 'Fonctionnalités Premium';
+        if (badgeEl) badgeEl.style.display = isPremium ? 'none' : '';
         var now = new Date().toISOString();
         var isBoosted = p.boosted_until && p.boosted_until > now;
         if(isBoosted) {

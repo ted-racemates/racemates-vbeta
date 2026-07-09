@@ -572,6 +572,57 @@
             }
         });
 
+        // Échappe le contenu utilisateur avant toute injection dans innerHTML
+        // (messages, bio, avis...) pour empêcher le XSS stocké.
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // ===== PÉRIODE GRATUITE DE LANCEMENT =====
+        // Tout le monde a accès aux fonctionnalités Premium jusqu'à cette date, sans payer.
+        // Après cette date, seul le plan réel ('premium' en base, activé par le webhook Stripe) compte.
+        var LAUNCH_FREE_END = new Date('2026-10-06T00:00:00Z').getTime();
+        function isLaunchFreePeriod() {
+            return Date.now() < LAUNCH_FREE_END;
+        }
+        // Vrai si l'utilisateur a un accès Premium effectif (payé OU période de lancement gratuite)
+        function isUserPremium() {
+            var realPremium = !!(window.myProfile && window.myProfile.plan === 'premium');
+            return realPremium || isLaunchFreePeriod();
+        }
+
+        // Normalise une valeur (sports/needs) en tableau JS, quelle que soit sa forme
+        // en base (tableau déjà propre, chaîne JSON, chaîne simple, null...).
+        // Empêche un profil avec une donnée corrompue de faire planter tout l'écran.
+        function safeArray(val) {
+            if (Array.isArray(val)) {
+                return val.filter(function(x){ return typeof x === 'string' && x.length > 0; });
+            }
+            if (typeof val === 'string') {
+                try {
+                    var parsed = JSON.parse(val);
+                    if (Array.isArray(parsed)) {
+                        return parsed.filter(function(x){ return typeof x === 'string' && x.length > 0; });
+                    }
+                    // Une valeur JSON valide mais qui n'est pas un tableau (ex: "{}", un nombre...)
+                    // n'est jamais exploitable ici : on renvoie un tableau vide plutôt que de
+                    // risquer un objet/nombre qui ferait planter un .toLowerCase() plus loin.
+                    if (typeof parsed === 'string' && parsed) return [parsed];
+                    return [];
+                } catch (e) {
+                    // Pas du JSON valide : chaîne brute genre "Hyrox" tapée à la main
+                    return val ? [val] : [];
+                }
+            }
+            return [];
+        }
+
         // ── Auth state ──────────────────────────────────────────
         let currentUser = null;
         let currentProfile = null;
@@ -707,20 +758,18 @@
             if(typeof updateMyProfileScreen==='function') updateMyProfileScreen();
             if(typeof setPlan==='function') setPlan(data.plan||'free');
             // Activer Premium si retour Stripe en attente
+            // ⚠️ SÉCURITÉ : on ne fait plus confiance à un simple flag client pour passer en premium.
+            // Le webhook Stripe (serveur) est la SEULE source qui écrit plan='premium' en base.
+            // Ici on se contente de vérifier en lecture seule si le webhook a déjà fait son travail,
+            // et on réessaie quelques fois car le webhook peut prendre 1-2 secondes.
             if(sessionStorage.getItem('stripe_premium_pending') === '1') {
-                sessionStorage.removeItem('stripe_premium_pending');
-                sb.from('profiles').update({plan:'premium'}).eq('id', expectedUserId).then(function(){
-                    if(window.myProfile) window.myProfile.plan = 'premium';
-                    if(typeof setPlan==='function') setPlan('premium');
-                    showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
-                    if(typeof renderBoostButton==='function') renderBoostButton();
-                    if(typeof loadProfileStats==='function') loadProfileStats();
-                });
+                pollForPremiumActivation(expectedUserId, 0);
             }
             if(typeof updateAthleteCount==='function') setTimeout(updateAthleteCount, 500);
             setTimeout(function(){ if(typeof loadConversationsList==='function') loadConversationsList(); }, 300);
             setTimeout(function(){ if(typeof loadHomeMatches==='function') loadHomeMatches(); }, 500);
             setTimeout(function(){ if(typeof updateSportCounts==='function') updateSportCounts(); }, 600);
+
             setTimeout(function(){ if(typeof loadDashboardStats==='function') loadDashboardStats(); }, 400);
             // Forcer le rechargement de l'écran actif
             setTimeout(function(){
@@ -750,6 +799,28 @@
             if(typeof startNotifSubscription==='function') startNotifSubscription();
             if(typeof updateNotifBadge==='function') setTimeout(updateNotifBadge, 800);
             // Les athlètes se chargent uniquement via goTo('matching')
+        }
+
+        // Vérifie en LECTURE SEULE si le webhook Stripe (serveur) a activé le Premium.
+        // On ne fait jamais confiance à un flag client pour écrire plan='premium'.
+        function pollForPremiumActivation(userId, attempt) {
+            if (attempt >= 8) { // ~16s max (8 x 2s), au-delà on laisse tomber silencieusement
+                sessionStorage.removeItem('stripe_premium_pending');
+                return;
+            }
+            setTimeout(async function() {
+                const { data, error } = await sb.from('profiles').select('plan').eq('id', userId).single();
+                if (!error && data && data.plan === 'premium') {
+                    sessionStorage.removeItem('stripe_premium_pending');
+                    if (window.myProfile) window.myProfile.plan = 'premium';
+                    if (typeof setPlan === 'function') setPlan('premium');
+                    showStatusToast('🎉 Bienvenue dans RaceMates Premium !');
+                    if (typeof renderBoostButton === 'function') renderBoostButton();
+                    if (typeof loadProfileStats === 'function') loadProfileStats();
+                } else {
+                    pollForPremiumActivation(userId, attempt + 1);
+                }
+            }, 2000);
         }
 
         // ── AUTH FUNCTIONS ──────────────────────────────────────
@@ -978,7 +1049,7 @@
             if (filters.sport && athletes.length) {
                 athletes = athletes.filter(function(a) {
                     try {
-                        var sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports || []);
+                        var sports = safeArray(a.sports);
                         return sports.some(function(s){ return s.toLowerCase().includes(filters.sport.toLowerCase()); });
                     } catch(e) { return false; }
                 });
@@ -1015,6 +1086,13 @@
         <div class="welcome-banner">
             <div><div class="welcome-name" id="home-welcome">Bonjour 👋</div><div class="welcome-sub">3 nouveaux matchs depuis hier</div></div>
             <div class="welcome-avatar">TJ</div>
+        </div>
+        <div id="launch-free-banner" style="display:none;margin-top:12px;background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:14px;padding:12px 16px;align-items:center;gap:10px;cursor:pointer" onclick="openSubSwitcher()">
+            <div style="font-size:1.3em">⚡</div>
+            <div style="flex:1">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.92em;color:#0A1628">Premium disponible à partir du 6 octobre</div>
+                <div id="launch-free-banner-sub" style="font-size:0.78em;color:#78350F"></div>
+            </div>
         </div>
     </div>
     <div class="body">
@@ -1839,10 +1917,8 @@ function loadRealAthletes() {
             var avatarHtml = a.avatar_url
                 ? '<img src="'+a.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
                 : initials;
-            var sports = [];
-            try { sports = typeof a.sports === 'string' ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
-            var needs = [];
-            try { needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs||[]); } catch(e){}
+            var sports = safeArray(a.sports);
+            var needs = safeArray(a.needs);
             var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
             var allSportKeys = sports.map(function(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); }).join(' ');
             var needTags = needs.map(function(n){
@@ -1859,7 +1935,7 @@ function loadRealAthletes() {
 
             var sportBadges = sports.slice(0,4).map(function(s){return '<span class="badge badge-dark">'+s+'</span>';}).join('');
             var needBadges = needs.slice(0,2).map(function(n){
-                var icons={'Logement':'🏠','Partenaire Duo':'🏅','Relais':'⚡','Entra':'🤝'};
+                var icons={'Logement':'🏠','compétitions':'🏅','Covoiturage':'🚗','Entra':'🤝','Alerte':'🚨'};
                 var key=Object.keys(icons).find(function(k){return n.includes(k);});
                 return '<span class="badge badge-blue">'+(key?icons[key]+' ':'')+n+'</span>';
             }).join('');
@@ -1893,8 +1969,8 @@ function loadRealAthletes() {
                 +'<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:1px">NOUVEAU</div>'
                 +boostBadge
                 +'<div class="ac-top" style="background:'+color+'"><div class="ac-av" style="'+(a.avatar_url?'padding:0;overflow:hidden':'')+'">'+avatarHtml+'</div>'
-                +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
-                +'<div class="ac-loc">&#x1F4CD; '+(a.ville||'France')+'</div></div>'
+                +'<div class="ac-info"><div class="ac-name">'+escapeHtml(displayName)+(a.pseudo?' @'+escapeHtml(a.pseudo):'')+'</div>'
+                +'<div class="ac-loc">&#x1F4CD; '+escapeHtml(a.ville||'France')+'</div></div>'
                 +(function(){
                     var niv={};
                     try{niv=typeof a.niveau==='string'?JSON.parse(a.niveau):(a.niveau||{});}catch(e){}
@@ -1906,7 +1982,7 @@ function loadRealAthletes() {
                 })()
                 +'<div class="ac-body"><div class="ac-badges">'+sportBadges+needBadges+'<span class="match-pct">'+compatScore+'%</span></div>'
                 +'<div class="compat-row"><div class="compat-bar"><div class="compat-fill" style="width:'+compatScore+'%"></div></div><div class="compat-pct">'+compatScore+'%</div></div>'
-                +(a.bio?'<div class="ac-bio">'+a.bio.substring(0,80)+(a.bio.length>80?'...':'')+'</div>':'')
+                +(a.bio?'<div class="ac-bio">'+escapeHtml(a.bio.substring(0,80))+(a.bio.length>80?'...':'')+'</div>':'')
                 +'<div class="ac-actions">'
                 +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(\''+aid+'\')">&#x1F4AC; Contacter</button>'
                 +'<button class="btn-save" onclick="event.stopPropagation();toggleSave(this,&quot;'+aid+'&quot;)">&#x1F516;</button>'
@@ -1974,9 +2050,9 @@ function openRealProfile(userId) {
         var a = res.data;
         if(!a) return;
         var sports=[];
-        try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
+        try{sports=safeArray(a.sports);}catch(e){}
         var needs=[];
-        try{needs=typeof a.needs==='string'?JSON.parse(a.needs):(a.needs||[]);}catch(e){}
+        try{needs=safeArray(a.needs);}catch(e){}
         var initials=a.avatar_initials||((a.prenom[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
         var pm=document.getElementById('profile-modal');
         if(!pm) return;
@@ -2040,7 +2116,7 @@ async function loadProfileReviews(userId) {
                 +'<div class="review-av">'+ini+'</div>'
                 +'<div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">'+name+'</div></div></div>'
                 +'<div>'+stars+'</div></div>'
-                +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+(r.comment||'')+'"</div></div>';
+                +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+escapeHtml(r.comment||'')+'"</div></div>';
         }).join('');
 }
 
@@ -2053,7 +2129,7 @@ function openRealChat(userId) {
         var a = res.data;
         if(!a) { console.error('openRealChat: profil non trouvé pour', userId); return; }
         var sports=[];
-        try{sports=typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]);}catch(e){}
+        try{sports=safeArray(a.sports);}catch(e){}
         var initials=a.avatar_initials||((a.prenom||'?')[0]+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
         contactAndChat((a.prenom||'')+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'), userId);
     }).catch(function(err){ console.error('openRealChat:', err); });
@@ -2098,7 +2174,7 @@ async function loadMessages(convId) {
         wrap.className = 'msg-wrap ' + (isMine ? 'sent' : 'recv');
         var time = new Date(m.created_at);
         var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
-        wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + (isMine ? ' <span class="rcheck">✓✓</span>' : '') + '</div>';
+        wrap.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.content) + '</div><div class="msg-time">' + timeStr + (isMine ? ' <span class="rcheck">✓✓</span>' : '') + '</div>';
         msgs.appendChild(wrap);
     });
     msgs.scrollTop = msgs.scrollHeight;
@@ -2132,7 +2208,7 @@ function subscribeToMessages(convId) {
                 wrap.className = 'msg-wrap recv';
                 var time = new Date(m.created_at);
                 var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
-                wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + '</div>';
+                wrap.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.content) + '</div><div class="msg-time">' + timeStr + '</div>';
                 msgs.appendChild(wrap);
                 msgs.scrollTop = msgs.scrollHeight;
                 // Marquer lu
@@ -2168,7 +2244,7 @@ function startGlobalMessagesSubscription() {
                 wrap.className = 'msg-wrap recv';
                 var time = new Date(m.created_at);
                 var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
-                wrap.innerHTML = '<div class="msg-bubble">' + m.content + '</div><div class="msg-time">' + timeStr + '</div>';
+                wrap.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.content) + '</div><div class="msg-time">' + timeStr + '</div>';
                 msgs.appendChild(wrap);
                 msgs.scrollTop = msgs.scrollHeight;
                 // Marquer lu en base
@@ -2204,7 +2280,7 @@ function startGlobalMessagesSubscription() {
         if(!list) return;
         var displayName = a.prenom || a.pseudo || 'Athlète';
         var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
-        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var sports = []; try{ sports = safeArray(a.sports); }catch(e){}
         var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
         var sportBadges = sports.slice(0,2).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
         var div = document.createElement('div');
@@ -2215,8 +2291,8 @@ function startGlobalMessagesSubscription() {
         div.style.cssText = 'cursor:pointer;border:2px solid #059669';
         div.innerHTML = '<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px">NOUVEAU</div>'
             +'<div class="ac-top"><div class="ac-av">'+initials+'</div>'
-            +'<div class="ac-info"><div class="ac-name">'+displayName+(a.pseudo?' @'+a.pseudo:'')+'</div>'
-            +'<div class="ac-loc">📍 '+(a.ville||'France')+'</div></div></div>'
+            +'<div class="ac-info"><div class="ac-name">'+escapeHtml(displayName)+(a.pseudo?' @'+escapeHtml(a.pseudo):'')+'</div>'
+            +'<div class="ac-loc">📍 '+escapeHtml(a.ville||'France')+'</div></div></div>'
             +'<div class="ac-body"><div class="ac-badges">'+sportBadges+'</div>'
             +'<div class="ac-actions">'
             +'<button class="btn-contact" onclick="event.stopPropagation();openRealChat(&quot;'+a.id+'&quot;)">💬 Contacter</button>'
@@ -2229,7 +2305,7 @@ function startGlobalMessagesSubscription() {
         // Notif si sport en commun avec moi
         var myP = window.myProfile || {};
         var mySports = [];
-        try { mySports = typeof myP.sports==='string'?JSON.parse(myP.sports):(myP.sports||[]); } catch(e){}
+        try { mySports = safeArray(myP.sports); } catch(e){}
         var mySportsNorm = mySports.map(function(s){ return s.toLowerCase().replace(/[^a-z]/g,''); });
         var commonSport = sports.find(function(s){ return mySportsNorm.includes(s.toLowerCase().replace(/[^a-z]/g,'')); });
         if(commonSport) {
@@ -2373,8 +2449,8 @@ function sendMsgBtn() {
     var input = document.getElementById('msg-input');
     var text = input.value.trim();
     if(!text) return;
-    // Bloquer coordonnees pour non-premium
-    var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+    // Bloquer coordonnees pour non-premium (sauf pendant la période gratuite de lancement)
+    var isPremium = isUserPremium();
     if(!isPremium && containsPersonalContact(text)) {
         input.value = text;
         showPremiumContactModal();
@@ -2642,7 +2718,7 @@ async function adminSaveEvent() {
         var sportNorm = (payload.sport||'').toLowerCase().replace(/[^a-z]/g,'');
         sb.from('profiles').select('id,sports').neq('id', currentUser.id).then(function(res) {
             (res.data||[]).forEach(function(p) {
-                var sports = []; try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}
+                var sports = []; try{ sports = safeArray(p.sports); }catch(e){}
                 var match = sports.some(function(s){ return s.toLowerCase().replace(/[^a-z]/g,'') === sportNorm; });
                 if(match) {
                     insertNotif(p.id, 'new_event',
@@ -2721,16 +2797,16 @@ async function loadSavedProfiles() {
 
     (profiles||[]).forEach(function(p) {
         var sports = [];
-        try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}
+        try{ sports = safeArray(p.sports); }catch(e){}
         var needs = [];
-        try{ needs = typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]); }catch(e){}
+        try{ needs = safeArray(p.needs); }catch(e){}
         var initials = p.avatar_initials || ((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
         var name = (p.prenom||'') + (p.pseudo?' @'+p.pseudo:'');
         var sportBadges = sports.slice(0,2).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
         var div = document.createElement('div');
         div.className = 'saved-item';
         div.innerHTML = '<div class="saved-top"><div class="saved-av">'+initials+'</div>'
-            +'<div class="saved-name">'+name+(p.ville?' · '+p.ville:'')+'</div>'
+            +'<div class="saved-name">'+escapeHtml(name)+(p.ville?' · '+escapeHtml(p.ville):'')+'</div>'
             +'<div style="font-weight:900;font-size:0.9em;color:white">'+(p.best_time||'')+'</div></div>'
             +'<div style="padding:8px 12px 10px;display:flex;align-items:center;justify-content:space-between">'
             +'<div style="display:flex;gap:5px;flex-wrap:wrap">'+sportBadges+'</div>'
@@ -2827,8 +2903,8 @@ async function loadNotifications() {
         return '<div class="nd-item'+(n.read?'':' unread')+'" data-notif-id="'+n.id+'" data-notif-type="'+n.type+'" data-notif-data=\''+JSON.stringify(n.data||{})+'\'>'
             +'<div style="font-size:1.4em;flex-shrink:0">'+icon+'</div>'
             +'<div style="flex:1;min-width:0">'
-            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+n.title+'</div>'
-            +(n.body?'<div style="font-size:0.78em;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+n.body+'</div>':'')
+            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+escapeHtml(n.title)+'</div>'
+            +(n.body?'<div style="font-size:0.78em;color:#64748B;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(n.body)+'</div>':'')
             +'<div style="font-size:0.7em;color:#94A3B8;margin-top:4px">'+fmt(n.created_at)+'</div>'
             +'</div>'
             +(n.read?'':'<div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px"></div>')
@@ -3466,6 +3542,27 @@ function setPlan(plan) {
         btn.style.background='var(--red)'; btn.style.cursor='pointer';
         btn.style.opacity='1'; btn.disabled=false; btn.removeAttribute('data-locked');
     });
+    updateLaunchFreeBanner();
+}
+
+// Affiche/masque le bandeau "Premium à venir" pendant la période de lancement.
+// Ne s'affiche que si l'utilisateur n'est pas déjà un vrai abonné payant.
+function updateLaunchFreeBanner() {
+    var banner = document.getElementById('launch-free-banner');
+    if (!banner) return;
+    var realPremium = !!(window.myProfile && window.myProfile.plan === 'premium');
+    if (realPremium || !isLaunchFreePeriod()) {
+        banner.style.display = 'none';
+        return;
+    }
+    var daysLeft = Math.max(0, Math.ceil((LAUNCH_FREE_END - Date.now()) / 86400000));
+    var sub = document.getElementById('launch-free-banner-sub');
+    if (sub) sub.textContent = daysLeft > 7
+        ? 'En attendant, profite de toutes les fonctionnalités gratuitement'
+        : (daysLeft > 1
+            ? 'Plus que ' + daysLeft + ' jours pour en profiter gratuitement'
+            : (daysLeft === 1 ? 'Dernier jour d\'accès gratuit !' : 'Dernier jour d\'accès gratuit aujourd\'hui'));
+    banner.style.display = 'flex';
 }
 function openSubSwitcher() {
     document.getElementById('sub-modal').classList.add('open');
@@ -3592,7 +3689,7 @@ async function loadTraining() {
     // Filtrer côté JS les profils cherchant un partenaire entraînement
     var filtered = (data||[]).filter(function(a) {
         try {
-            var needs = typeof a.needs === 'string' ? JSON.parse(a.needs) : (a.needs || []);
+            var needs = safeArray(a.needs);
             return needs.some(function(n){ return (n||'').toLowerCase().includes('entra'); });
         } catch(e) { return false; }
     });
@@ -3636,7 +3733,7 @@ function renderTraining(athletes) {
     var normSport = activeSport.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
 
     var filtered = athletes.filter(function(a) {
-        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var sports = []; try{ sports = safeArray(a.sports); }catch(e){}
         var sportMatch = activeSport === 'all' || sports.some(function(s){
             return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'').includes(normSport);
         });
@@ -3661,7 +3758,7 @@ function renderTraining(athletes) {
     if(countEl) countEl.textContent = '(' + filtered.length + ')';
 
     filtered.forEach(function(a) {
-        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var sports = []; try{ sports = safeArray(a.sports); }catch(e){}
         var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
         var name = (a.prenom||'') + (a.pseudo?' @'+a.pseudo:'');
         var sportBadges = sports.slice(0,3).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
@@ -3701,11 +3798,11 @@ function renderTraining(athletes) {
         div.style.cursor = 'pointer';
         div.innerHTML = '<div class="ac-top">'
             +'<div class="ac-av">'+initials+'</div>'
-            +'<div class="ac-info"><div class="ac-name">'+name+'</div><div class="ac-loc">📍 '+(a.ville||'France')+'</div></div>'
+            +'<div class="ac-info"><div class="ac-name">'+escapeHtml(name)+'</div><div class="ac-loc">📍 '+escapeHtml(a.ville||'France')+'</div></div>'
             +'<div class="ac-chrono">'+perf+'</div></div>'
             +'<div class="ac-body">'
             +'<div class="ac-badges">'+sportBadges+'<span class="badge badge-training">🤝 Entraîn.</span></div>'
-            +(a.bio ? '<div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">'+a.bio.substring(0,100)+'</div>' : '')
+            +(a.bio ? '<div style="font-size:0.78em;color:var(--grey);margin:6px 0;line-height:1.4">'+escapeHtml(a.bio.substring(0,100))+'</div>' : '')
             +'<div class="ac-actions">'
             +'<button class="btn-contact training-contact-btn" data-uid="'+a.id+'">💬 Contacter</button>'
             +'<button class="btn-save training-save-btn" data-uid="'+a.id+'">🔖</button>'
@@ -3818,16 +3915,16 @@ function filterTraining(el, sport) {
             return '<div style="background:white;border-radius:14px;padding:14px 16px;border:1.5px solid #FEE2E2;display:flex;gap:12px;align-items:flex-start">'
                 +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:0.9em;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'
                 +'<div style="flex:1;min-width:0">'
-                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+name+' <span style="font-size:0.8em;color:#64748B;font-weight:400">· '+a.event_name+'</span></div>'
+                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+escapeHtml(name)+' <span style="font-size:0.8em;color:#64748B;font-weight:400">· '+escapeHtml(a.event_name)+'</span></div>'
                 +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'
                 +'<span style="background:'+needColor+';color:white;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">'+needLabel+'</span>'
                 +'<span style="background:#F1F5F9;color:#64748B;font-size:0.7em;padding:2px 8px;border-radius:6px">\uD83D\uDCC5 '+date+'</span>'
                 +'</div>'
-                +(a.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+a.message+'</div>' : '')
+                +(a.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+escapeHtml(a.message)+'</div>' : '')
                 +'</div>'
                 +(isOwn ? '<button onclick="deleteLastMinute(\''+a.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
                 +'</div>'
-                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',\'\',\''+a.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
+                +(!isOwn ? '<button onclick="contactAndChat(\''+escapeHtml(name)+'\',\''+initials+'\',\'online\',\'\',\''+a.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#7F1D1D,#991B1B);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
                 +'</div>';
         }).join('');
         if(container) container.innerHTML = html;
@@ -3907,17 +4004,17 @@ function filterTraining(el, sport) {
             return '<div style="background:white;border-radius:14px;padding:14px 16px;border:1.5px solid #D1FAE5;display:flex;gap:12px;align-items:flex-start">'
                 +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:0.9em;flex-shrink:0;overflow:hidden">'+avatarHtml+'</div>'
                 +'<div style="flex:1;min-width:0">'
-                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+name+' <span style="font-size:0.8em;color:#64748B;font-weight:400">\u2192 '+c.event_name+'</span></div>'
+                +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+escapeHtml(name)+' <span style="font-size:0.8em;color:#64748B;font-weight:400">\u2192 '+escapeHtml(c.event_name)+'</span></div>'
                 +'<div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">'
-                +'<span style="background:#166534;color:white;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">\uD83D\uDCCD '+c.departure_city+'</span>'
+                +'<span style="background:#166534;color:white;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">\uD83D\uDCCD '+escapeHtml(c.departure_city)+'</span>'
                 +'<span style="background:#F1F5F9;color:#64748B;font-size:0.7em;padding:2px 8px;border-radius:6px">\uD83D\uDCC5 '+date+'</span>'
                 +'<span style="background:#FEF3C7;color:#92400E;font-size:0.7em;font-weight:700;padding:2px 8px;border-radius:6px">\uD83D\uDC65 '+c.seats+' place'+(c.seats>1?'s':'')+'</span>'
                 +'</div>'
-                +(c.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+c.message+'</div>' : '')
+                +(c.message ? '<div style="font-size:0.78em;color:#64748B;margin-top:6px;line-height:1.4">'+escapeHtml(c.message)+'</div>' : '')
                 +'</div>'
                 +(isOwn ? '<button onclick="deleteCarpool(\''+c.id+'\')" style="background:none;border:none;color:#DC2626;font-size:1.1em;cursor:pointer;padding:0;flex-shrink:0">\u2715</button>' : '')
                 +'</div>'
-                +(!isOwn ? '<button onclick="contactAndChat(\''+name+'\',\''+initials+'\',\'online\',\'\',\''+c.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
+                +(!isOwn ? '<button onclick="contactAndChat(\''+escapeHtml(name)+'\',\''+initials+'\',\'online\',\'\',\''+c.user_id+'\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#1C3A1C,#166534);color:white;border:none;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.88em;cursor:pointer">💬 Contacter</button>' : '')
                 +'</div>';
         }).join('');
         if(container) container.innerHTML = html;
@@ -4043,7 +4140,7 @@ async function loadLodgingSeekers(eventId) {
 
     var seekers=(profiles||[]).filter(function(p){
         try{
-            var n=typeof p.needs==='string'?JSON.parse(p.needs):(p.needs||[]);
+            var n=safeArray(p.needs);
             return n.some(function(x){return x.includes('Logement');});
         }catch(e){return false;}
     });
@@ -4071,7 +4168,7 @@ async function loadLodgingSeekers(eventId) {
     }
 
     list.innerHTML=seekers.map(function(p){
-        var sports=[];try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
+        var sports=[];try{sports=safeArray(p.sports);}catch(e){}
         var initials=p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
         var av=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
         // Badge event logement
@@ -4083,9 +4180,9 @@ async function loadLodgingSeekers(eventId) {
         return '<div style="background:white;border:1px solid #E2E8F0;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px">'
             +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
             +'<div style="flex:1;min-width:0">'
-            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
-            +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div>'
-            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+p.best_time+'</div>':'')
+            +'<div style="font-weight:700;font-size:0.88em;color:#0A1628">'+escapeHtml(p.prenom||'Athlète')+(p.pseudo?' @'+escapeHtml(p.pseudo):'')+'</div>'
+            +'<div style="font-size:0.75em;color:#64748B">📍 '+escapeHtml(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div>'
+            +(p.best_time?'<div style="font-size:0.72em;color:#059669;font-weight:700">⏱ '+escapeHtml(p.best_time)+'</div>':'')
             +evBadge
             +'</div>'
             +'<button data-uid="'+p.id+'" class="lodge-contact-btn" style="padding:8px 12px;background:#0A1628;color:white;border:none;border-radius:8px;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.8em;cursor:pointer;flex-shrink:0">💬 Contacter</button>'
@@ -4109,11 +4206,11 @@ async function loadLodgingOffers(eventId) {
         return '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;margin-bottom:10px">'
             +'<div style="background:linear-gradient(135deg,#065F46,#059669);padding:10px 14px;display:flex;align-items:center;gap:10px">'
             +'<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;overflow:hidden;flex-shrink:0">'+av+'</div>'
-            +'<div style="flex:1"><div style="font-weight:700;color:white;font-size:0.88em">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
+            +'<div style="flex:1"><div style="font-weight:700;color:white;font-size:0.88em">'+escapeHtml(p.prenom||'Athlète')+(p.pseudo?' @'+escapeHtml(p.pseudo):'')+'</div>'
             +'<div style="font-size:0.7em;color:rgba(255,255,255,0.7)">Propose son logement</div></div>'
             +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;font-size:1.1em">'+(o.price_per_night||'?')+'€<span style="font-size:0.55em;font-weight:400">/nuit</span></div>'
             +'</div><div style="padding:12px 14px">'
-            +'<div style="font-size:0.82em;color:#0A1628;margin-bottom:6px">'+(o.description||'Logement disponible')+'</div>'
+            +'<div style="font-size:0.82em;color:#0A1628;margin-bottom:6px">'+escapeHtml(o.description||'Logement disponible')+'</div>'
             +'<div style="display:flex;align-items:center;justify-content:space-between">'
             +'<span style="font-size:0.75em;color:#64748B">👥 '+(o.places||1)+' place'+(o.places>1?'s':'')+' disponible'+(o.places>1?'s':'')+'</span>'
             +(isOwn?'<button data-lid="'+o.id+'" class="lodge-del-btn" style="padding:6px 10px;background:#FEE2E2;color:#DC2626;border:none;border-radius:7px;font-size:0.75em;cursor:pointer">🗑 Retirer</button>'
@@ -4283,9 +4380,9 @@ async function updateSportCounts() {
     if(!profiles) return;
     var counts = {};
     profiles.forEach(function(p) {
-        var sports = [];
-        try{ sports = typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]); }catch(e){}
+        var sports = safeArray(p.sports);
         sports.forEach(function(s) {
+            if (typeof s !== 'string') return;
             var key = s.toLowerCase().replace(/[^a-z]/g,'');
             counts[key] = (counts[key]||0) + 1;
         });
@@ -4315,10 +4412,8 @@ async function loadHomeMatches() {
 
     // Charger mon profil pour avoir mes sports et needs
     var myP = window.myProfile || {};
-    var mySports = [];
-    var myNeeds = [];
-    try { mySports = typeof myP.sports === 'string' ? JSON.parse(myP.sports) : (myP.sports || []); } catch(e){}
-    try { myNeeds = typeof myP.needs === 'string' ? JSON.parse(myP.needs) : (myP.needs || []); } catch(e){}
+    var mySports = safeArray(myP.sports);
+    var myNeeds = safeArray(myP.needs);
 
     // Normaliser pour comparaison
     var normStr = function(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); };
@@ -4338,8 +4433,8 @@ async function loadHomeMatches() {
 
     // Scorer chaque profil
     var scored = athletes.map(function(a) {
-        var aSports = []; try{ aSports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
-        var aNeeds = []; try{ aNeeds = typeof a.needs==='string'?JSON.parse(a.needs):(a.needs||[]); }catch(e){}
+        var aSports = safeArray(a.sports);
+        var aNeeds = safeArray(a.needs);
         var aSportsNorm = aSports.map(normStr);
         var aNeedsNorm = aNeeds.map(normStr);
 
@@ -4382,7 +4477,7 @@ async function loadHomeMatches() {
 
     list.innerHTML = top.map(function(t) {
         var a = t.athlete;
-        var sports = []; try{ sports = typeof a.sports==='string'?JSON.parse(a.sports):(a.sports||[]); }catch(e){}
+        var sports = []; try{ sports = safeArray(a.sports); }catch(e){}
         var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
         var name = (a.prenom||'Athlète') + (a.pseudo?' @'+a.pseudo:'') + ' · ' + (a.ville||'France');
         // Afficher les sports en commun en priorité, puis les autres
@@ -4396,7 +4491,7 @@ async function loadHomeMatches() {
         var pctColor = t.score >= 50 ? 'var(--green)' : t.score >= 30 ? 'var(--blue)' : 'var(--grey)';
         return '<div class="mini-match-card" data-uid="'+a.id+'">'
             +'<div class="mmc-top"><div class="mmc-av">'+initials+'</div>'
-            +'<div class="mmc-name">'+name+'</div>'
+            +'<div class="mmc-name">'+escapeHtml(name)+'</div>'
             +'<div class="mmc-chrono">'+(a.best_time||'')+'</div></div>'
             +'<div class="mmc-body"><div class="mmc-badges">'+badges+'</div>'
             +'<div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-size:0.85em;color:'+pctColor+'">'+pct+'</div>'
@@ -4717,7 +4812,7 @@ function toggleCompletFilter() {
             var b = document.getElementById('sc-badges');
             if(b) {
                 b.innerHTML = '';
-                var icons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
+                var icons = {'Logement':'🏠','Partenaire de compétitions':'🏅','Covoiturage':'🚗',"Partenaire d'entraînement":'🤝','Alerte de dernière minute':'🚨'};
                 needs.slice(0,3).forEach(function(n){ var s=document.createElement('span'); s.className='sc-badge'; s.textContent=(icons[n]||'')+(icons[n]?' ':'')+n; b.appendChild(s); });
                 if(events[0]){ var ev=document.createElement('span'); ev.className='sc-badge'; ev.textContent='📍 '+events[0].replace('Hyrox ',''); b.appendChild(ev); }
             }
@@ -4741,6 +4836,18 @@ function toggleCompletFilter() {
                 var userId = data && data.user && data.user.id;
                 console.log('sbSignUp userId:', userId);
                 if(userId) {
+                    // Upload de la photo choisie pendant l'onboarding, si il y en a une
+                    if (window._obPhotoFile) {
+                        try {
+                            var avatarUrl = await uploadAvatarFile(window._obPhotoFile, userId);
+                            profileData.avatar_url = avatarUrl;
+                            window.myProfile.avatar_url = avatarUrl;
+                            console.log('✅ Photo de profil uploadée');
+                        } catch(photoErr) {
+                            console.warn('⚠️ Upload photo échoué (profil créé quand même) :', photoErr.message || photoErr);
+                        }
+                        window._obPhotoFile = null;
+                    }
                     var fn = window.sbUpdateProfile || sbUpdateProfile;
                     await fn(profileData, userId);
                     console.log('✅ Profil complet envoyé à Supabase');
@@ -5420,7 +5527,7 @@ function toggleCompletFilter() {
             var sportCounts = {};
             all.forEach(function(a) {
                 var sports = [];
-                try { sports = typeof a.sports === "string" ? JSON.parse(a.sports) : (a.sports||[]); } catch(e){}
+                try { sports = safeArray(a.sports); } catch(e){}
                 sports.forEach(function(s) {
                     var key = s.toLowerCase().replace(/[^a-z]/g,"");
                     sportCounts[key] = (sportCounts[key]||0) + 1;
@@ -5436,7 +5543,7 @@ function toggleCompletFilter() {
             });
             var total = all.length + demoCards.length;
             var training = all.filter(function(a){
-                try{ var n=typeof a.needs==="string"?JSON.parse(a.needs):(a.needs||[]); return n.some(function(x){return x.includes("Entraîn");}); }catch(e){return false;}
+                try{ var n=safeArray(a.needs); return n.some(function(x){return x.includes("Entraîn");}); }catch(e){return false;}
             }).length;
             var elA = document.getElementById("qa-sub-athletes");
             if(elA) elA.textContent = total + " disponibles";
@@ -5595,7 +5702,7 @@ function toggleCompletFilter() {
         var pstats = document.getElementById('profile-pstats');
         if(pstats) {
             var statsHtml = '';
-            var sports = p.sports && p.sports.length ? p.sports : [];
+            var sports = safeArray(p.sports);
             var lbl1 = 'BEST PERF';
             var lbl2 = 'COURSES';
             var lbl3 = p.pace ? 'PACE / STAT' : 'PACE';
@@ -5608,11 +5715,11 @@ function toggleCompletFilter() {
         // Badges dynamiques (sports + needs + niveau)
         var badgesDyn = document.getElementById('profile-badges-dynamic');
         if(badgesDyn) {
-            var sports = p.sports && p.sports.length ? p.sports : [];
-            var needs = p.needs && p.needs.length ? p.needs : [];
+            var sports = safeArray(p.sports);
+            var needs = safeArray(p.needs);
             var niveau = p.niveau || {};
             var sportIcons = {hyrox:'🏋️',athx:'⚡',running:'🏃',trail:'🌿',triathlon:'🏊',crossfit:'💪',spartan:'🧱',musculation:'🏋️‍♂️',natation:'🏊'};
-            var needIcons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
+            var needIcons = {'Logement':'🏠','Partenaire de compétitions':'🏅','Covoiturage':'🚗',"Partenaire d'entraînement":'🤝','Alerte de dernière minute':'🚨'};
             var html = '';
             sports.forEach(function(s){
                 var key = s.toLowerCase().replace(/[^a-z]/g,'');
@@ -5631,7 +5738,7 @@ function toggleCompletFilter() {
         // Onglets sport dynamiques
         var sportTabs = document.getElementById('profile-sport-tabs');
         if(sportTabs) {
-            var sports = p.sports && p.sports.length ? p.sports : [];
+            var sports = safeArray(p.sports);
             var sportIcons = {hyrox:'🏋️',athx:'⚡',running:'🏃',trail:'🌿',triathlon:'🏊',crossfit:'💪',spartan:'🧱',musculation:'🏋️‍♂️',natation:'🏊'};
             sportTabs.innerHTML = sports.map(function(s, i){
                 var key = s.toLowerCase().replace(/[^a-z]/g,'');
@@ -5642,12 +5749,12 @@ function toggleCompletFilter() {
         // Complétion du profil
         var pccItems = document.getElementById('pcc-items-dynamic');
         if(pccItems) {
-            var sports = p.sports && p.sports.length ? p.sports : [];
+            var sports = safeArray(p.sports);
             var sportName = sports[0] ? (SPORT_LABELS[sports[0]] ? SPORT_LABELS[sports[0]].name : sports[0]) : 'sport';
             var hasPhoto = !!p.avatar_url;
             var hasSocial = !!(p.instagram || p.strava || p.facebook);
             var hasPerf = !!(p.best_time || p.nb_courses || p.pace);
-            var hasNeeds = !!(p.needs && p.needs.length);
+            var hasNeeds = !!(safeArray(p.needs).length);
             var items = [
                 { done: true,      label: 'Informations de base', bonus: '' },
                 { done: !!sports.length, label: 'Sport(s) : ' + sports.map(function(s){ return SPORT_LABELS[s] ? SPORT_LABELS[s].icon+' '+SPORT_LABELS[s].name : s; }).join(', '), bonus: '' },
@@ -5687,8 +5794,8 @@ function toggleCompletFilter() {
         // Recherches actives dynamiques — depuis event_registrations + needs
         var rechercheContent = document.getElementById('profile-recherches-content');
         if(rechercheContent && currentUser) {
-            var needs = p.needs && p.needs.length ? p.needs : [];
-            var needIcons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
+            var needs = safeArray(p.needs);
+            var needIcons = {'Logement':'🏠','Partenaire de compétitions':'🏅','Covoiturage':'🚗',"Partenaire d'entraînement":'🤝','Alerte de dernière minute':'🚨'};
             var statusMap = {};
             try { statusMap = typeof p.status_map === 'string' ? JSON.parse(p.status_map) : (p.status_map || {}); } catch(e){}
 
@@ -5774,9 +5881,9 @@ function toggleCompletFilter() {
 
         // Recherches actives (based on needs)
         var searchBanner = document.getElementById('profile-status-banner');
-        if(searchBanner && p.needs && p.needs.length) {
-            var needIcons = {'Logement':'🏠','Partenaire Duo':'🏅','Équipe Relais':'⚡','Entraînement':'🤝'};
-            var needHtml = p.needs.map(function(n){ return '<span class="badge badge-blue">' + (needIcons[n]||'') + ' ' + n + '</span>'; }).join(' ');
+        if(searchBanner && safeArray(p.needs).length) {
+            var needIcons = {'Logement':'🏠','Partenaire de compétitions':'🏅','Covoiturage':'🚗',"Partenaire d'entraînement":'🤝','Alerte de dernière minute':'🚨'};
+            var needHtml = safeArray(p.needs).map(function(n){ return '<span class="badge badge-blue">' + (needIcons[n]||'') + ' ' + n + '</span>'; }).join(' ');
             var searchEl = searchBanner.querySelector('.search-active-tags');
             if(searchEl) searchEl.innerHTML = needHtml;
         }
@@ -5823,7 +5930,7 @@ function toggleCompletFilter() {
                     +'<div><div style="font-size:0.85em;font-weight:700;color:var(--dark)">'+name+'</div>'
                     +'<div style="font-size:0.7em;color:var(--grey)">'+date+'</div></div></div>'
                     +'<div>'+stars+'</div></div>'
-                    +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+( r.comment||'' )+'"</div></div>';
+                    +'<div style="font-size:0.82em;color:var(--grey);line-height:1.5">"'+escapeHtml(r.comment||'')+'"</div></div>';
             }).join('');
     }
 
@@ -5840,16 +5947,16 @@ function toggleCompletFilter() {
             list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--grey);font-size:0.85em">Personne n\'a encore sauvegardé ton profil.</div>';
             return;
         }
-        var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+        var isPremium = isUserPremium();
         if(isPremium) {
             list.innerHTML = savers.map(function(p) {
-                var sports=[]; try{sports=typeof p.sports==='string'?JSON.parse(p.sports):(p.sports||[]);}catch(e){}
+                var sports=[]; try{sports=safeArray(p.sports);}catch(e){}
                 var initials = p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
                 var av = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
                 return '<div style="background:white;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer" onclick="openRealProfile(\''+p.id+'\')">'
                     +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
-                    +'<div style="flex:1"><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+(p.prenom||'Athlète')+(p.pseudo?' @'+p.pseudo:'')+'</div>'
-                    +'<div style="font-size:0.75em;color:#64748B">📍 '+(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div></div>'
+                    +'<div style="flex:1"><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+escapeHtml(p.prenom||'Athlète')+(p.pseudo?' @'+escapeHtml(p.pseudo):'')+'</div>'
+                    +'<div style="font-size:0.75em;color:#64748B">📍 '+escapeHtml(p.ville||'France')+' · '+sports.slice(0,2).join(', ')+'</div></div>'
                     +'<button onclick="event.stopPropagation();openRealChat(\''+p.id+'\')" style="padding:6px 10px;background:#0A1628;color:white;border:none;border-radius:7px;font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-size:0.75em;cursor:pointer">💬</button>'
                     +'</div>';
             }).join('');
@@ -5872,7 +5979,7 @@ function toggleCompletFilter() {
         if(!currentUser) return;
         var statsEl = document.getElementById('profile-engagement-stats');
         if(!statsEl) return;
-        var isPremium = (window.myProfile && window.myProfile.plan === 'premium');
+        var isPremium = isUserPremium();
         if(!isPremium) {
             statsEl.innerHTML = '<div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:14px;padding:14px">'
                 +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:0.9em;color:#0A1628;margin-bottom:10px">📊 Stats de ton profil — cette semaine</div>'
@@ -6028,7 +6135,7 @@ function toggleCompletFilter() {
         if(el('edit-pace')) el('edit-pace').value = p.pace || '';
         // Pré-cocher les sports actuels
         var currentSports = [];
-        try { currentSports = typeof p.sports === 'string' ? JSON.parse(p.sports) : (p.sports || []); } catch(e){}
+        try { currentSports = safeArray(p.sports); } catch(e){}
         var currentSportsNorm = currentSports.map(function(s){ return s.toLowerCase().replace(/[^a-z]/g,''); });
         document.querySelectorAll('.edit-sport-chip').forEach(function(chip) {
             var sport = chip.getAttribute('data-sport');
@@ -6049,7 +6156,7 @@ function toggleCompletFilter() {
         });
         // Pré-cocher les needs actuels
         var currentNeeds = [];
-        try { currentNeeds = typeof p.needs === 'string' ? JSON.parse(p.needs) : (p.needs || []); } catch(e){}
+        try { currentNeeds = safeArray(p.needs); } catch(e){}
         document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
             var need = chip.getAttribute('data-need');
             var active = currentNeeds.some(function(n){ return n === need; });
@@ -6118,6 +6225,23 @@ function toggleCompletFilter() {
         document.body.style.overflow = 'hidden';
     }
 
+    // Upload un fichier vers Supabase Storage et renvoie l'URL publique.
+    // Réutilisée par uploadAvatar() (édition de profil) et finishOnboarding() (création de compte).
+    async function uploadAvatarFile(file, userId) {
+        if (file.size > 5 * 1024 * 1024) {
+            throw new Error('Fichier trop lourd (max 5 Mo)');
+        }
+        var ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+        var filePath = userId + '/avatar.' + ext;
+        var { error: upErr } = await sb.storage.from('avatars').upload(filePath, file, {
+            upsert: true,
+            contentType: file.type
+        });
+        if (upErr) throw upErr;
+        var { data: urlData } = sb.storage.from('avatars').getPublicUrl(filePath);
+        return urlData.publicUrl + '?t=' + Date.now(); // cache-bust
+    }
+
     // Upload avatar vers Supabase Storage
     async function uploadAvatar(file) {
         if(!currentUser) return;
@@ -6125,27 +6249,8 @@ function toggleCompletFilter() {
         var previewEl = document.getElementById('edit-avatar-preview');
         if(statusEl) statusEl.textContent = '⏳ Upload en cours...';
 
-        // Vérif taille
-        if(file.size > 5 * 1024 * 1024) {
-            if(statusEl) statusEl.textContent = '⚠️ Fichier trop lourd (max 5 Mo)';
-            return;
-        }
-
-        // Chemin : avatars/{userId}/avatar.jpg
-        var ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-        var filePath = currentUser.id + '/avatar.' + ext;
-
         try {
-            // Upload (upsert = écrase l'ancien)
-            var { error: upErr } = await sb.storage.from('avatars').upload(filePath, file, {
-                upsert: true,
-                contentType: file.type
-            });
-            if(upErr) throw upErr;
-
-            // Récupérer l'URL publique
-            var { data: urlData } = sb.storage.from('avatars').getPublicUrl(filePath);
-            var publicUrl = urlData.publicUrl + '?t=' + Date.now(); // cache-bust
+            var publicUrl = await uploadAvatarFile(file, currentUser.id);
 
             // Sauvegarder dans profiles
             await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', currentUser.id);
@@ -6557,6 +6662,7 @@ setPlan('free');
     function triggerPhoto(){document.getElementById('photo-input').click();}
     function handlePhoto(input){
         if(input.files&&input.files[0]){
+            window._obPhotoFile = input.files[0]; // gardé en mémoire pour l'upload à la fin de l'onboarding
             var r=new FileReader();
             r.onload=function(e){document.getElementById('photo-preview').src=e.target.result;document.getElementById('photo-upload').classList.add('has-photo');};
             r.readAsDataURL(input.files[0]);
@@ -6822,9 +6928,10 @@ setPlan('free');
             <label class="field-label">Je cherche</label>
             <div class="need-grid">
                 <div class="need-card" onclick="toggleNeed(this);toggleLodgingEventSelect(this)"><span class="need-icon">🏠</span><div class="need-name">Logement</div><div class="need-desc">Partager un hébergement</div></div>
-                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🏅</span><div class="need-name">Partenaire Duo</div><div class="need-desc">Courir à deux</div></div>
-                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">⚡</span><div class="need-name">Équipe Relais</div><div class="need-desc">4 membres min.</div></div>
-                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🤝</span><div class="need-name">Entraînement</div><div class="need-desc">Sessions régulières</div></div>
+                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🏅</span><div class="need-name">Partenaire de compétitions</div><div class="need-desc">Courir en compétition</div></div>
+                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🚗</span><div class="need-name">Covoiturage</div><div class="need-desc">Partager la route</div></div>
+                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🤝</span><div class="need-name">Partenaire d'entraînement</div><div class="need-desc">Sessions régulières</div></div>
+                <div class="need-card" onclick="toggleNeed(this)"><span class="need-icon">🚨</span><div class="need-name">Alerte de dernière minute</div><div class="need-desc">Besoin urgent avant course</div></div>
             </div>
             <div id="lodging-event-select-wrap" style="display:none;margin-top:12px">
                 <label class="field-label">🏠 Pour quel événement cherches-tu un logement ?</label>
@@ -7196,10 +7303,11 @@ setPlan('free');
             <div style="border-top:1px solid #E2E8F0;padding-top:14px">
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🤝 Je recherche</label>
                 <div id="edit-needs-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
-                    <div class="edit-need-chip" data-need="Entraînement" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🤝 Entraînement</div>
-                    <div class="edit-need-chip" data-need="Partenaire Duo" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏅 Partenaire Duo</div>
-                    <div class="edit-need-chip" data-need="Équipe Relais" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">⚡ Équipe Relais</div>
+                    <div class="edit-need-chip" data-need="Partenaire d'entraînement" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🤝 Partenaire d'entraînement</div>
+                    <div class="edit-need-chip" data-need="Partenaire de compétitions" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏅 Partenaire de compétitions</div>
+                    <div class="edit-need-chip" data-need="Covoiturage" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🚗 Covoiturage</div>
                     <div class="edit-need-chip" data-need="Logement" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏠 Logement</div>
+                    <div class="edit-need-chip" data-need="Alerte de dernière minute" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🚨 Alerte de dernière minute</div>
                 </div>
                 <!-- Select event logement -->
                 <div id="edit-lodging-event-wrap" style="display:none;margin-top:10px">

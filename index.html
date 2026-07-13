@@ -743,6 +743,7 @@
                 niveau: parseSafeObj(data.niveau), events: parseSafe(data.events),
                 initials: data.avatar_initials||'RM', plan: data.plan||'free',
                 best_time: data.best_time||'', nb_courses: data.nb_courses||'', pace: data.pace||'',
+                sport_stats: parseSafeObj(data.sport_stats),
                 avatar_url: data.avatar_url||'',
                 status_map: data.status_map || {},
                 boosted_until: data.boosted_until || null
@@ -1513,7 +1514,8 @@
     </div>
     <div style="padding:16px 20px 0">
         <div id="pm-name" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2em;color:var(--dark);line-height:1;margin-bottom:4px"></div>
-        <div id="pm-loc" style="font-size:0.82em;color:var(--grey);margin-bottom:14px"></div>
+        <div id="pm-loc" style="font-size:0.82em;color:var(--grey);margin-bottom:8px"></div>
+        <div id="pm-sport" style="display:inline-block;background:#F1F5F9;color:#0A1628;font-size:0.78em;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:14px"></div>
         <div id="pm-badges" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
             <div class="pstat"><div id="pm-stat1" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl1">BEST PERF</div></div>
@@ -1521,6 +1523,7 @@
             <div class="pstat"><div id="pm-stat3" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl3">PACE / STAT</div></div>
         </div>
         <div id="pm-bio" class="profile-bio"></div>
+        <div id="pm-sport-stats" style="margin-top:12px"></div>
         <div style="margin-top:14px;margin-bottom:16px" id="pm-event"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <button id="profile-modal-contact-btn" style="background:var(--red);color:white;border:none;padding:14px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;letter-spacing:1px;cursor:pointer">💬 Contacter</button>
@@ -2086,7 +2089,33 @@ function openRealProfile(userId) {
         if(el('pm-name')) el('pm-name').textContent=a.prenom+(a.pseudo?' @'+a.pseudo:'');
         if(el('pm-loc')) el('pm-loc').textContent='📍 '+(a.ville||'France');
         if(el('pm-bio')) el('pm-bio').textContent=a.bio||'';
-        if(el('pm-sport')) el('pm-sport').textContent=sports[0]||'';
+        if(el('pm-sport')) {
+            var sportIcons = {'Hyrox':'🏋️','ATHX':'⚡','Running':'🏃','Trail':'🌿','Triathlon':'🏊','CrossFit':'💪','Spartan Race':'🧱','Musculation':'🏋️‍♂️'};
+            var sportText = sports.map(function(s){ return (sportIcons[s]||'') + ' ' + s; }).join('  ·  ');
+            var sportEl = el('pm-sport');
+            sportEl.textContent = sportText;
+            sportEl.style.display = sportText ? 'inline-block' : 'none';
+        }
+        var sportStatsEl = el('pm-sport-stats');
+        if (sportStatsEl) {
+            var sportStats = {};
+            try { sportStats = typeof a.sport_stats === 'string' ? JSON.parse(a.sport_stats) : (a.sport_stats || {}); } catch(e) {}
+            var sportStatsHtml = '';
+            Object.keys(sportStats).forEach(function(sportName) {
+                var statsForSport = sportStats[sportName];
+                var rows = Object.keys(statsForSport).map(function(label) {
+                    return '<div style="display:flex;justify-content:space-between;font-size:0.8em;padding:4px 0;border-bottom:1px solid #F1F5F9">'
+                        + '<span style="color:#64748B">' + escapeHtml(label) + '</span>'
+                        + '<span style="font-weight:700;color:#0A1628">' + escapeHtml(statsForSport[label]) + '</span></div>';
+                }).join('');
+                if (rows) {
+                    sportStatsHtml += '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;margin-bottom:8px">'
+                        + '<div style="font-weight:900;font-family:\'Barlow Condensed\',sans-serif;font-size:0.9em;color:#0A1628;margin-bottom:4px">' + escapeHtml(sportName) + '</div>'
+                        + rows + '</div>';
+                }
+            });
+            sportStatsEl.innerHTML = sportStatsHtml;
+        }
         var needsEl=el('pm-needs');
         if(needsEl){
             needsEl.innerHTML=needs.map(function(n){
@@ -4879,30 +4908,42 @@ function toggleCompletFilter() {
         document.querySelectorAll('#ob-sports-grid .ob-chip.on').forEach(function(c){ if(c.dataset.sport) sports.push(c.dataset.sport); });
         if(!sports.length) sports = window._obSports || [];
 
+        // Collecte TOUTES les stats détaillées saisies, par sport (chrono Hyrox,
+        // temps triathlon, FRAN, squat...) — plus rien n'est perdu, même si
+        // l'athlète pratique plusieurs sports et remplit plusieurs stats.
+        var sportStats = {};
+        sports.forEach(function(sportName) {
+            var cfg = (typeof SPORT_CONFIG !== 'undefined') && SPORT_CONFIG[sportName];
+            if (!cfg || !cfg.perfs) return;
+            var statsForSport = {};
+            cfg.perfs.forEach(function(perf) {
+                if (perf.type === 'chrono') {
+                    var ch = (document.getElementById(perf.id+'-h')||{}).value || '';
+                    var cm = (document.getElementById(perf.id+'-m')||{}).value || '';
+                    var cs = (document.getElementById(perf.id+'-s')||{}).value || '';
+                    if (ch || cm || cs) {
+                        statsForSport[perf.label] = (ch||'0') + ':' + String(cm||'00').padStart(2,'0') + ':' + String(cs||'00').padStart(2,'0');
+                    }
+                } else if (perf.type === 'number' || perf.type === 'text') {
+                    var pv = (document.getElementById(perf.id)||{}).value || '';
+                    if (pv) statsForSport[perf.label] = pv;
+                } else if (perf.type === 'pace') {
+                    var pdisp = document.getElementById('pdisp-'+perf.id);
+                    if (pdisp && pdisp.textContent) statsForSport[perf.label] = pdisp.textContent + '/km';
+                }
+            });
+            if (Object.keys(statsForSport).length) sportStats[sportName] = statsForSport;
+        });
+
         // Repli : si le champ générique "Meilleure perf" est vide, on récupère la
-        // première valeur saisie dans les champs détaillés par sport (chrono Hyrox,
-        // temps triathlon, FRAN, squat...) pour ne plus jamais perdre cette donnée
-        // au moment de valider l'inscription.
+        // première valeur saisie dans les stats détaillées ci-dessus, pour que la
+        // case "BEST PERF" du profil ait toujours quelque chose à montrer.
         if (!best_time) {
             for (var si = 0; si < sports.length && !best_time; si++) {
-                var cfg = (typeof SPORT_CONFIG !== 'undefined') && SPORT_CONFIG[sports[si]];
-                if (!cfg || !cfg.perfs) continue;
-                for (var pi = 0; pi < cfg.perfs.length && !best_time; pi++) {
-                    var perf = cfg.perfs[pi];
-                    if (perf.type === 'chrono') {
-                        var ch = (document.getElementById(perf.id+'-h')||{}).value || '';
-                        var cm = (document.getElementById(perf.id+'-m')||{}).value || '';
-                        var cs = (document.getElementById(perf.id+'-s')||{}).value || '';
-                        if (ch || cm || cs) {
-                            best_time = (ch||'0') + ':' + String(cm||'00').padStart(2,'0') + ':' + String(cs||'00').padStart(2,'0');
-                        }
-                    } else if (perf.type === 'number' || perf.type === 'text') {
-                        var pv = (document.getElementById(perf.id)||{}).value || '';
-                        if (pv) {
-                            best_time = perf.label + ': ' + pv;
-                        }
-                    }
-                }
+                var statsForThisSport = sportStats[sports[si]];
+                if (!statsForThisSport) continue;
+                var firstKey = Object.keys(statsForThisSport)[0];
+                if (firstKey) best_time = statsForThisSport[firstKey];
             }
         }
 
@@ -4934,8 +4975,8 @@ function toggleCompletFilter() {
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
 
         // Sauvegarder dans myProfile
-        window.myProfile = { prenom, pseudo, ville, email, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, plan:'free', best_time, nb_courses, pace, lodging_event_id };
-        window._pendingAuth = { email, pwd, prenom, pseudo, ville, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, best_time, nb_courses, pace, lodging_event_id };
+        window.myProfile = { prenom, pseudo, ville, email, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, plan:'free', best_time, nb_courses, pace, lodging_event_id, sport_stats: sportStats };
+        window._pendingAuth = { email, pwd, prenom, pseudo, ville, bio, instagram, strava, facebook, gender, sports, needs, niveau, events, initials, best_time, nb_courses, pace, lodging_event_id, sport_stats: sportStats };
 
         // Mettre à jour les avatars UI
         document.querySelectorAll('.user-av').forEach(function(el){ el.textContent = initials; });
@@ -4972,7 +5013,8 @@ function toggleCompletFilter() {
             avatar_initials: initials,
             best_time: best_time,
             nb_courses: nb_courses,
-            pace: pace
+            pace: pace,
+            sport_stats: JSON.stringify(sportStats)
         };
         sbSignUp(email, pwd, prenom, pseudo, ville)
             .then(async function(data) {
@@ -6280,6 +6322,73 @@ function toggleCompletFilter() {
 
 
     // ===== EDIT PROFILE =====
+    // Génère les champs de stats détaillées par sport dans l'édition de profil,
+    // réutilise la même config que l'onboarding (SPORT_CONFIG), pré-rempli avec
+    // les valeurs déjà enregistrées le cas échéant.
+    function renderEditSportStats() {
+        var container = document.getElementById('edit-sport-stats-container');
+        if (!container) return;
+        var existingStats = {};
+        try {
+            var raw = (window.myProfile || {}).sport_stats;
+            existingStats = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+        } catch(e) {}
+
+        var activeSports = [];
+        document.querySelectorAll('.edit-sport-chip').forEach(function(chip) {
+            var on = chip.style.background === 'rgb(10, 22, 40)' || chip.style.background === '#0A1628';
+            if (on) activeSports.push(chip.getAttribute('data-sport'));
+        });
+
+        if (!activeSports.length) {
+            container.innerHTML = '<div style="font-size:0.78em;color:#94A3B8">Sélectionne au moins un sport ci-dessus pour ajouter tes stats.</div>';
+            return;
+        }
+
+        var html = '';
+        activeSports.forEach(function(sportName) {
+            var cfg = (typeof SPORT_CONFIG !== 'undefined') && SPORT_CONFIG[sportName];
+            if (!cfg || !cfg.perfs) return;
+            var statsForSport = existingStats[sportName] || {};
+            html += '<div style="margin-bottom:14px"><div style="font-size:0.72em;font-weight:700;color:var(--grey);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">' + (cfg.icon||'') + ' ' + sportName + '</div>';
+            cfg.perfs.forEach(function(perf) {
+                var editId = 'edit-' + perf.id;
+                if (perf.type === 'chrono') {
+                    html += buildChronoHTML(editId, perf.label);
+                } else if (perf.type === 'pace') {
+                    html += buildPaceHTML(editId, perf.min, perf.max, perf.val);
+                } else if (perf.type === 'number') {
+                    html += buildNumberHTML(editId, perf.label, perf.placeholder);
+                } else if (perf.type === 'text') {
+                    html += buildTextHTML(editId, perf.label, perf.placeholder);
+                }
+            });
+            html += '</div>';
+        });
+        container.innerHTML = html;
+
+        // Pré-remplir avec les valeurs existantes (chrono h/m/s, ou valeur simple)
+        activeSports.forEach(function(sportName) {
+            var cfg = (typeof SPORT_CONFIG !== 'undefined') && SPORT_CONFIG[sportName];
+            if (!cfg || !cfg.perfs) return;
+            var statsForSport = existingStats[sportName] || {};
+            cfg.perfs.forEach(function(perf) {
+                var val = statsForSport[perf.label];
+                if (!val) return;
+                var editId = 'edit-' + perf.id;
+                if (perf.type === 'chrono') {
+                    var parts = String(val).split(':');
+                    if (document.getElementById(editId+'-h')) document.getElementById(editId+'-h').value = parts[0] || '';
+                    if (document.getElementById(editId+'-m')) document.getElementById(editId+'-m').value = parts[1] || '';
+                    if (document.getElementById(editId+'-s')) document.getElementById(editId+'-s').value = parts[2] || '';
+                } else if (perf.type === 'number' || perf.type === 'text') {
+                    if (document.getElementById(editId)) document.getElementById(editId).value = val;
+                }
+                // Les sliders 'pace' gardent leur valeur par défaut (même limite que onboarding : pas de "touché/pas touché" fiable)
+            });
+        });
+    }
+
     function openEditProfile() {
         var p = window.myProfile || {};
         var el = function(id) { return document.getElementById(id); };
@@ -6312,8 +6421,10 @@ function toggleCompletFilter() {
                 chip.style.background = on ? '#F8F9FC' : '#0A1628';
                 chip.style.color = on ? '#64748B' : 'white';
                 chip.style.borderColor = on ? '#E2E8F0' : '#0A1628';
+                renderEditSportStats();
             };
         });
+        renderEditSportStats();
         // Pré-cocher les needs actuels
         var currentNeeds = [];
         try { currentNeeds = safeArray(p.needs); } catch(e){}
@@ -6503,6 +6614,33 @@ function toggleCompletFilter() {
             if(on) newSports.push(chip.getAttribute('data-sport'));
         });
         if(!newSports.length){ showStatusToast('⚠️ Sélectionne au moins un sport !'); return; }
+
+        // Collecte les stats détaillées par sport (chrono, FRAN, squat...) pour
+        // les sports actuellement cochés — même logique que l'onboarding.
+        var sportStats = {};
+        newSports.forEach(function(sportName) {
+            var cfg = (typeof SPORT_CONFIG !== 'undefined') && SPORT_CONFIG[sportName];
+            if (!cfg || !cfg.perfs) return;
+            var statsForSport = {};
+            cfg.perfs.forEach(function(perf) {
+                var editId = 'edit-' + perf.id;
+                if (perf.type === 'chrono') {
+                    var ch = (el(editId+'-h')||{}).value || '';
+                    var cm = (el(editId+'-m')||{}).value || '';
+                    var cs = (el(editId+'-s')||{}).value || '';
+                    if (ch || cm || cs) {
+                        statsForSport[perf.label] = (ch||'0') + ':' + String(cm||'00').padStart(2,'0') + ':' + String(cs||'00').padStart(2,'0');
+                    }
+                } else if (perf.type === 'number' || perf.type === 'text') {
+                    var pv = (el(editId)||{}).value || '';
+                    if (pv) statsForSport[perf.label] = pv;
+                } else if (perf.type === 'pace') {
+                    var pdisp = el('pdisp-'+editId);
+                    if (pdisp && pdisp.textContent) statsForSport[perf.label] = pdisp.textContent + '/km';
+                }
+            });
+            if (Object.keys(statsForSport).length) sportStats[sportName] = statsForSport;
+        });
         // Lire les needs cochés
         var newNeeds = [];
         document.querySelectorAll('.edit-need-chip').forEach(function(chip) {
@@ -6517,7 +6655,7 @@ function toggleCompletFilter() {
         }
         var initials = ((prenom[0]||'A') + (pseudo[0]||prenom[1]||'T')).toUpperCase();
         if(!window.myProfile) window.myProfile = {};
-        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds, sports: newSports, lodging_event_id: lodgingEventId });
+        Object.assign(window.myProfile, { prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, initials, needs: newNeeds, sports: newSports, lodging_event_id: lodgingEventId, sport_stats: sportStats });
         // Update UI
         document.querySelectorAll('.user-av').forEach(av => av.textContent = initials);
         var profName = document.querySelector('#screen-profile .profile-name');
@@ -6533,7 +6671,7 @@ function toggleCompletFilter() {
         // Sync Supabase puis recharger le profil
         var updateFn = window.sbUpdateProfile || sbUpdateProfile;
         try {
-            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds), sports: JSON.stringify(newSports), lodging_event_id: lodgingEventId })
+            updateFn({ prenom, pseudo, ville, bio, instagram, strava, facebook, best_time, nb_courses, pace, avatar_initials: initials, needs: JSON.stringify(newNeeds), sports: JSON.stringify(newSports), lodging_event_id: lodgingEventId, sport_stats: JSON.stringify(sportStats) })
                 .then(function() {
                     showStatusToast('✅ Profil mis à jour !');
                     if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
@@ -6921,6 +7059,7 @@ setPlan('free');
                 bio: p.bio||'', instagram: p.instagram||'', strava: p.strava||'',
                 facebook: p.facebook||'', events: p.events||[],
                 best_time: p.best_time||'', nb_courses: p.nb_courses||'', pace: p.pace||'',
+                sport_stats: p.sport_stats||{},
                 initials: p.initials||'RM', plan: p.plan||'free'
             };
             document.querySelectorAll('.user-av').forEach(el => el.textContent = window.myProfile.initials);
@@ -7489,7 +7628,7 @@ setPlan('free');
                     <div class="edit-sport-chip" data-sport="Trail" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🌿 Trail</div>
                     <div class="edit-sport-chip" data-sport="Triathlon" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏊 Triathlon</div>
                     <div class="edit-sport-chip" data-sport="CrossFit" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">💪 CrossFit</div>
-                    <div class="edit-sport-chip" data-sport="Spartan" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🧱 Spartan</div>
+                    <div class="edit-sport-chip" data-sport="Spartan Race" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🧱 Spartan</div>
                     <div class="edit-sport-chip" data-sport="Musculation" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏋️‍♂️ Muscu</div>
                     <div class="edit-sport-chip" data-sport="Natation" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🏊 Natation</div>
                     <div class="edit-sport-chip" data-sport="Cyclisme" style="padding:8px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.82em;font-weight:600;cursor:pointer;background:#F8F9FC;color:#64748B;transition:all 0.15s">🚴 Cyclisme</div>
@@ -7514,6 +7653,10 @@ setPlan('free');
                 </div>
             </div>
 
+            <div style="border-top:1px solid #E2E8F0;padding-top:14px">
+                <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">📊 Mes stats par sport</label>
+                <div id="edit-sport-stats-container" style="margin-top:10px"></div>
+            </div>
             <div style="border-top:1px solid #E2E8F0;padding-top:14px">
                 <label style="font-size:0.78em;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px">🏅 Meilleure perf</label>
                 <input id="edit-best-time" type="text" style="width:100%;margin-top:5px;padding:11px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.92em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none" placeholder="ex: 1:05:00 · 3h45 · 180kg squat">

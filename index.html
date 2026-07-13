@@ -749,7 +749,7 @@
             };
             // Mettre à jour l'UI — photo ou initiales
             if(data.avatar_url) {
-                var imgTag = '<img src="'+data.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                var imgTag = '<img src="'+escapeHtml(data.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
                 document.querySelectorAll('.user-av').forEach(function(el){ el.innerHTML = imgTag; el.style.padding='0'; el.style.overflow='hidden'; });
                 if(typeof applyAvatarEverywhere === 'function') applyAvatarEverywhere(data.avatar_url);
             } else {
@@ -1917,7 +1917,7 @@ function loadRealAthletes() {
             var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
             // Avatar : photo ou initiales
             var avatarHtml = a.avatar_url
-                ? '<img src="'+a.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+                ? '<img src="'+escapeHtml(a.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
                 : initials;
             var sports = safeArray(a.sports);
             var needs = safeArray(a.needs);
@@ -4008,7 +4008,7 @@ function filterTraining(el, sport) {
             var p = a.profiles || {};
             var name = p.prenom || p.pseudo || 'Athl\u00e8te';
             var initials = p.avatar_initials || (name[0]||'?').toUpperCase();
-            var avatarHtml = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+            var avatarHtml = p.avatar_url ? '<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
             var date = new Date(a.event_date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
             var needColor = needColors[a.need] || '#0A1628';
             var needLabel = needLabels[a.need] || a.need;
@@ -4099,7 +4099,7 @@ function filterTraining(el, sport) {
             var p = c.profiles || {};
             var name = p.prenom || p.pseudo || 'Athl\u00e8te';
             var initials = p.avatar_initials || (name[0]||'?').toUpperCase();
-            var avatarHtml = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+            var avatarHtml = p.avatar_url ? '<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
             var date = new Date(c.event_date).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
             var isOwn = currentUser && c.user_id === currentUser.id;
             return '<div style="background:white;border-radius:14px;padding:14px 16px;border:1.5px solid #D1FAE5;display:flex;gap:12px;align-items:flex-start">'
@@ -4170,7 +4170,7 @@ async function loadLodgingScreen() {
 
     var av = document.getElementById('lodging-av');
     if(av && window.myProfile) {
-        if(window.myProfile.avatar_url) { av.innerHTML='<img src="'+window.myProfile.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; }
+        if(window.myProfile.avatar_url) { av.innerHTML='<img src="'+escapeHtml(window.myProfile.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'; }
         else { av.textContent = window.myProfile.initials||'?'; }
     }
     var {data:events} = await sb.from('events').select('id,name,city,event_date,sport').order('event_date');
@@ -4271,7 +4271,7 @@ async function loadLodgingSeekers(eventId) {
     list.innerHTML=seekers.map(function(p){
         var sports=[];try{sports=safeArray(p.sports);}catch(e){}
         var initials=p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-        var av=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
+        var av=p.avatar_url?'<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
         // Badge event logement
         var evBadge = '';
         if(p.lodging_event_id && eventsMap[p.lodging_event_id]) {
@@ -4302,7 +4302,7 @@ async function loadLodgingOffers(eventId) {
     list.innerHTML=offers.map(function(o){
         var p=o.profiles||{};
         var initials=p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-        var av=p.avatar_url?'<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
+        var av=p.avatar_url?'<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':initials;
         var isOwn=o.user_id===currentUser.id;
         return '<div style="background:white;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;margin-bottom:10px">'
             +'<div style="background:linear-gradient(135deg,#065F46,#059669);padding:10px 14px;display:flex;align-items:center;gap:10px">'
@@ -5776,7 +5776,7 @@ function toggleCompletFilter() {
         var welcomeAv = document.querySelector('.welcome-avatar');
         if(welcomeAv) {
             if(p.avatar_url) {
-                welcomeAv.innerHTML = '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                welcomeAv.innerHTML = '<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
                 welcomeAv.style.padding = '0'; welcomeAv.style.overflow = 'hidden';
             } else {
                 welcomeAv.textContent = p.avatar_initials || p.initials || '?';
@@ -5791,7 +5791,7 @@ function toggleCompletFilter() {
         var profAv = document.querySelector('#screen-profile .profile-avatar');
         if(profAv) {
             if(p.avatar_url) {
-                profAv.innerHTML = '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                profAv.innerHTML = '<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
                 profAv.style.padding = '0';
                 profAv.style.overflow = 'hidden';
             } else {
@@ -6053,7 +6053,7 @@ function toggleCompletFilter() {
             list.innerHTML = savers.map(function(p) {
                 var sports=[]; try{sports=safeArray(p.sports);}catch(e){}
                 var initials = p.avatar_initials||((p.prenom||'?')[0]+(p.pseudo||'A')[0]).toUpperCase();
-                var av = p.avatar_url ? '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+                var av = p.avatar_url ? '<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
                 return '<div style="background:white;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer" onclick="openRealProfile(\''+p.id+'\')">'
                     +'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A8A);display:flex;align-items:center;justify-content:center;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;color:white;flex-shrink:0;overflow:hidden">'+av+'</div>'
                     +'<div style="flex:1"><div style="font-weight:700;font-size:0.88em;color:#0A1628">'+escapeHtml(p.prenom||'Athlète')+(p.pseudo?' @'+escapeHtml(p.pseudo):'')+'</div>'
@@ -6325,13 +6325,12 @@ function toggleCompletFilter() {
         var avatarEl = el('edit-avatar-preview');
         if(avatarEl) {
             if(p.avatar_url) {
-                avatarEl.innerHTML = '<img src="'+p.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                avatarEl.innerHTML = '<img src="'+escapeHtml(p.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
             } else {
                 var initials = ((p.prenom||'?')[0] + (p.pseudo||p.prenom||'?')[1]||'').toUpperCase();
                 avatarEl.textContent = initials || '?';
             }
         }
-        updateAvatarDeleteButton();
         // Wirer le file input pour upload immédiat
         var fileInput = el('avatar-file-input');
         if(fileInput) {
@@ -6379,12 +6378,11 @@ function toggleCompletFilter() {
             window.myProfile.avatar_url = publicUrl;
 
             // Preview dans le modal
-            if(previewEl) previewEl.innerHTML = '<img src="'+publicUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+            if(previewEl) previewEl.innerHTML = '<img src="'+escapeHtml(publicUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
             if(statusEl) statusEl.textContent = '✅ Photo mise à jour !';
 
             // Mettre à jour partout dans l'UI
             applyAvatarEverywhere(publicUrl);
-            updateAvatarDeleteButton();
 
         } catch(e) {
             console.error('uploadAvatar error:', e);
@@ -6397,13 +6395,18 @@ function toggleCompletFilter() {
         if(!currentUser) return;
         var statusEl = document.getElementById('avatar-upload-status');
         var previewEl = document.getElementById('edit-avatar-preview');
+
+        if(!window.myProfile || !window.myProfile.avatar_url) {
+            if(statusEl) statusEl.textContent = 'Aucune photo à supprimer';
+            return;
+        }
+
         if(statusEl) statusEl.textContent = '⏳ Suppression...';
 
         try {
             var { error } = await sb.from('profiles').update({ avatar_url: null }).eq('id', currentUser.id);
             if(error) throw error;
 
-            if(!window.myProfile) window.myProfile = {};
             window.myProfile.avatar_url = null;
 
             var initials = window.myProfile.initials || 'AT';
@@ -6411,7 +6414,6 @@ function toggleCompletFilter() {
             if(statusEl) statusEl.textContent = '✅ Photo supprimée';
 
             applyAvatarEverywhere(null);
-            updateAvatarDeleteButton();
 
         } catch(e) {
             console.error('deleteAvatar error:', e);
@@ -6419,18 +6421,10 @@ function toggleCompletFilter() {
         }
     }
 
-    // Affiche le bouton "Supprimer" uniquement si une photo est actuellement définie
-    function updateAvatarDeleteButton() {
-        var btn = document.getElementById('avatar-delete-btn');
-        if(!btn) return;
-        var hasAvatar = !!(window.myProfile && window.myProfile.avatar_url);
-        btn.style.display = hasAvatar ? 'inline-block' : 'none';
-    }
-
     // Applique la photo de profil partout dans l'UI
     function applyAvatarEverywhere(url) {
         var initials = (window.myProfile && window.myProfile.initials) || 'AT';
-        var content = url ? '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
+        var content = url ? '<img src="'+escapeHtml(url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
         // Avatar profil principal
         var profAv = document.querySelector('#screen-profile .profile-avatar');
         if(profAv) { profAv.innerHTML = content; profAv.style.padding = url ? '0' : ''; profAv.style.overflow = url ? 'hidden' : ''; }
@@ -7409,7 +7403,7 @@ setPlan('free');
                     <div style="font-weight:700;font-size:0.9em;color:#0A1628;margin-bottom:4px">Photo de profil</div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap">
                         <button onclick="document.getElementById('avatar-file-input').click()" style="background:#0A1628;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">📸 Changer la photo</button>
-                        <button id="avatar-delete-btn" onclick="deleteAvatar()" style="display:none;background:#FEF2F2;color:#EF4444;border:1px solid #FEE2E2;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">🗑️ Supprimer</button>
+                        <button id="avatar-delete-btn" onclick="deleteAvatar()" style="background:#FEF2F2;color:#EF4444;border:1px solid #FEE2E2;border-radius:8px;padding:7px 14px;font-size:0.78em;font-weight:700;cursor:pointer;font-family:Barlow,sans-serif">🗑️ Supprimer</button>
                     </div>
                     <div id="avatar-upload-status" style="font-size:0.72em;color:#94A3B8;margin-top:4px">JPG, PNG — max 5 Mo</div>
                 </div>

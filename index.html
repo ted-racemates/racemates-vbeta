@@ -2020,8 +2020,23 @@ function buildEventPills(events, userEvents, athletes) {
     var sportNorm = function(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,''); };
     var MOIS = ['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aou','Sep','Oct','Nov','Dec'];
 
+    // Sélection équilibrée : jusqu'à 4 events les plus proches PAR SPORT, pour qu'un sport
+    // très rempli (ex: Hyrox) n'écrase pas les autres (running, trail, triathlon...) dans le
+    // plafond global. Puis on re-trie le tout par date pour l'affichage.
+    var perSportCount = {};
+    var balancedEvents = [];
+    displayEvents.forEach(function(ev) {
+        var sp = sportNorm(ev.sport||'');
+        perSportCount[sp] = perSportCount[sp] || 0;
+        if(perSportCount[sp] < 4) {
+            perSportCount[sp]++;
+            balancedEvents.push(ev);
+        }
+    });
+    balancedEvents.sort(function(a,b){ return new Date(a.event_date) - new Date(b.event_date); });
+
     var pillsHtml = '<div class="epill active" onclick="selPill(this,false)" data-event-id="all" data-sport="all">&#x1F3C6; Tous</div>';
-    displayEvents.slice(0, 12).forEach(function(ev) {
+    balancedEvents.slice(0, 24).forEach(function(ev) {
         var sp = sportNorm(ev.sport||'');
         var icon = SPORT_ICONS[sp] || '&#x1F4CD;';
         var d = new Date(ev.event_date);
@@ -4863,6 +4878,33 @@ function toggleCompletFilter() {
         var sports = [];
         document.querySelectorAll('#ob-sports-grid .ob-chip.on').forEach(function(c){ if(c.dataset.sport) sports.push(c.dataset.sport); });
         if(!sports.length) sports = window._obSports || [];
+
+        // Repli : si le champ générique "Meilleure perf" est vide, on récupère la
+        // première valeur saisie dans les champs détaillés par sport (chrono Hyrox,
+        // temps triathlon, FRAN, squat...) pour ne plus jamais perdre cette donnée
+        // au moment de valider l'inscription.
+        if (!best_time) {
+            for (var si = 0; si < sports.length && !best_time; si++) {
+                var cfg = (typeof SPORT_CONFIG !== 'undefined') && SPORT_CONFIG[sports[si]];
+                if (!cfg || !cfg.perfs) continue;
+                for (var pi = 0; pi < cfg.perfs.length && !best_time; pi++) {
+                    var perf = cfg.perfs[pi];
+                    if (perf.type === 'chrono') {
+                        var ch = (document.getElementById(perf.id+'-h')||{}).value || '';
+                        var cm = (document.getElementById(perf.id+'-m')||{}).value || '';
+                        var cs = (document.getElementById(perf.id+'-s')||{}).value || '';
+                        if (ch || cm || cs) {
+                            best_time = (ch||'0') + ':' + String(cm||'00').padStart(2,'0') + ':' + String(cs||'00').padStart(2,'0');
+                        }
+                    } else if (perf.type === 'number' || perf.type === 'text') {
+                        var pv = (document.getElementById(perf.id)||{}).value || '';
+                        if (pv) {
+                            best_time = perf.label + ': ' + pv;
+                        }
+                    }
+                }
+            }
+        }
 
         // Lire needs depuis les need-cards cochées
         var needs = [];

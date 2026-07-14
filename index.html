@@ -2683,6 +2683,8 @@ function openAdminModal() {
         return;
     }
     document.getElementById('admin-modal').style.display = 'flex';
+    var dateInput = document.getElementById('admin-ev-date');
+    if(dateInput) dateInput.min = new Date().toISOString().split('T')[0];
     adminLoadEvents();
 }
 function closeAdminModal() {
@@ -4004,7 +4006,7 @@ function filterTraining(el, sport) {
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">\u00c9v\u00e9nement</label>'
             +'<input id="lm-event-name" placeholder="Ex: Hyrox Grand Palais" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Date de l\'\u00e9v\u00e9nement</label>'
-            +'<input id="lm-event-date" type="date" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<input id="lm-event-date" type="date" min="'+new Date().toISOString().split('T')[0]+'" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:8px">Ce que tu cherches</label>'
             +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
             +'<div class="lm-need-chip" onclick="selLmNeed(this,\'logement\')" data-need="logement" style="padding:6px 14px;border-radius:20px;border:1.5px solid #E2E8F0;font-size:0.8em;font-weight:700;cursor:pointer;color:#0A1628">\uD83C\uDFE0 Logement</div>'
@@ -4101,7 +4103,7 @@ function filterTraining(el, sport) {
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">\u00c9v\u00e9nement</label>'
             +'<input id="cp-event-name" placeholder="Ex: Hyrox Lyon" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Date</label>'
-            +'<input id="cp-event-date" type="date" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
+            +'<input id="cp-event-date" type="date" min="'+new Date().toISOString().split('T')[0]+'" style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Ville de d\u00e9part</label>'
             +'<input id="cp-departure" placeholder="Ex: Lyon, Paris..." style="width:100%;padding:12px 14px;border:1.5px solid #E2E8F0;border-radius:10px;font-size:0.9em;margin-bottom:12px;box-sizing:border-box;font-family:Barlow,sans-serif">'
             +'<label style="font-size:0.75em;font-weight:700;color:#64748B;text-transform:uppercase;display:block;margin-bottom:6px">Heure de départ (optionnel)</label>'
@@ -5543,47 +5545,15 @@ function toggleCompletFilter() {
 
 
     // ===== EVENTS ONBOARDING DYNAMIQUES =====
-    var OB_EVENTS_BY_SPORT = {
-        'Hyrox': [
-            { name:'Hyrox Toulouse',    date:'📍 Palais des Sports · 15 Mars 2026', badge:'Dans 28j',      on:true },
-            { name:'Hyrox Grand Palais',date:'📍 Grand Palais, Paris · 18 Avr. 2026',badge:'Dans 62j',    on:false },
-            { name:'Hyrox Lyon',        date:'📍 Eurexpo · 10 Mai 2026',            badge:'Dans 84j',     on:false },
-            { name:'Hyrox Berlin 🌍',   date:'📍 Messe Berlin · 6 Juin 2026',       badge:'International', on:false },
-            { name:'🏆 Worlds Stockholm',date:'📍 Stockholmsmässan · Juin 2026',    badge:'Worlds',        on:false }
-        ],
-        'ATHX': [
-            { name:'ATHX Paris',        date:'📍 Paris · Avr. 2026',                badge:'Dans 50j',     on:false },
-            { name:'ATHX Lyon',         date:'📍 Lyon · Juin 2026',                 badge:'Dans 110j',    on:false }
-        ],
-        'Running': [
-            { name:'Marathon de Paris', date:'📍 Paris · 5 Avr. 2026',             badge:'Dans 40j',     on:false },
-            { name:'Semi-marathon Lyon',date:'📍 Lyon · 15 Mars 2026',             badge:'Dans 28j',     on:false },
-            { name:'10km de Bordeaux',  date:'📍 Bordeaux · Mai 2026',             badge:'Dans 90j',     on:false }
-        ],
-        'Trail': [
-            { name:'UTMB',              date:'📍 Chamonix · 28 Août 2026',          badge:'Dans 185j',    on:false },
-            { name:'Les Templiers',     date:'📍 Millau · Oct. 2026',              badge:'Dans 240j',    on:false },
-            { name:'Strasbourg-Alsace', date:'📍 Strasbourg · Nov. 2026',          badge:'Dans 270j',    on:false }
-        ],
-        'Triathlon': [
-            { name:'Ironman Nice',      date:'📍 Nice · 23 Juin 2026',             badge:'Dans 119j',    on:false },
-            { name:'Triathlon de Paris',date:'📍 Paris · Juil. 2026',              badge:'Dans 140j',    on:false }
-        ],
-        'CrossFit': [
-            { name:'CrossFit Open 2026',date:'📍 Partout · Fév–Mars 2026',         badge:'En cours !',   on:true  },
-            { name:'French Throwdown',  date:'📍 Toulouse · 25 Sept. 2026',        badge:'Dans 213j',    on:false }
-        ],
-        'Spartan Race': [
-            { name:'Spartan Race Lyon', date:'📍 Lyon · 4 Avr. 2026',             badge:'Dans 39j',     on:false },
-            { name:'Spartan Paris',     date:'📍 Paris · Juin 2026',              badge:'Dans 110j',    on:false }
-        ],
-        'Musculation': [
-            { name:'Compétition Force Paris', date:'📍 Paris · Avr. 2026',        badge:'Dans 60j',     on:false },
-            { name:'Open Powerlifting Lyon',  date:'📍 Lyon · Nov. 2026',         badge:'Dans 265j',    on:false }
-        ]
+    // Correspondance entre le nom de sport affiché à l'utilisateur et la valeur
+    // stockée dans la colonne `sport` de la table events.
+    var OB_SPORT_TO_DB_KEY = {
+        'Hyrox': 'hyrox', 'ATHX': 'athx', 'Running': 'running', 'Trail': 'trail',
+        'Triathlon': 'triathlon', 'CrossFit': 'crossfit', 'Spartan Race': 'spartan',
+        'Musculation': 'musculation'
     };
 
-    function generateObEvents() {
+    async function generateObEvents() {
         var list = document.getElementById('ob-events-list');
         if(!list) return;
 
@@ -5601,26 +5571,39 @@ function toggleCompletFilter() {
         var titleEl = document.getElementById('events-slide-title');
         if(titleEl) titleEl.textContent = sports.length === 1 ? sports[0] : 'événements';
 
-        var html = '';
-        sports.forEach(function(sport) {
-            var events = OB_EVENTS_BY_SPORT[sport] || [];
-            if(events.length === 0) return;
+        list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--grey);font-size:0.85em">Chargement des événements...</div>';
 
-            var cfg = SPORT_CONFIG[sport] || {};
+        var todayStr = new Date().toISOString().split('T')[0];
+        var html = '';
+
+        for (var i = 0; i < sports.length; i++) {
+            var sport = sports[i];
+            var dbKey = OB_SPORT_TO_DB_KEY[sport] || sport.toLowerCase();
+            var { data: events, error } = await sb.from('events')
+                .select('*')
+                .ilike('sport', dbKey)
+                .gte('event_date', todayStr)
+                .order('event_date')
+                .limit(6);
+
+            if (error || !events || events.length === 0) continue;
+
+            var cfg = (typeof SPORT_CONFIG !== 'undefined' && SPORT_CONFIG[sport]) || {};
             html += '<div style="margin-bottom:12px">';
-            html += '<div style="font-size:0.7em;font-weight:700;color:var(--grey);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">' + (cfg.icon || '') + ' ' + sport + '</div>';
+            html += '<div style="font-size:0.7em;font-weight:700;color:var(--grey);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">' + (cfg.icon || '') + ' ' + escapeHtml(sport) + '</div>';
             events.forEach(function(ev) {
-                var onClass = ev.on ? ' on' : '';
-                var badgeStyle = ev.badge === 'Worlds' ? 'background:#FFD700;color:#0A1628;font-weight:900' : (ev.badge === 'International' ? 'background:var(--blue-light);color:var(--blue)' : '');
-                html += '<div class="event-card-sel' + onClass + '" onclick="toggleEventCard(this)" style="margin-bottom:6px">';
+                var daysLeft = Math.ceil((new Date(ev.event_date) - new Date()) / 86400000);
+                var badge = daysLeft <= 0 ? 'Aujourd\'hui' : 'Dans ' + daysLeft + 'j';
+                var dateFmt = new Date(ev.event_date).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'});
+                html += '<div class="event-card-sel" onclick="toggleEventCard(this)" style="margin-bottom:6px">';
                 html += '<div class="ecs-dot"><div class="ecs-dot-inner"></div></div>';
-                html += '<div class="ecs-info"><div class="ecs-name">' + ev.name + '</div><div class="ecs-date">' + ev.date + '</div></div>';
-                html += '<div class="ecs-badge" style="' + badgeStyle + '">' + ev.badge + '</div></div>';
+                html += '<div class="ecs-info"><div class="ecs-name">' + escapeHtml(ev.name) + '</div><div class="ecs-date">📍 ' + escapeHtml(ev.city||'') + ' · ' + dateFmt + '</div></div>';
+                html += '<div class="ecs-badge">' + badge + '</div></div>';
             });
             html += '</div>';
-        });
+        }
 
-        list.innerHTML = html;
+        list.innerHTML = html || '<div class="info-box"><span>💡</span><span>Aucun événement à venir pour ce(s) sport(s) pour l\'instant. Tu pourras en ajouter plus tard depuis ton profil.</span></div>';
     }
 
 
@@ -6150,7 +6133,7 @@ function toggleCompletFilter() {
         var {data} = await sb.from('saved_profiles')
             .select('user_id, profiles!saved_profiles_user_id_fkey(id,prenom,pseudo,ville,sports,avatar_url,avatar_initials)')
             .eq('saved_user_id', currentUser.id)
-            .order('created_at', {ascending:false});
+            .order('saved_at', {ascending:false});
         var savers = (data||[]).map(function(r){ return r.profiles; }).filter(Boolean);
         if(!savers.length) {
             list.innerHTML = '<div style="text-align:center;padding:16px;color:var(--grey);font-size:0.85em">Personne n\'a encore sauvegardé ton profil.</div>';
@@ -6207,7 +6190,7 @@ function toggleCompletFilter() {
             var results = await Promise.all([
                 sb.from('profile_views').select('id',{count:'exact',head:true}).eq('viewed_id',currentUser.id).gte('created_at',weekAgo),
                 sb.from('conversations').select('id',{count:'exact',head:true}).or('user1_id.eq.'+currentUser.id+',user2_id.eq.'+currentUser.id).gte('created_at',weekAgo),
-                sb.from('saved_profiles').select('id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id).gte('created_at',weekAgo)
+                sb.from('saved_profiles').select('id',{count:'exact',head:true}).eq('saved_user_id',currentUser.id).gte('saved_at',weekAgo)
             ]);
             vr = results[0]; cr = results[1]; sr = results[2];
         } catch(e) { console.warn('stats error:', e); }
@@ -6700,8 +6683,11 @@ function toggleCompletFilter() {
                     showStatusToast('✅ Profil mis à jour !');
                     if(typeof window.loadMyProfile === 'function') window.loadMyProfile();
                 })
-                .catch(function(e) { console.warn('saveEdit error:', e); showStatusToast('✅ Sauvegardé !'); });
-        } catch(e) { console.warn('saveEdit catch:', e); }
+                .catch(function(e) {
+                    console.error('saveEdit error:', e && e.message, '| code:', e && e.code, '| details:', e && e.details, '| hint:', e && e.hint);
+                    showStatusToast('❌ Échec de la sauvegarde : ' + (e && e.message ? e.message : 'réessaie dans quelques secondes'));
+                });
+        } catch(e) { console.warn('saveEdit catch:', e); showStatusToast('❌ Erreur, réessaie.'); }
     }
 
 

@@ -855,7 +855,14 @@
             const { data, error } = await sb
                 .from('profiles')
                 .upsert({ id: uid, ...updates }, { onConflict: 'id' });
-            if (error) { console.error('sbUpdateProfile error:', error.message); throw error; }
+            if (error) {
+                console.error('sbUpdateProfile error — message:', error.message);
+                console.error('sbUpdateProfile error — code:', error.code);
+                console.error('sbUpdateProfile error — details:', error.details);
+                console.error('sbUpdateProfile error — hint:', error.hint);
+                console.error('sbUpdateProfile error — updates envoyés:', updates);
+                throw error;
+            }
             console.log('✅ sbUpdateProfile OK', data);
             if (currentUser) await loadMyProfile();
         }
@@ -5034,8 +5041,25 @@ function toggleCompletFilter() {
                         window._obPhotoFile = null;
                     }
                     var fn = window.sbUpdateProfile || sbUpdateProfile;
-                    await fn(profileData, userId);
-                    console.log('✅ Profil complet envoyé à Supabase');
+                    try {
+                        await fn(profileData, userId);
+                        console.log('✅ Profil complet envoyé à Supabase');
+                    } catch(saveErr) {
+                        console.warn('⚠️ 1ère tentative échouée, nouvel essai dans 1.5s :', saveErr && saveErr.message);
+                        await new Promise(function(r){ setTimeout(r, 1500); });
+                        try {
+                            await fn(profileData, userId);
+                            console.log('✅ Profil complet envoyé à Supabase (2e tentative)');
+                        } catch(saveErr2) {
+                            console.error('❌ Échec définitif sauvegarde profil complet :', saveErr2 && saveErr2.message);
+                            // On garde les données en mémoire pour retenter, et on prévient
+                            // clairement l'utilisateur au lieu de le laisser croire que
+                            // tout s'est bien passé alors que rien n'a été sauvegardé.
+                            window._pendingProfileData = profileData;
+                            window._pendingProfileUserId = userId;
+                            showStatusToast('⚠️ Ton compte est créé, mais certaines infos (sports, stats...) n\'ont pas pu être enregistrées. Va dans "Modifier mon profil" pour les compléter.');
+                        }
+                    }
                 } else {
                     window._pendingProfileData = profileData;
                     console.warn('userId null — profil en attente');

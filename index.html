@@ -1105,7 +1105,7 @@
     </div>
     <div class="body">
         <div class="stats-grid">
-            <div class="stat-box" onclick="goTo('sport-select')"><div class="stat-icon">🏃</div><div class="stat-val" id="stat-val-matches">-</div><div class="stat-lbl">Matchs</div></div>
+            <div class="stat-box" onclick="goTo('sport-select')"><div class="stat-icon">🏃</div><div class="stat-val" id="stat-val-matches">-</div><div class="stat-lbl">Sportifs dispo.</div></div>
             <div class="stat-box" onclick="goTo('messages')"><div class="stat-icon">💬</div><div class="stat-val red" id="stat-val-messages">-</div><div class="stat-lbl">Messages</div></div>
             <div class="stat-box" onclick="goTo('events')"><div class="stat-icon">📅</div><div class="stat-val" id="stat-val-events">-</div><div class="stat-lbl">Événements</div></div>
         </div>
@@ -1884,6 +1884,9 @@ function goTo(page) {
     if(page === 'training') {
         if(typeof loadTraining === 'function') loadTraining();
     }
+    if(page === 'home') {
+        if(typeof updateAthleteCount === 'function') updateAthleteCount();
+    }
 }
 
 function loadRealAthletes() {
@@ -2085,7 +2088,18 @@ function openRealProfile(userId) {
         var pm=document.getElementById('profile-modal');
         if(!pm) return;
         var el=function(id){return document.getElementById(id);};
-        if(el('pm-av')) el('pm-av').textContent=initials;
+        if(el('pm-av')) {
+            var avEl = el('pm-av');
+            if (a.avatar_url) {
+                avEl.innerHTML = '<img src="'+escapeHtml(a.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+                avEl.style.padding = '0';
+                avEl.style.overflow = 'hidden';
+            } else {
+                avEl.textContent = initials;
+                avEl.style.padding = '';
+                avEl.style.overflow = '';
+            }
+        }
         if(el('pm-chrono')) el('pm-chrono').textContent = a.best_time || sports[0] || 'RaceMates';
         if(el('pm-stat1')) el('pm-stat1').textContent = a.best_time || '-';
         if(el('pm-lbl1')) el('pm-lbl1').textContent = 'BEST PERF';
@@ -2228,7 +2242,8 @@ async function loadMessages(convId) {
         wrap.className = 'msg-wrap ' + (isMine ? 'sent' : 'recv');
         var time = new Date(m.created_at);
         var timeStr = time.getHours() + ':' + String(time.getMinutes()).padStart(2,'0');
-        wrap.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.content) + '</div><div class="msg-time">' + timeStr + (isMine ? ' <span class="rcheck">✓✓</span>' : '') + '</div>';
+        var checkHtml = isMine ? (' <span class="rcheck' + (m.read_at ? '' : ' sent-check') + '">' + (m.read_at ? '✓✓' : '✓') + '</span>') : '';
+        wrap.innerHTML = '<div class="msg-bubble">' + escapeHtml(m.content) + '</div><div class="msg-time">' + timeStr + checkHtml + '</div>';
         msgs.appendChild(wrap);
     });
     msgs.scrollTop = msgs.scrollHeight;
@@ -2533,7 +2548,9 @@ function sendMsgBtn() {
                 showStatusToast('⚠️ Message non envoyé : ' + res.error.message);
             } else {
                 console.log('INSERT message OK');
-                wrap.querySelector('.rcheck') && (wrap.querySelector('.rcheck').textContent = '✓✓');
+                // Le message reste sur "✓ envoyé" — il ne passera à "✓✓ lu" que
+                // lorsque le destinataire aura réellement ouvert la conversation
+                // (vérifié via read_at au prochain chargement des messages).
                 // Update last_message
                 sb.from('conversations').update({ last_message: text, last_message_at: now.toISOString() })
                     .eq('id', _currentConvId)
@@ -2543,7 +2560,6 @@ function sendMsgBtn() {
     } else {
         // Pas de conv réelle (démo sans compte)
         console.warn('sendMsg: pas de conv réelle (_currentConvId=' + _currentConvId + ', user=' + (currentUser&&currentUser.id) + ')');
-        setTimeout(function() { var chk = wrap.querySelector('.rcheck'); if(chk) chk.textContent = '✓✓'; }, 800);
     }
 }
 
@@ -3787,7 +3803,7 @@ function openAthleteProfile(initials) {
     document.getElementById('pm-bio').textContent = d.bio;
     var badgesEl = document.getElementById('pm-badges');
     badgesEl.innerHTML = d.badges.map(function(b) {
-        var cls = b.includes('Entraîn') ? 'badge-training' : (b.includes('Logement') || b.includes('Compétitions') || b.includes('Covoiturage')) ? 'badge-blue' : 'badge-dark';
+        var cls = b.toLowerCase().includes('entraîn') ? 'badge-training' : (b.includes('Logement') || b.includes('Compétitions') || b.includes('Covoiturage')) ? 'badge-blue' : 'badge-dark';
         return '<span class="badge ' + cls + '">' + b + '</span>';
     }).join('');
     document.getElementById('pm-event').innerHTML = '<div class="pevent"><div style="display:flex;align-items:center;gap:10px"><div class="pevent-dot"></div><div><div class="pevent-name">' + d.event + '</div></div></div><span class="badge badge-blue">' + d.eventBadge + '</span></div>';
@@ -5735,7 +5751,7 @@ function toggleCompletFilter() {
             });
             var total = all.length + demoCards.length;
             var training = all.filter(function(a){
-                try{ var n=safeArray(a.needs); return n.some(function(x){return x.includes("Entraîn");}); }catch(e){return false;}
+                try{ var n=safeArray(a.needs); return n.some(function(x){return x.toLowerCase().includes("entraîn");}); }catch(e){return false;}
             }).length;
             var elA = document.getElementById("qa-sub-athletes");
             if(elA) elA.textContent = total + " disponibles";

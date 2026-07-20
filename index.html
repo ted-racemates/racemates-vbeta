@@ -308,6 +308,18 @@
         .pstat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center}
         .pstat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:var(--blue);line-height:1}
         .pstat-lbl{font-size:0.6em;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+        .sscar{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+        .sscar-card{flex:0 0 82%;scroll-snap-align:start;background:#F8FAFC;border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+        .sscar-card .sscar-title{font-weight:900;font-family:'Barlow Condensed',sans-serif;font-size:0.95em;color:var(--dark);margin-bottom:6px}
+        .sscar-row{display:flex;justify-content:space-between;font-size:0.8em;padding:4px 0;border-bottom:1px solid #E2E8F0}
+        .sscar-row:last-of-type{border-bottom:none}
+        .sscar-row .sscar-lbl{color:#64748B}
+        .sscar-row .sscar-val{font-weight:700;color:var(--dark)}
+        .sscar-empty{font-size:0.78em;color:#94A3B8;text-align:center;padding:10px 4px}
+        .sscar-add-btn{margin-top:8px;width:100%;padding:8px;border:1.5px dashed #CBD5E1;border-radius:10px;background:none;color:var(--blue);font-size:0.78em;font-weight:700;cursor:pointer}
+        .sscar-dots{display:flex;justify-content:center;gap:5px;margin-top:6px}
+        .sscar-dots .dot{width:6px;height:6px;border-radius:50%;background:#E2E8F0}
+        .sscar-dots .dot.active{background:var(--red)}
         .profile-bio{font-size:0.87em;color:var(--grey);line-height:1.6;margin-bottom:18px;font-style:italic;border-left:3px solid var(--blue);padding:10px 12px;background:var(--blue-light);border-radius:0 8px 8px 0}
         .pevent{display:flex;align-items:center;justify-content:space-between;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px}
         .pevent-dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
@@ -937,7 +949,7 @@
             if (!data || data.length === 0) return [];
             // 2. Récupérer les profils des interlocuteurs séparément
             const otherIds = data.map(c => c.user1_id === currentUser.id ? c.user2_id : c.user1_id).filter(Boolean);
-            const { data: profiles } = await sb.from('profiles').select('id,prenom,pseudo,avatar_initials').in('id', otherIds);
+            const { data: profiles } = await sb.from('profiles').select('id,prenom,pseudo,avatar_initials,avatar_url').in('id', otherIds);
             const profileMap = {};
             (profiles||[]).forEach(function(p){ profileMap[p.id] = p; });
             // 3. Compter messages non lus
@@ -1424,7 +1436,8 @@
         <!-- BADGES + SPORT TABS + STATS SPORTIVES -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="profile-badges-dynamic"></div>
         <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none" id="profile-sport-tabs"></div>
-        <div id="profile-pstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px"></div>
+        <div id="profile-pstats" style="display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px"></div>
+        <div id="profile-sport-stats-carousel" style="margin-bottom:12px"></div>
         <div class="profile-bio" id="profile-bio-dynamic"></div>
         <div id="profile-social-dynamic" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
 
@@ -1524,7 +1537,7 @@
         <div id="pm-loc" style="font-size:0.82em;color:var(--grey);margin-bottom:8px"></div>
         <div id="pm-sport" style="display:inline-block;background:#F1F5F9;color:#0A1628;font-size:0.78em;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:14px"></div>
         <div id="pm-badges" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div style="display:none;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
             <div class="pstat"><div id="pm-stat1" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl1">BEST PERF</div></div>
             <div class="pstat"><div id="pm-stat2" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl2">COURSES</div></div>
             <div class="pstat"><div id="pm-stat3" class="pstat-val">-</div><div class="pstat-lbl" id="pm-lbl3">PACE / STAT</div></div>
@@ -1852,6 +1865,91 @@ var SPORT_LABELS = {
     'Cyclisme':   { name: 'Cyclisme',   icon: '🚴' }
 };
 
+// Repli pour les cases résumées du profil (BEST PERF / PACE) : si best_time ou
+// pace ne sont pas remplis (souvent le cas pour les profils créés/édités après
+// l'ajout des stats détaillées par sport), on va chercher une valeur équivalente
+// dans sport_stats plutôt que d'afficher un tiret. N'écrase jamais best_time/pace
+// s'ils existent déjà — purement un repli d'affichage.
+function getSportStatsFallback(sportStatsRaw, sports) {
+    var sportStats = {};
+    try { sportStats = typeof sportStatsRaw === 'string' ? JSON.parse(sportStatsRaw) : (sportStatsRaw || {}); } catch(e) {}
+    var orderedSports = (sports && sports.length) ? sports : Object.keys(sportStats);
+    var bestPerf = '', pace = '';
+    for (var i = 0; i < orderedSports.length; i++) {
+        var stats = sportStats[orderedSports[i]];
+        if (!stats) continue;
+        Object.keys(stats).forEach(function(label) {
+            if (label === '__custom') return;
+            var val = stats[label];
+            if (!val) return;
+            if (!pace && /pace/i.test(label)) pace = val;
+            if (!bestPerf) bestPerf = val;
+        });
+        if (bestPerf && pace) break;
+    }
+    return { bestPerf: bestPerf, pace: pace };
+}
+
+// Rendu du carrousel de stats par sport (une carte par sport pratiqué).
+// sportStatsRaw : objet {sportName: {label: valeur, ..., __custom: [{label,value}]}}
+// sports : liste des sports du profil (pour l'ordre + les sports sans aucune stat)
+// showEmptyCta : true sur son propre profil (bouton pour aller éditer), false sur le profil d'un tiers
+function renderSportStatsCarousel(containerEl, sportStatsRaw, sports, showEmptyCta) {
+    if (!containerEl) return;
+    var sportStats = {};
+    try { sportStats = typeof sportStatsRaw === 'string' ? JSON.parse(sportStatsRaw) : (sportStatsRaw || {}); } catch(e) {}
+    var sportList = (sports && sports.length) ? sports : Object.keys(sportStats);
+    if (!sportList.length) { containerEl.innerHTML = ''; return; }
+
+    var cardsHtml = '';
+    var allCustom = []; // {sportName, label, value} collectés sur tous les sports, pour la carte "Autres PR"
+    sportList.forEach(function(sportName) {
+        var meta = SPORT_LABELS[sportName] || { name: sportName, icon: '🏆' };
+        var stats = sportStats[sportName] || {};
+        var rows = '';
+        Object.keys(stats).forEach(function(label) {
+            if (label === '__custom') return;
+            if (!stats[label]) return;
+            rows += '<div class="sscar-row"><span class="sscar-lbl">' + escapeHtml(label) + '</span><span class="sscar-val">' + escapeHtml(stats[label]) + '</span></div>';
+        });
+        (stats.__custom || []).forEach(function(c) {
+            if (!c || !c.label || !c.value) return;
+            allCustom.push({ sportName: sportName, label: c.label, value: c.value });
+        });
+        cardsHtml += '<div class="sscar-card"><div class="sscar-title">' + meta.icon + ' ' + escapeHtml(meta.name) + '</div>';
+        if (rows) {
+            cardsHtml += rows;
+        } else {
+            cardsHtml += '<div class="sscar-empty">Aucune stat renseignée' + (showEmptyCta ? '<br><button class="sscar-add-btn" onclick="if(typeof openEditProfile===\'function\')openEditProfile()">+ Ajouter mes stats</button>' : '') + '</div>';
+        }
+        cardsHtml += '</div>';
+    });
+
+    // Carte finale "Autres PR" regroupant tous les PR perso, tous sports confondus —
+    // seulement si au moins un a été renseigné, pour ne pas ajouter une carte vide.
+    var totalCards = sportList.length;
+    if (allCustom.length) {
+        var customRows = allCustom.map(function(c) {
+            return '<div class="sscar-row"><span class="sscar-lbl">' + escapeHtml(c.label) + '</span><span class="sscar-val">' + escapeHtml(c.value) + '</span></div>';
+        }).join('');
+        cardsHtml += '<div class="sscar-card"><div class="sscar-title">🎖️ Autres PR</div>' + customRows + '</div>';
+        totalCards++;
+    }
+
+    var dotsHtml = '';
+    for (var di = 0; di < totalCards; di++) { dotsHtml += '<div class="dot' + (di===0?' active':'') + '"></div>'; }
+    containerEl.innerHTML = '<div class="sscar">' + cardsHtml + '</div>' + (totalCards > 1 ? '<div class="sscar-dots">' + dotsHtml + '</div>' : '');
+
+    if (totalCards > 1) {
+        var scroller = containerEl.querySelector('.sscar');
+        var dots = containerEl.querySelectorAll('.sscar-dots .dot');
+        scroller.addEventListener('scroll', function() {
+            var idx = Math.round(scroller.scrollLeft / (scroller.firstElementChild.offsetWidth + 10));
+            dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+        });
+    }
+}
+
 // ===================== NAVIGATION =====================
 function goTo(page) {
     // Fermer les modals ouverts
@@ -2100,12 +2198,13 @@ function openRealProfile(userId) {
                 avEl.style.overflow = '';
             }
         }
-        if(el('pm-chrono')) el('pm-chrono').textContent = a.best_time || sports[0] || 'RaceMates';
-        if(el('pm-stat1')) el('pm-stat1').textContent = a.best_time || '-';
+        var pmFallback = getSportStatsFallback(a.sport_stats, sports);
+        if(el('pm-chrono')) el('pm-chrono').textContent = a.best_time || pmFallback.bestPerf || sports[0] || 'RaceMates';
+        if(el('pm-stat1')) el('pm-stat1').textContent = a.best_time || pmFallback.bestPerf || '-';
         if(el('pm-lbl1')) el('pm-lbl1').textContent = 'BEST PERF';
         if(el('pm-stat2')) el('pm-stat2').textContent = a.nb_courses || '-';
         if(el('pm-lbl2')) el('pm-lbl2').textContent = 'COURSES';
-        if(el('pm-stat3')) el('pm-stat3').textContent = a.pace || '-';
+        if(el('pm-stat3')) el('pm-stat3').textContent = a.pace || pmFallback.pace || '-';
         if(el('pm-lbl3')) el('pm-lbl3').textContent = 'PACE / STAT';
         if(el('pm-name')) el('pm-name').textContent=a.prenom+(a.pseudo?' @'+a.pseudo:'');
         if(el('pm-loc')) el('pm-loc').textContent='📍 '+(a.ville||'France');
@@ -2118,25 +2217,7 @@ function openRealProfile(userId) {
             sportEl.style.display = sportText ? 'inline-block' : 'none';
         }
         var sportStatsEl = el('pm-sport-stats');
-        if (sportStatsEl) {
-            var sportStats = {};
-            try { sportStats = typeof a.sport_stats === 'string' ? JSON.parse(a.sport_stats) : (a.sport_stats || {}); } catch(e) {}
-            var sportStatsHtml = '';
-            Object.keys(sportStats).forEach(function(sportName) {
-                var statsForSport = sportStats[sportName];
-                var rows = Object.keys(statsForSport).map(function(label) {
-                    return '<div style="display:flex;justify-content:space-between;font-size:0.8em;padding:4px 0;border-bottom:1px solid #F1F5F9">'
-                        + '<span style="color:#64748B">' + escapeHtml(label) + '</span>'
-                        + '<span style="font-weight:700;color:#0A1628">' + escapeHtml(statsForSport[label]) + '</span></div>';
-                }).join('');
-                if (rows) {
-                    sportStatsHtml += '<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:10px 14px;margin-bottom:8px">'
-                        + '<div style="font-weight:900;font-family:\'Barlow Condensed\',sans-serif;font-size:0.9em;color:#0A1628;margin-bottom:4px">' + escapeHtml(sportName) + '</div>'
-                        + rows + '</div>';
-                }
-            });
-            sportStatsEl.innerHTML = sportStatsHtml;
-        }
+        if (sportStatsEl) renderSportStatsCarousel(sportStatsEl, a.sport_stats, sports, false);
         var needsEl=el('pm-needs');
         if(needsEl){
             needsEl.innerHTML=needs.map(function(n){
@@ -2199,7 +2280,7 @@ function openRealChat(userId) {
         var sports=[];
         try{sports=safeArray(a.sports);}catch(e){}
         var initials=a.avatar_initials||((a.prenom||'?')[0]+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
-        contactAndChat((a.prenom||'')+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'), userId);
+        contactAndChat((a.prenom||'')+(a.pseudo?' @'+a.pseudo:''),initials,'online',(sports[0]||'RaceMates')+' - '+(a.ville||'France'), userId, a.avatar_url||'');
     }).catch(function(err){ console.error('openRealChat:', err); });
 }
 
@@ -2389,9 +2470,18 @@ function startGlobalMessagesSubscription() {
     _globalChannel.subscribe();
 }
 
-function openChat(name, initials, status, event) {
+function openChat(name, initials, status, event, avatarUrl) {
     document.getElementById('chat-name').textContent = name;
-    document.getElementById('chat-av').textContent = initials;
+    var chatAvEl = document.getElementById('chat-av');
+    if (chatAvEl) {
+        if (avatarUrl) {
+            chatAvEl.innerHTML = '<img src="'+escapeHtml(avatarUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+            chatAvEl.style.padding = '0'; chatAvEl.style.overflow = 'hidden';
+        } else {
+            chatAvEl.textContent = initials;
+            chatAvEl.style.padding = ''; chatAvEl.style.overflow = '';
+        }
+    }
     document.getElementById('chat-status').textContent = status === 'online' ? '🟢 En ligne' : '⚫ Hors ligne';
     document.getElementById('chat-event').textContent = event;
     document.getElementById('chat-view').classList.add('open');
@@ -2563,7 +2653,7 @@ function sendMsgBtn() {
     }
 }
 
-async function contactAndChat(name, initials, status, event, otherUserId) {
+async function contactAndChat(name, initials, status, event, otherUserId, avatarUrl) {
     goTo('messages');
     _currentConvId = null;
     _currentConvUserId = otherUserId || null;
@@ -2579,7 +2669,7 @@ async function contactAndChat(name, initials, status, event, otherUserId) {
             }
         } catch(e) { console.warn('chat error:', e); }
     }
-    openChat(name, initials, status, event);
+    openChat(name, initials, status, event, avatarUrl);
 }
 
 async function loadConversationsList() {
@@ -2603,6 +2693,7 @@ async function loadConversationsList() {
             var other = conv.other || null;
             var otherId = conv.other_id || (conv.user1_id === currentUser.id ? conv.user2_id : conv.user1_id);
             var initials = other ? (other.avatar_initials || ((other.prenom||'?')[0] + (other.pseudo||'A')[0]).toUpperCase()) : '?';
+            var otherAvatarUrl = other ? (other.avatar_url || '') : '';
             var name = other ? ((other.prenom||'') + (other.pseudo ? ' @'+other.pseudo : '')) : 'Athlète';
             if (!name.trim()) name = 'Athlète';
             var lastMsg = conv.last_message || 'Nouvelle conversation';
@@ -2615,7 +2706,10 @@ async function loadConversationsList() {
             card.className = 'conv-card' + (isUnread ? ' unread' : '');
             card.setAttribute('data-conv-id', conv.id);
             var unreadBadge = isUnread ? '<div class="conv-badge">'+conv.unread_count+'</div>' : '';
-            card.innerHTML = '<div class="conv-av-wrap"><div class="conv-av" style="background:'+color+'">'+initials+'</div></div>'
+            var convAvHtml = otherAvatarUrl
+                ? '<img src="'+escapeHtml(otherAvatarUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+                : initials;
+            card.innerHTML = '<div class="conv-av-wrap"><div class="conv-av" style="background:'+color+(otherAvatarUrl?';padding:0;overflow:hidden':'')+'">'+convAvHtml+'</div></div>'
                 + '<div class="conv-body"><div class="conv-top"><div class="conv-name">'+(isUnread?'<strong>'+name+'</strong>':name)+'</div>'
                 + '<div style="display:flex;align-items:center;gap:6px"><div class="conv-time">'+timeStr+'</div>'
                 + '<button class="conv-del-btn" style="background:none;border:none;color:#CBD5E1;font-size:1em;cursor:pointer;padding:2px 6px;line-height:1" title="Supprimer">✕</button></div></div>'
@@ -2637,7 +2731,7 @@ async function loadConversationsList() {
                 _currentConvUserId = otherId;
                 loadMessages(conv.id);
                 subscribeToMessages(conv.id);
-                openChat(name, initials, 'online', '');
+                openChat(name, initials, 'online', '', otherAvatarUrl);
             };
             list.appendChild(card);
         });
@@ -4957,6 +5051,15 @@ function toggleCompletFilter() {
                     if (pdisp && pdisp.textContent) statsForSport[perf.label] = pdisp.textContent + '/km';
                 }
             });
+            // Stats perso ajoutées via "+ Ajouter un PR perso" (max 3, déjà plafonné dans addPR)
+            var prList = document.getElementById('pr-list-' + sportName.replace(/ /g,'_'));
+            if (prList) {
+                var customStats = [];
+                prList.querySelectorAll('[data-pr-label]').forEach(function(b) {
+                    if (b.dataset.prLabel && b.dataset.prValue) customStats.push({ label: b.dataset.prLabel, value: b.dataset.prValue });
+                });
+                if (customStats.length) statsForSport.__custom = customStats;
+            }
             if (Object.keys(statsForSport).length) sportStats[sportName] = statsForSport;
         });
 
@@ -5393,7 +5496,7 @@ function toggleCompletFilter() {
 
             // PR libre
             html += "<div style=\"margin-top:10px;padding-top:10px;border-top:1px solid var(--border)\">";
-            html += "<div style=\"font-size:0.7em;font-weight:700;color:var(--grey);margin-bottom:6px;letter-spacing:1px\">➕ AJOUTER UN PR PERSO</div>";
+            html += "<div style=\"font-size:0.7em;font-weight:700;color:var(--grey);margin-bottom:6px;letter-spacing:1px\">➕ AJOUTER UN PR PERSO <span style=\"font-weight:400;font-style:italic\">(max 3)</span></div>";
             html += "<div style=\"display:flex;gap:6px\" id=\"pr-add-row-" + sportId + "\">";
             html += "<input class=\"ob-input\" type=\"text\" placeholder=\"Nom ex: Front Squat\" style=\"margin-bottom:0;flex:2;font-size:0.82em\">";
             html += "<input class=\"ob-input\" type=\"text\" placeholder=\"ex: 90kg\" style=\"margin-bottom:0;flex:1;font-size:0.82em\">";
@@ -5420,11 +5523,17 @@ function toggleCompletFilter() {
         if(!name || !val) return;
         var listId = row.parentElement.querySelector('[id^="pr-list-"]');
         if(listId) {
+            if (listId.children.length >= 3) {
+                if (typeof showStatusToast === 'function') showStatusToast('⚠️ Max 3 stats perso par sport');
+                return;
+            }
             var badge = document.createElement('span');
             badge.className = 'badge badge-dark';
             badge.style.cursor = 'pointer';
             badge.title = 'Cliquer pour supprimer';
             badge.textContent = name + ': ' + val;
+            badge.dataset.prLabel = name;
+            badge.dataset.prValue = val;
             badge.onclick = function(){ badge.remove(); };
             listId.appendChild(badge);
         }
@@ -5914,11 +6023,14 @@ function toggleCompletFilter() {
             var lbl1 = 'BEST PERF';
             var lbl2 = 'COURSES';
             var lbl3 = p.pace ? 'PACE / STAT' : 'PACE';
-            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.best_time || '-') + '</div><div class="pstat-lbl">' + lbl1 + '</div></div>';
+            var pFallback = getSportStatsFallback(p.sport_stats, sports);
+            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.best_time || pFallback.bestPerf || '-') + '</div><div class="pstat-lbl">' + lbl1 + '</div></div>';
             statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.nb_courses || '-') + '</div><div class="pstat-lbl">' + lbl2 + '</div></div>';
-            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.pace || '-') + '</div><div class="pstat-lbl">' + lbl3 + '</div></div>';
+            statsHtml += '<div class="pstat"><div class="pstat-val">' + (p.pace || pFallback.pace || '-') + '</div><div class="pstat-lbl">' + lbl3 + '</div></div>';
             pstats.innerHTML = statsHtml;
         }
+        var ssCarousel = document.getElementById('profile-sport-stats-carousel');
+        if (ssCarousel) renderSportStatsCarousel(ssCarousel, p.sport_stats, safeArray(p.sports), true);
 
         // Badges dynamiques (sports + needs + niveau)
         var badgesDyn = document.getElementById('profile-badges-dynamic');
@@ -6338,8 +6450,8 @@ function toggleCompletFilter() {
 
     // When message is read/opened — mark conv as read
     var _origOpenChat = openChat;
-    openChat = function(name, initials, status, event) {
-        _origOpenChat(name, initials, status, event);
+    openChat = function(name, initials, status, event, avatarUrl) {
+        _origOpenChat(name, initials, status, event, avatarUrl);
         // No badge change needed for prototype — count stays as convs total
     };
 
@@ -6386,6 +6498,18 @@ function toggleCompletFilter() {
                     html += buildTextHTML(editId, perf.label, perf.placeholder);
                 }
             });
+            // Jusqu'à 3 stats personnalisées, en plus des champs prédéfinis ci-dessus
+            var sportKey = sportName.replace(/[^a-zA-Z0-9]/g, '');
+            var existingCustom = (statsForSport.__custom || []);
+            html += '<div style="font-size:0.68em;color:#94A3B8;margin:6px 0 4px">Stats perso (optionnel, max 3)</div>';
+            for (var ci = 0; ci < 3; ci++) {
+                var cLabel = (existingCustom[ci] && existingCustom[ci].label) || '';
+                var cValue = (existingCustom[ci] && existingCustom[ci].value) || '';
+                html += '<div style="display:flex;gap:6px;margin-bottom:6px">'
+                    + '<input id="edit-custom-' + sportKey + '-' + ci + '-label" type="text" value="' + escapeHtml(cLabel) + '" placeholder="ex: Deadlift" style="flex:1;padding:9px 10px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:0.85em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">'
+                    + '<input id="edit-custom-' + sportKey + '-' + ci + '-value" type="text" value="' + escapeHtml(cValue) + '" placeholder="ex: 180kg" style="flex:1;padding:9px 10px;border:1.5px solid #E2E8F0;border-radius:9px;font-size:0.85em;font-family:Barlow,sans-serif;box-sizing:border-box;outline:none">'
+                    + '</div>';
+            }
             html += '</div>';
         });
         container.innerHTML = html;
@@ -6662,6 +6786,15 @@ function toggleCompletFilter() {
                     if (pdisp && pdisp.textContent) statsForSport[perf.label] = pdisp.textContent + '/km';
                 }
             });
+            // Stats personnalisées (jusqu'à 3), seulement les paires label+valeur remplies
+            var sportKeyForCustom = sportName.replace(/[^a-zA-Z0-9]/g, '');
+            var customStats = [];
+            for (var ci = 0; ci < 3; ci++) {
+                var cLabel = (el('edit-custom-' + sportKeyForCustom + '-' + ci + '-label') || {}).value?.trim() || '';
+                var cValue = (el('edit-custom-' + sportKeyForCustom + '-' + ci + '-value') || {}).value?.trim() || '';
+                if (cLabel && cValue) customStats.push({ label: cLabel, value: cValue });
+            }
+            if (customStats.length) statsForSport.__custom = customStats;
             if (Object.keys(statsForSport).length) sportStats[sportName] = statsForSport;
         });
         // Lire les needs cochés

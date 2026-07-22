@@ -308,20 +308,23 @@
         .pstat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 10px;text-align:center}
         .pstat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3em;color:var(--blue);line-height:1}
         .pstat-lbl{font-size:0.6em;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-        #landing-screen{position:fixed;inset:0;z-index:100000;display:none;flex-direction:column;background:linear-gradient(160deg,var(--dark) 0%,var(--blue) 55%,var(--dark) 100%);color:#fff;padding:28px 24px 22px;overflow-y:auto}
+        #landing-screen{position:fixed;inset:0;z-index:100000;display:none;flex-direction:column;background:var(--white);overflow-y:auto}
+        #landing-screen .ls-header{position:relative;background:linear-gradient(160deg,var(--dark) 0%,var(--blue) 100%);color:#fff;padding:28px 24px 52px}
+        #landing-screen .ls-header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:var(--white);clip-path:polygon(0 70%,100% 0,100% 100%,0 100%)}
         #landing-screen .ls-logo{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6em;letter-spacing:0.5px;margin-bottom:2px}
         #landing-screen .ls-logo .ls-race{color:var(--red)}
         #landing-screen .ls-tagline{text-align:center;font-size:0.62em;letter-spacing:3px;color:rgba(255,255,255,0.55);margin-bottom:16px}
-        #landing-screen .ls-headline{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:1.15em;font-weight:900;line-height:1.25;margin-bottom:6px}
+        #landing-screen .ls-headline{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:1.15em;font-weight:900;line-height:1.25}
         #landing-screen .ls-headline .ls-accent{color:var(--red)}
-        #landing-screen .ls-sub{text-align:center;font-size:0.75em;color:rgba(255,255,255,0.7);line-height:1.4;margin-bottom:18px}
-        #landing-screen .ls-benefit{display:flex;gap:11px;align-items:flex-start;margin-bottom:12px}
-        #landing-screen .ls-benefit-icon{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:1em;flex-shrink:0}
-        #landing-screen .ls-benefit-title{font-weight:800;font-size:0.82em;color:#fff;margin-bottom:1px}
-        #landing-screen .ls-benefit-desc{font-size:0.7em;color:rgba(255,255,255,0.6);line-height:1.35}
-        #landing-screen .ls-sports{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin:14px 0 18px}
-        #landing-screen .ls-sport-chip{font-size:0.66em;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.85);padding:4px 9px;border-radius:20px}
-        #landing-screen .ls-cta-wrap{margin-top:auto}
+        #landing-screen .ls-body{flex:1;padding:8px 24px 4px}
+        #landing-screen .ls-sub{text-align:center;font-size:0.75em;color:var(--grey);line-height:1.4;margin-bottom:20px}
+        #landing-screen .ls-benefit{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+        #landing-screen .ls-benefit-icon{width:36px;height:36px;border-radius:10px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.05em;flex-shrink:0}
+        #landing-screen .ls-benefit-title{font-weight:800;font-size:0.84em;color:var(--dark);margin-bottom:1px}
+        #landing-screen .ls-benefit-desc{font-size:0.72em;color:var(--grey);line-height:1.35}
+        #landing-screen .ls-sports{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin:8px 0 4px}
+        #landing-screen .ls-sport-chip{font-size:0.66em;background:var(--bg);border:1px solid var(--border);color:var(--grey);padding:4px 9px;border-radius:20px}
+        #landing-screen .ls-footer{background:var(--dark);padding:18px 24px 22px;margin-top:16px}
         #landing-screen .ls-cta-btn{width:100%;padding:15px;background:var(--red);color:#fff;text-align:center;border-radius:12px;font-weight:900;font-size:0.95em;letter-spacing:0.3px;margin-bottom:10px;cursor:pointer;border:none;font-family:inherit}
         #landing-screen .ls-cta-link{text-align:center;font-size:0.78em;color:rgba(255,255,255,0.6)}
         #landing-screen .ls-cta-link span{color:#fff;font-weight:700;text-decoration:underline;cursor:pointer}
@@ -7276,59 +7279,63 @@ setPlan('free');
     <div id="onboarding-overlay" style="position:fixed;inset:0;z-index:99999;background:var(--bg);">
 
 <div id="landing-screen">
-    <div class="ls-logo"><span class="ls-race">RACE</span>MATES</div>
-    <div class="ls-tagline">YOUR MATE · OUR RACE</div>
-
-    <div class="ls-headline">La communauté qui t'accompagne <span class="ls-accent">avant, pendant et après</span> ta course.</div>
-    <div class="ls-sub">Trouve des partenaires, un logement, un covoiturage — pour chaque compétition.</div>
-
-    <div class="ls-benefit">
-        <div class="ls-benefit-icon">🤝</div>
-        <div>
-            <div class="ls-benefit-title">Partenaires d'entraînement ou de compétition</div>
-            <div class="ls-benefit-desc">Trouve des sportifs qui partagent tes objectifs et forme ton équipe idéale.</div>
-        </div>
-    </div>
-    <div class="ls-benefit">
-        <div class="ls-benefit-icon">🏠</div>
-        <div>
-            <div class="ls-benefit-title">Hébergements</div>
-            <div class="ls-benefit-desc">Trouve un logement proche de ta compétition, ou propose le tien à la location.</div>
-        </div>
-    </div>
-    <div class="ls-benefit">
-        <div class="ls-benefit-icon">🚗</div>
-        <div>
-            <div class="ls-benefit-title">Covoiturage</div>
-            <div class="ls-benefit-desc">Propose ou trouve un trajet et partage les frais.</div>
-        </div>
-    </div>
-    <div class="ls-benefit">
-        <div class="ls-benefit-icon">📅</div>
-        <div>
-            <div class="ls-benefit-title">Événements</div>
-            <div class="ls-benefit-desc">Retrouve toutes les compétitions à venir et inscris-toi en un clic.</div>
-        </div>
-    </div>
-    <div class="ls-benefit">
-        <div class="ls-benefit-icon">🚨</div>
-        <div>
-            <div class="ls-benefit-title">Alerte dernière minute</div>
-            <div class="ls-benefit-desc">Un imprévu ? Lance un appel express à la communauté.</div>
-        </div>
+    <div class="ls-header">
+        <div class="ls-logo"><span class="ls-race">RACE</span>MATES</div>
+        <div class="ls-tagline">YOUR MATE · OUR RACE</div>
+        <div class="ls-headline">La communauté qui t'accompagne <span class="ls-accent">avant, pendant et après</span> ta course.</div>
     </div>
 
-    <div class="ls-sports">
-        <div class="ls-sport-chip">🏋️ Hyrox</div>
-        <div class="ls-sport-chip">🏃 Running</div>
-        <div class="ls-sport-chip">⛰️ Trail</div>
-        <div class="ls-sport-chip">🏊 Triathlon</div>
-        <div class="ls-sport-chip">💪 CrossFit</div>
-        <div class="ls-sport-chip">🧗 Spartan</div>
-        <div class="ls-sport-chip">🏋️‍♀️ Musculation</div>
+    <div class="ls-body">
+        <div class="ls-sub">Trouve des partenaires, un logement, un covoiturage — pour chaque compétition.</div>
+
+        <div class="ls-benefit">
+            <div class="ls-benefit-icon">🤝</div>
+            <div>
+                <div class="ls-benefit-title">Partenaires d'entraînement ou de compétition</div>
+                <div class="ls-benefit-desc">Trouve des sportifs qui partagent tes objectifs et forme ton équipe idéale.</div>
+            </div>
+        </div>
+        <div class="ls-benefit">
+            <div class="ls-benefit-icon">🏠</div>
+            <div>
+                <div class="ls-benefit-title">Hébergements</div>
+                <div class="ls-benefit-desc">Trouve un logement proche de ta compétition, ou propose le tien à la location.</div>
+            </div>
+        </div>
+        <div class="ls-benefit">
+            <div class="ls-benefit-icon">🚗</div>
+            <div>
+                <div class="ls-benefit-title">Covoiturage</div>
+                <div class="ls-benefit-desc">Propose ou trouve un trajet et partage les frais.</div>
+            </div>
+        </div>
+        <div class="ls-benefit">
+            <div class="ls-benefit-icon">📅</div>
+            <div>
+                <div class="ls-benefit-title">Événements</div>
+                <div class="ls-benefit-desc">Retrouve toutes les compétitions à venir et inscris-toi en un clic.</div>
+            </div>
+        </div>
+        <div class="ls-benefit">
+            <div class="ls-benefit-icon">🚨</div>
+            <div>
+                <div class="ls-benefit-title">Alerte dernière minute</div>
+                <div class="ls-benefit-desc">Un imprévu ? Lance un appel express à la communauté.</div>
+            </div>
+        </div>
+
+        <div class="ls-sports">
+            <div class="ls-sport-chip">🏋️ Hyrox</div>
+            <div class="ls-sport-chip">🏃 Running</div>
+            <div class="ls-sport-chip">⛰️ Trail</div>
+            <div class="ls-sport-chip">🏊 Triathlon</div>
+            <div class="ls-sport-chip">💪 CrossFit</div>
+            <div class="ls-sport-chip">🧗 Spartan</div>
+            <div class="ls-sport-chip">🏋️‍♀️ Musculation</div>
+        </div>
     </div>
 
-    <div class="ls-cta-wrap">
+    <div class="ls-footer">
         <button class="ls-cta-btn" onclick="startOnboardingFromLanding()">Commencer →</button>
         <div class="ls-cta-link">Déjà un compte ? <span onclick="if(typeof openLoginModal==='function')openLoginModal()">Se connecter</span></div>
     </div>

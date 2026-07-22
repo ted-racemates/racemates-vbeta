@@ -58,22 +58,27 @@ export default async function handler(req, res) {
         }
 
         // 3. Anti-spam : si le destinataire a déjà un message NON LU plus ancien
-        //    venant du même expéditeur dans cette conversation, on a déjà dû
-        //    lui envoyer un email pour celui-là — on ne renvoie pas à chaque
-        //    message d'une même rafale, seulement pour le premier non lu.
+        //    venant du même expéditeur, ENVOYÉ IL Y A MOINS DE 10 MINUTES, on
+        //    considère qu'on vient déjà de le notifier pour cette rafale et on
+        //    ne renvoie pas un email pour chaque message. Passé 10 minutes,
+        //    même si l'ancien message traîne toujours non lu, on renotifie —
+        //    sinon une conversation jamais ouverte ne recevrait plus jamais
+        //    d'email pour ses nouveaux messages.
+        const tenMinAgo = new Date(new Date(msg.created_at).getTime() - 10 * 60 * 1000).toISOString();
         const priorUnreadRes = await fetch(
             SUPABASE_URL + '/rest/v1/messages'
                 + '?conversation_id=eq.' + msg.conversation_id
                 + '&sender_id=eq.' + msg.sender_id
                 + '&read_at=is.null'
                 + '&created_at=lt.' + encodeURIComponent(msg.created_at)
+                + '&created_at=gte.' + encodeURIComponent(tenMinAgo)
                 + '&select=id&limit=1',
             { headers: sbHeaders }
         );
         const priorUnread = await priorUnreadRes.json();
         if (priorUnread && priorUnread.length > 0) {
-            console.log('notify-message SKIPPED:', 'already notified for this streak');
-            return res.status(200).json({ skipped: true, reason: 'already notified for this streak' });
+            console.log('notify-message SKIPPED:', 'already notified in the last 10min');
+            return res.status(200).json({ skipped: true, reason: 'already notified in the last 10min' });
         }
 
         // 4. Récupérer l'email du destinataire — vit dans auth.users, pas dans
@@ -127,4 +132,6 @@ export default async function handler(req, res) {
         return res.status(200).json({ sent: false, error: String(err) });
     }
 }
+
+
 

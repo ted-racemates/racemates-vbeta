@@ -25,8 +25,10 @@ export default async function handler(req, res) {
 
     try {
         const payload = req.body || {};
+        console.log('notify-message PAYLOAD:', JSON.stringify(payload));
         const msg = payload.record; // format standard des Database Webhooks Supabase
         if (!msg || !msg.conversation_id || !msg.sender_id || !msg.id) {
+            console.log('notify-message SKIPPED:', 'invalid payload');
             return res.status(200).json({ skipped: true, reason: 'invalid payload' });
         }
 
@@ -45,11 +47,13 @@ export default async function handler(req, res) {
         );
         const convs = await convRes.json();
         if (!convs || !convs[0]) {
+            console.log('notify-message SKIPPED:', 'conversation not found');
             return res.status(200).json({ skipped: true, reason: 'conversation not found' });
         }
         const conv = convs[0];
         const recipientId = conv.user1_id === msg.sender_id ? conv.user2_id : conv.user1_id;
         if (!recipientId) {
+            console.log('notify-message SKIPPED:', 'no recipient');
             return res.status(200).json({ skipped: true, reason: 'no recipient' });
         }
 
@@ -68,6 +72,7 @@ export default async function handler(req, res) {
         );
         const priorUnread = await priorUnreadRes.json();
         if (priorUnread && priorUnread.length > 0) {
+            console.log('notify-message SKIPPED:', 'already notified for this streak');
             return res.status(200).json({ skipped: true, reason: 'already notified for this streak' });
         }
 
@@ -77,6 +82,7 @@ export default async function handler(req, res) {
         const recipient = await userRes.json();
         const recipientEmail = recipient && recipient.email;
         if (!recipientEmail) {
+            console.log('notify-message SKIPPED:', 'no recipient email');
             return res.status(200).json({ skipped: true, reason: 'no recipient email' });
         }
 
@@ -90,6 +96,7 @@ export default async function handler(req, res) {
 
         // 6. Envoyer l'email via Resend
         const preview = escapeHtml(String(msg.content || '').slice(0, 140));
+        console.log('notify-message CALLING RESEND, sending to:', recipientEmail);
         const emailRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -120,3 +127,4 @@ export default async function handler(req, res) {
         return res.status(200).json({ sent: false, error: String(err) });
     }
 }
+

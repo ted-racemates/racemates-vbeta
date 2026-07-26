@@ -1,4 +1,4 @@
- api/send-welcome-blast.js
+// api/send-welcome-blast.js
 // Fonction à usage PONCTUEL — pas déclenchée par un webhook, mais visitée
 // manuellement dans le navigateur pour envoyer le mail de bienvenue à TOUS
 // les comptes déjà inscrits (rattrapage, une seule fois).
@@ -49,12 +49,19 @@ function buildWelcomeEmail(firstName) {
 }
 
 export default async function handler(req, res) {
-    const secret = req.query.secret;
+    var url;
+    try {
+        url = new URL(req.url, 'http://' + (req.headers && req.headers.host || 'localhost'));
+    } catch (e) {
+        return res.status(400).json({ error: 'URL invalide' });
+    }
+    const secret = url.searchParams.get('secret');
     if (!process.env.SUPABASE_WEBHOOK_SECRET || secret !== process.env.SUPABASE_WEBHOOK_SECRET) {
         return res.status(401).json({ error: 'Unauthorized — ajoute ?secret=TON_SECRET dans l\'URL' });
     }
 
-    const dryRun = req.query.dry_run === 'true' || req.query.dry_run === '1';
+    const dryRunParam = url.searchParams.get('dry_run');
+    const dryRun = dryRunParam === 'true' || dryRunParam === '1';
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -128,3 +135,4 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: String(err) });
     }
 }
+ 

@@ -2450,6 +2450,7 @@ function startGlobalMessagesSubscription() {
         if(!list) return;
         var displayName = a.prenom || a.pseudo || 'Athlète';
         var initials = a.avatar_initials || ((displayName[0]||'?')+(a.pseudo?a.pseudo[0]||'':'A')).toUpperCase();
+        var avatarHtml = a.avatar_url ? '<img src="'+escapeHtml(a.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
         var sports = []; try{ sports = safeArray(a.sports); }catch(e){}
         var sportKey = (sports[0]||'').toLowerCase().replace(/[^a-z]/g,'');
         var sportBadges = sports.slice(0,2).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
@@ -2460,7 +2461,7 @@ function startGlobalMessagesSubscription() {
         div.setAttribute('data-status', 'dispo');
         div.style.cssText = 'cursor:pointer;border:2px solid #059669';
         div.innerHTML = '<div style="position:absolute;bottom:8px;left:8px;background:#059669;color:white;font-size:0.6em;font-weight:700;padding:2px 6px;border-radius:6px">NOUVEAU</div>'
-            +'<div class="ac-top"><div class="ac-av">'+initials+'</div>'
+            +'<div class="ac-top"><div class="ac-av" style="'+(a.avatar_url?'padding:0;overflow:hidden':'')+'">'+avatarHtml+'</div>'
             +'<div class="ac-info"><div class="ac-name">'+escapeHtml(displayName)+(a.pseudo?' @'+escapeHtml(a.pseudo):'')+'</div>'
             +'<div class="ac-loc">📍 '+escapeHtml(a.ville||'France')+'</div></div></div>'
             +'<div class="ac-body"><div class="ac-badges">'+sportBadges+'</div>'
@@ -4045,6 +4046,7 @@ function renderTraining(athletes) {
     filtered.forEach(function(a) {
         var sports = []; try{ sports = safeArray(a.sports); }catch(e){}
         var initials = a.avatar_initials || ((a.prenom||'?')[0]+(a.pseudo||'A')[0]).toUpperCase();
+        var avatarHtml = a.avatar_url ? '<img src="'+escapeHtml(a.avatar_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : initials;
         var name = (a.prenom||'') + (a.pseudo?' @'+a.pseudo:'');
         var sportBadges = sports.slice(0,3).map(function(s){ return '<span class="badge badge-dark">'+s+'</span>'; }).join('');
         var perf = a.best_time ? '<div class="ac-chrono-lbl">⏱ Best</div><div class="ac-chrono-val">'+a.best_time+'</div>' : '';
@@ -4082,7 +4084,7 @@ function renderTraining(athletes) {
         })));
         div.style.cursor = 'pointer';
         div.innerHTML = '<div class="ac-top">'
-            +'<div class="ac-av">'+initials+'</div>'
+            +'<div class="ac-av" style="'+(a.avatar_url?'padding:0;overflow:hidden':'')+'">'+avatarHtml+'</div>'
             +'<div class="ac-info"><div class="ac-name">'+escapeHtml(name)+'</div><div class="ac-loc">📍 '+escapeHtml(a.ville||'France')+'</div></div>'
             +'<div class="ac-chrono">'+perf+'</div></div>'
             +'<div class="ac-body">'
@@ -7759,6 +7761,14 @@ setPlan('free');
             if(btn){ btn.style.background=t===tab?'white':'rgba(255,255,255,0.15)'; btn.style.color=t===tab?'#0A1628':'rgba(255,255,255,0.8)'; }
         });
     }
+    function prefillDuoFeedback(){
+        switchHelpTab('feedback');
+        document.querySelectorAll('.fb-cat').forEach(function(c){
+            c.classList.toggle('active', c.textContent.indexOf('Match confirmé') !== -1);
+        });
+        var textEl = document.getElementById('feedback-text');
+        if (textEl && !textEl.value) textEl.value = 'J\'ai trouvé grâce à RaceMates : ';
+    }
     function toggleFaq(el){ el.classList.toggle('open'); }
     function selFbCat(el){
         document.querySelectorAll('.fb-cat').forEach(c=>c.classList.remove('active'));
@@ -7951,6 +7961,11 @@ setPlan('free');
     </div>
     <div style="overflow-y:auto;flex:1;padding:18px">
         <div id="help-content-faq">
+            <div style="margin-bottom:16px;border:2px solid #0A1628;border-radius:12px;padding:14px 16px">
+                <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:0.5px;color:#0A1628;font-size:0.95em">🏅 TU AS TROUVÉ TON MATCH ?</div>
+                <div style="font-size:0.78em;color:#64748B;line-height:1.5;margin-top:5px">Un partenaire, un logement, un covoiturage... dès que RaceMates t'a aidé à trouver quelqu'un, préviens-nous et on t'envoie un badge à porter le jour de la course, pour la photo souvenir.</div>
+                <div onclick="prefillDuoFeedback()" style="margin-top:8px;color:#DC2626;font-weight:700;font-size:0.8em;cursor:pointer">Nous prévenir →</div>
+            </div>
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1em;color:#0A1628;margin-bottom:12px">Questions fréquentes</div>
             <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Comment fonctionne le matching ? <span class="faq-arrow">▼</span></div><div class="faq-a">RaceMates te propose des athlètes selon ton sport, ta région et tes besoins. Tu filtres, consultes et contactes directement.</div></div>
             <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Pourquoi je ne peux pas envoyer de message ? <span class="faq-arrow">▼</span></div><div class="faq-a">La messagerie est disponible à partir du Pass Événement (2,99€). Le plan Découverte permet uniquement de consulter les profils.</div></div>
@@ -7968,6 +7983,7 @@ setPlan('free');
             <div style="font-size:0.78em;color:#64748B;margin-bottom:14px">Chaque retour est lu et pris en compte.</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
                 <span class="fb-cat active" onclick="selFbCat(this)">✨ Fonctionnalité</span>
+                <span class="fb-cat" onclick="selFbCat(this)">🏅 Match confirmé</span>
                 <span class="fb-cat" onclick="selFbCat(this)">🏅 Nouveau sport</span>
                 <span class="fb-cat" onclick="selFbCat(this)">🏠 Logements</span>
                 <span class="fb-cat" onclick="selFbCat(this)">🎨 Design</span>
